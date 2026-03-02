@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "nuxtr.nuxtr-vscode",
+    "streetsidesoftware.code-spell-checker",
+    "stylelint.vscode-stylelint",
+    "Vue.volar",
+    "dozerg.tsimportsorter",
+  ]
+}

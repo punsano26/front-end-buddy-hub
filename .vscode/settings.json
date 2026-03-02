@@ -1,0 +1,88 @@
+{
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "editor.quickSuggestions": {
+    "strings": "on"
+  },
+  "tailwindCSS.classAttributes": ["class"],
+  "eslint.validate": [
+    "vue",
+    "html",
+    "javascript",
+    "typescript",
+    "javascriptreact",
+    "typescriptreact"
+  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "eslint.workingDirectories": [
+    {
+      "mode": "auto"
+    }
+  ],
+  "cSpell.ignoreRegExpList": [
+    "/[\\u0E00-\\u0E7F]/g"
+  ],
+  "cSpell.words": [],
+	"tsImportSorter.configuration.trailingComma": "none",
+	"tsImportSorter.configuration.hasSemicolon": false,
+	"tsImportSorter.configuration.bracketSpacing": true,
+	"tsImportSorter.configuration.maxLineLength": 160,
+  "tsImportSorter.configuration.autoFormat": "onSave",
+	"tsImportSorter.configuration.formatExports": true,
+	"tsImportSorter.configuration.exclude": [
+		"node_modules",
+		"main.ts",
+		"vite.config.*",
+		"eslint.config.*"
+	],
+	"tsImportSorter.configuration.sortImportsBy": "paths",
+	"tsImportSorter.configuration.groupRules": [
+		"^fs$",
+		"^path$",
+		"^vue$", // Vue core libraries
+		"^vue-router$", // Vue Router imports
+		"^vitest$", // Vitest imports
+		"^pinia$", // Pinia imports
+		"^vuetify", // Vuetify imports
+		"^axios$",
+		"^@/plugins/", // Absolute plugins
+		"^([.]{1,2}/)+plugins/", // Relative plugins
+		"^@/stores/", // Absolute stores
+		"^([.]{1,2}/)+stores/", // Relative stores
+		"^@/utils/", // Absolute utilities
+		"^([.]{1,2}/)+utils/", // Relative utilities
+		"^@/enums/", // Absolute enums
+		"^([.]{1,2}/)+enums/", // Relative enums
+		"^@/models/", // Absolute models
+		"^([.]{1,2}/)+models/", // Relative models
+		"^@/components/", // Absolute components
+		"^([.]{1,2}/)+components/", // Relative components
+		"^@/pages/", // Absolute pages
+		"^([.]{1,2}/)+pages/", // Relative pages
+		"^@/assets/", // Absolute assets
+		"^([.]{1,2}/)+assets/", // Relative assets
+		"^@/resources/", // Absolute resources
+		"^([.]{1,2}/)+resources/", // Relative resources
+		"^@", // Other scoped imports (e.g., third-party libraries with '@' prefix)
+		"^[.]+/" // Fallback for other relative imports
+	],
+	"tsImportSorter.configuration.sortRules": {
+		"paths": ["_", "aA"], // Sort paths alphabetically
+		"names": ["_", "aA"] // Sort names alphabetically within each path
+	},
+	"tsImportSorter.configuration.wrappingStyle": {
+		"maxBindingNamesPerLine": 0, // No limit for binding names per line
+		"maxDefaultAndBindingNamesPerLine": 2, // Maximum 2 names per line for default and binding
+		"maxExportNamesPerLine": 1, // No limit for export names per line
+		"maxNamesPerWrappedLine": 1, // No limit on wrapped lines
+		"ignoreComments": false
+	},
+	"tsImportSorter.configuration.emptyLinesBetweenGroups": 0,
+	"tsImportSorter.configuration.emptyLinesAfterAllImports": 1,
+	"tsImportSorter.configuration.keepUnused": [],
+	"tsImportSorter.configuration.removeLastSlashInPath": false,
+	"tsImportSorter.configuration.removeLastIndexInPath": false,
+}
