@@ -24,6 +24,15 @@ export default defineNuxtConfig({
 
   devtools: { enabled: true },
 
+  app: {
+    head: {
+      title: 'Buddy Hub Hub',
+      link: [
+        { rel: 'icon', type: 'image/png', href: '/png/logo-buddy-hub.png' }
+      ]
+    }
+  },
+
   css: ['./app/assets/css/main.css'],
 
   devServer: {
