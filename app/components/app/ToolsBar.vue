@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Toolbar pt:root="p-4 bg-surface-900">
+    <Toolbar pt:root="p-4 bg-surface-900 border-none rounded-none">
       <template #start>
         <Button
           class="md:hidden"
