@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Toolbar pt:root="p-4 bg-surface-900">
+    <Toolbar pt:root="p-4 bg-surface-900 border-none rounded-none">
       <template #start>
         <Button
           class="md:hidden"
@@ -46,12 +46,11 @@
             class="w-6 h-6"
             src="/svg/mdi-light--bell.svg">
 
-          <OverlayBadge>
-            <Avatar
-              icon="pi pi-user"
-              image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
-              size="large" />
-          </OverlayBadge>
+
+          <Avatar
+            icon="pi pi-user"
+            image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
+            size="large" />
         </div>
       </template>
     </Toolbar>
