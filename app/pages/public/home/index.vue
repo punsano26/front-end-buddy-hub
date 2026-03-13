@@ -26,7 +26,7 @@
       </template>
     </Card>
     <div class="p-4 grid grid-cols-4 lg:grid-cols-6 gap-2 lg:gap-4">
-  <UserCard/>
+  <UserCard @click="visible = true"/>
   <UserCard/>
   <UserCard/>
   <UserCard/>
@@ -34,13 +34,23 @@
   <UserCard/>
   <UserCard/>
 </div>
+<template>
+    <div>
+        <Paginator pt:root:class="bg-slate-950" :rows="10" :totalRecords="120" />
+    </div>
+</template>
+<UserDetailDialog v-model:visible="visible" />
   </div>
 </template>
 
 <script setup lang="ts">
 import InputSearch from '~/components/input/InputSearch.vue'
-import UserCard from '~/components/UserCard.vue'
+import UserCard from '~/components/user/UserCard.vue'
+import UserDetailDialog from '~/components/user/UserDetailDialog.vue'
 import Card from '~/volt/Card.vue'
+import Paginator from '~/volt/Paginator.vue'
+
+const visible = ref(false)
 
 definePageMeta({ layout: 'navbar' })
 </script>
