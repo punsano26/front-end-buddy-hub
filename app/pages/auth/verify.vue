@@ -8,7 +8,8 @@
       required />
     <Button
       label="ถัดไป"
-      pt:label:class="font-normal text-white"
+      pt:label:class="font-bold"
+      pt:root:class="bg-gradient-primary border-none rounded-xl py-3"
       type="submit" />
   </form>
 </template>

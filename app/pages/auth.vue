@@ -4,8 +4,8 @@
     pt:body:class="px-[42px] py-10"
     pt:content:class="
       flex flex-col items-center gap-4
-      [&>div]:w-full [&>div]:flex [&>div]:flex-col [&>div]:gap-6
-      [&>form]:w-full [&>form]:flex [&>form]:flex-col [&>form]:gap-6
+      [&>div]:w-full [&>div]:flex [&>div]:flex-col [&>div]:gap-4
+      [&>form]:w-full [&>form]:flex [&>form]:flex-col [&>form]:gap-4
     ">
     <template #content>
       <div v-if="route.meta?.backPath">
@@ -16,11 +16,11 @@
         height="90"
         src="/png/logo-buddy-hub.png"
         width="90">
-      <h6 class="text-primary font-bold text-[32px]">
+      <h6 class="font-bold text-[32px]">
         {{ route.meta?.title || '-' }}
       </h6>
 
-      <p>
+      <p class="text-gray-400">
         {{ route.meta?.description || '-' }}
       </p>
       <NuxtPage />
