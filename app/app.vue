@@ -2,6 +2,7 @@
   <NuxtLayout>
     <NuxtLoadingIndicator />
     <NuxtRouteAnnouncer />
+    <Toast />
     <NuxtPage />
   </NuxtLayout>
 </template>
