@@ -20,8 +20,10 @@
         {{ route.meta?.title || '-' }}
       </h6>
 
-      <p class="text-gray-400">
-        {{ route.meta?.description || '-' }}
+      <p
+        v-if="route.meta?.description"
+        class="text-gray-400">
+        {{ route.meta?.description }}
       </p>
       <NuxtPage />
     </template>
