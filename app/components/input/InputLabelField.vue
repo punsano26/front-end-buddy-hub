@@ -29,7 +29,7 @@
 
     <p
       v-if="errorMessage"
-      class="mt-1 text-xs text-red-500">
+      class="mt-1 text-xs text-red-500 ">
       {{ errorMessage }}
     </p>
 
@@ -76,6 +76,7 @@ const errorMessage = computed((): string => {
 
 <style scoped>
 .required::after {
+  color: red;
   content: '*';
 }
 .bold::after {

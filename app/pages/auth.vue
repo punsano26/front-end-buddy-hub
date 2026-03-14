@@ -1,9 +1,9 @@
 <template>
   <Card
     class="w-full max-w-[446.68px] border-none border-(--p-gray-5) rounded-[28px] shadow-none"
-    pt:body:class="px-[42px] py-10 bg-[#0d1b2a]"
+    pt:body:class="px-[42px] py-10"
     pt:content:class="
-      flex flex-col items-center gap-2
+      flex flex-col items-center gap-4
       [&>div]:w-full [&>div]:flex [&>div]:flex-col [&>div]:gap-6
       [&>form]:w-full [&>form]:flex [&>form]:flex-col [&>form]:gap-6
     ">
