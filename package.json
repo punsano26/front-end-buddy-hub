@@ -20,6 +20,8 @@
     "@nuxt/test-utils": "3.22.0",
     "@pinia/nuxt": "0.11.3",
     "@tailwindcss/vite": "^4.1.18",
+    "axios": "^1.13.6",
+    "humps": "^2.0.1",
     "nuxt": "^4.2.2",
     "pinia": "^3.0.4",
     "primevue": "^4.5.4",
@@ -32,6 +34,7 @@
   "devDependencies": {
     "@nuxt/eslint": "^1.12.1",
     "@nuxt/eslint-config": "^1.12.1",
+    "@types/humps": "^2.0.6",
     "eslint": "^9.39.2",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
