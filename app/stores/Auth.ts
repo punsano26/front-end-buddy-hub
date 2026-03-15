@@ -1,13 +1,8 @@
 import { ref, type Ref } from 'vue'
 import { defineStore } from 'pinia'
+import type { IAuthLoginData } from '~/models/response/AuthRes.model'
 
-interface IUser {
-  userId: number
-  email: string
-  username: string
-  profileImg: string | null
-  roleName: string
-}
+interface IUser extends IAuthLoginData {}
 
 interface IToken {
   token: string
