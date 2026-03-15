@@ -1,7 +1,10 @@
 <template>
   <form>
     <InputLabelField
-      label="อีเมล" />
+      v-model="form.account"
+      label="อีเมลหรือชื่อผู้ใช้"
+      disabled
+      required />
     <InputLabelField label="รหัสผ่าน">
       <InputPasswordField />
     </InputLabelField>
@@ -22,8 +25,15 @@
 import InputLabelField from '~/components/input/InputLabelField.vue'
 import InputPasswordField from '~/components/input/InputPasswordField.vue'
 
+const route = useRoute()
+
 definePageMeta({
   title: 'เข้าสู่ระบบเพื่อใช้งาน'
+})
+
+const form = ref<any>({
+  account: route?.query?.account || '',
+  password: ''
 })
 </script>
 
