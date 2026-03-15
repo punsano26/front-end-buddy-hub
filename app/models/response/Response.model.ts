@@ -3,6 +3,14 @@ export interface IApiResponse<TData> {
   data: TData
 }
 
+export interface IApiTokenResponse<TData> {
+  message: string
+  token: string
+  refreshToken: string
+  expireIn: number | null
+  data: TData
+}
+
 export interface IErrorResponse {
   code: number
   message: string
