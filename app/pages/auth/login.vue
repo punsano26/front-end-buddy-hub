@@ -1,5 +1,5 @@
 <template>
-  <form>
+  <form @submit.prevent="login">
     <InputLabelField
       v-model="form.account"
       label="อีเมลหรือชื่อผู้ใช้"
@@ -22,17 +22,20 @@
 </template>
 
 <script setup lang="ts">
+import { useToast } from 'primevue/usetoast'
 import InputLabelField from '~/components/input/InputLabelField.vue'
 import InputPasswordField from '~/components/input/InputPasswordField.vue'
 import type { IAuthLoginPayload } from '~/models/request/AuthReq.model'
+import type { IAuthProvider } from '~/resource/provider/Auth.provider'
+import AuthProvider from '~/resource/provider/Auth.provider'
 
-// import type { IAuthProvider } from '~/resource/provider/Auth.provider'
-// import AuthProvider from '~/resource/provider/Auth.provider'
-
-// const authService: IAuthProvider = new AuthProvider()
+const authService: IAuthProvider = new AuthProvider()
 const route = useRoute()
-// const router = useRouter()
-// const authStore = useAuthStore()
+const toast = useToast()
+
+const router = useRouter()
+const authStore = useAuthStore()
+const { $handleLoading } = useNuxtApp()
 
 definePageMeta({
   title: 'เข้าสู่ระบบเพื่อใช้งาน'
@@ -45,17 +48,30 @@ const form = ref<IAuthLoginPayload>({
   password: ''
 })
 
-// async function onLogin (): Promise<void> {
-//   if (!form.value.account || !form.value.password) return
-//   const payload = {
-//     account: form.value.account,
-//     password: form.value.password
-//   }
-//   const response = await authService.login(payload)
-//   authStore.userLogin(response.data, response.token, response.refreshToken)
+async function onLogin (): Promise<void> {
+  if (!form.value.account || !form.value.password) return
+  const payload = {
+    account: form.value.account,
+    password: form.value.password
+  }
+  const response = await authService.login(payload)
+  authStore.userLogin(response.data, response.token, response.refreshToken)
 
-//   router.push({ name: 'admin-order' })
-// }
+  router.push({ name: 'public-home' })
+}
+
+function login (): void {
+  $handleLoading(onLogin, {
+    toast: {
+      instance: toast
+    }
+  })
+}
+
+onBeforeMount((): void => {
+  if (route.query.account) return
+  router.replace({ name: 'auth-verify' })
+})
 </script>
 
 <style scoped>
