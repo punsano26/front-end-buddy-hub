@@ -5,40 +5,38 @@ import type { IAuthLoginData } from '~/models/response/AuthRes.model'
 interface IUser extends IAuthLoginData {}
 
 interface IToken {
-  token: string
+  accessToken: string
   refreshToken: string
-  expireIn: number | null
+  tokenExpireIn: number | null
 }
 
 interface IAuthStore {
   user: Ref<IUser>
   userToken: Ref<IToken>
-  userLogin(user: IUser, token: string, refreshToken: string): void
+  userLogin(user: IUser, accessToken: string, refreshToken: string): void
   updateUser (userValue: IUser): void
   logout (): void
 }
 
 export const useAuthStore = defineStore('Auth', (): IAuthStore => {
   const user = ref<IUser>({
-    userId: 0,
-    email: '',
-    username: '',
+    id: 0,
     profileImg: null,
     roleName: ''
   })
 
   const userToken = ref<IToken>({
-    token: '',
+    accessToken: '',
     refreshToken: '',
-    expireIn: null
+    tokenExpireIn: null
   })
 
-  function userLogin (userValue: IUser, token: string, refreshToken: string): void {
+  function userLogin (userValue: IUser, accessToken: string, refreshToken: string): void {
     user.value = userValue
     userToken.value = {
-      token,
-      refreshToken,
-      expireIn: null
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      tokenExpireIn: null
     }
   }
 
@@ -48,16 +46,14 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
 
   function logout (): void {
     user.value = {
-      userId: 0,
-      email: '',
-      username: '',
+      id: 0,
       profileImg: null,
       roleName: ''
     }
     userToken.value = {
-      token: '',
+      accessToken: '',
       refreshToken: '',
-      expireIn: null
+      tokenExpireIn: null
     }
   }
 
