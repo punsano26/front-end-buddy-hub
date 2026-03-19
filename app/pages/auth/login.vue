@@ -14,7 +14,7 @@
       pt:root:class="bg-gradient-primary border-none rounded-xl py-3"
       type="submit" />
     <NuxtLink
-      :to="{ name: 'auth-forgot-password' }"
+      :to="{ name: 'auth-forgot-password', query: { from: 'login' } }"
       class="text-center text-blue-400">
       ลืมรหัสผ่าน ?
     </NuxtLink>

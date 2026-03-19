@@ -1,11 +1,12 @@
 import HttpRequest from '../HttpRequest'
-import type { IAuthLoginPayload, IAuthRegisterPayload, ICheckAuthPayload } from '~/models/request/AuthReq.model'
-import type { IAuthLoginResponse, IAuthRegisterResponse, ICheckAuthResponse } from '~/models/response/AuthRes.model'
+import type { IAuthLoginPayload, IAuthRegisterPayload, ICheckAuthPayload, IForgotPasswordPayload } from '~/models/request/AuthReq.model'
+import type { IAuthLoginResponse, IAuthRegisterResponse, ICheckAuthResponse, IForgotPasswordResponse } from '~/models/response/AuthRes.model'
 
 export interface IAuthProvider {
   checkAuth (payload: ICheckAuthPayload): Promise<ICheckAuthResponse>
   login (payload: IAuthLoginPayload): Promise<IAuthLoginResponse>
   register (payload: IAuthRegisterPayload): Promise<IAuthRegisterResponse>
+  forgotPassword (payload: IForgotPasswordPayload): Promise<IForgotPasswordResponse>
 }
 
 class AuthProvider extends HttpRequest implements IAuthProvider {
@@ -23,6 +24,12 @@ class AuthProvider extends HttpRequest implements IAuthProvider {
 
   public async register (payload: IAuthRegisterPayload): Promise<IAuthRegisterResponse> {
     const response = await this.post(`${this.urlPrefix}/register`, payload)
+    return response
+  }
+
+  public async forgotPassword (payload: IForgotPasswordPayload): Promise<IForgotPasswordResponse> {
+    const response = await this.post(`${this.urlPrefix}/forgotPassword
+`, payload)
     return response
   }
 }
