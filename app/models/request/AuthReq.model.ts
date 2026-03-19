@@ -26,3 +26,8 @@ export interface IForgotPasswordPayload {
   email: string
   username: string
 }
+
+export interface IResetPasswordPayload {
+  newPassword: string
+  confirmNewPassword: string
+}
