@@ -46,12 +46,20 @@ class HttpRequest implements IHttpRequest {
     }
   }
 
-  // public setUserAuthHeader (): void {
-  //   const authHeader: ISetHeader | null = getAuthToken()
-  //   if (authHeader) {
-  //     this.setHeader(authHeader)
-  //   }
-  // }
+  public setUserAuthHeader (): void {
+    const authHeader: ISetHeader | null = getAuthToken()
+    if (authHeader) {
+      this.setHeader(authHeader)
+    }
+  }
+
+  public setAuthResetHeader (): void {
+    const authHeader: ISetHeader | null = getAuthForgotPasswordToken()
+    if (authHeader) {
+      this.setHeader(authHeader)
+    }
+  }
+
 
   public get (endPoint: string, data?: object, config?: object): Promise<any> {
     return this.axiosInstance.get(endPoint, { params: data, ...config })
