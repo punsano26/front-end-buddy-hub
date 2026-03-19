@@ -1,15 +1,17 @@
 import type { IApiResponse, IApiTokenResponse } from './Response.model'
 
 export interface ICheckAuthData {
-  isExisting: boolean
+  isExists: boolean
 }
 
 export interface IAuthLoginData {
-  userId: number
-  email: string
-  username: string
+  id: number
   profileImg: string | null
   roleName: string
+}
+
+export interface IAuthRegisterResponse {
+  message: string
 }
 
 export type ICheckAuthResponse = IApiResponse<ICheckAuthData>

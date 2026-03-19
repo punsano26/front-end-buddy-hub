@@ -5,9 +5,9 @@ export interface IApiResponse<TData> {
 
 export interface IApiTokenResponse<TData> {
   message: string
-  token: string
+  accessToken: string
   refreshToken: string
-  expireIn: number | null
+  tokenExpireIn: number | null
   data: TData
 }
 
@@ -15,5 +15,6 @@ export interface IErrorResponse {
   code: number
   message: string
 }
+
 
 export type TErrorResponse = IErrorResponse | string | any
