@@ -43,7 +43,7 @@ async function onVerify (): Promise<void> {
   }
   const response = await authService.checkAuth(payload)
   router.push({
-    name: response.data.isExisting ? 'auth-login' : 'auth-register',
+    name: response.data.isExists ? 'auth-login' : 'auth-register',
     query: {
       account: account.value
     }
