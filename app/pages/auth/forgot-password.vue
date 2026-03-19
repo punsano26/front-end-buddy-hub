@@ -28,6 +28,7 @@ const authService: IAuthProvider = new AuthProvider()
 const { $handleLoading } = useNuxtApp()
 const toast = useToast()
 const route = useRoute()
+const authStore = useAuthStore()
 const router = useRouter()
 definePageMeta({
   title: 'ลืมรหัสผ่าน',
@@ -45,8 +46,8 @@ async function onCheckEmailUsername (): Promise<void> {
     email: form.value.email,
     username: form.value.username
   }
-  await authService.forgotPassword(payload)
-
+  const response = await authService.forgotPassword(payload)
+  authStore.resetPassword(response)
   router.push({ name: 'auth-reset-forgot-password' })
 }
 
