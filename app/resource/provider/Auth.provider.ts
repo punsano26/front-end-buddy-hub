@@ -1,12 +1,14 @@
 import HttpRequest from '../HttpRequest'
-import type { IAuthLoginPayload, IAuthRegisterPayload, ICheckAuthPayload, IForgotPasswordPayload } from '~/models/request/AuthReq.model'
-import type { IAuthLoginResponse, IAuthRegisterResponse, ICheckAuthResponse, IForgotPasswordResponse } from '~/models/response/AuthRes.model'
+import type { IAuthLoginPayload, IAuthRegisterPayload, ICheckAuthPayload, IForgotPasswordPayload, IResetPasswordPayload } from '~/models/request/AuthReq.model'
+import type { IAuthLoginResponse, ICheckAuthResponse, IForgotPasswordResponse } from '~/models/response/AuthRes.model'
+import type { IMessageResponse } from '~/models/response/Response.model'
 
 export interface IAuthProvider {
   checkAuth (payload: ICheckAuthPayload): Promise<ICheckAuthResponse>
   login (payload: IAuthLoginPayload): Promise<IAuthLoginResponse>
-  register (payload: IAuthRegisterPayload): Promise<IAuthRegisterResponse>
+  register (payload: IAuthRegisterPayload): Promise<IAuthLoginResponse>
   forgotPassword (payload: IForgotPasswordPayload): Promise<IForgotPasswordResponse>
+  resetForgotPassword (payload: IResetPasswordPayload): Promise<IMessageResponse>
 }
 
 class AuthProvider extends HttpRequest implements IAuthProvider {
@@ -22,13 +24,20 @@ class AuthProvider extends HttpRequest implements IAuthProvider {
     return response
   }
 
-  public async register (payload: IAuthRegisterPayload): Promise<IAuthRegisterResponse> {
+  public async register (payload: IAuthRegisterPayload): Promise<IAuthLoginResponse> {
     const response = await this.post(`${this.urlPrefix}/register`, payload)
     return response
   }
 
   public async forgotPassword (payload: IForgotPasswordPayload): Promise<IForgotPasswordResponse> {
     const response = await this.post(`${this.urlPrefix}/forgotPassword
+`, payload)
+    return response
+  }
+
+  public async resetForgotPassword (payload: IResetPasswordPayload): Promise<IMessageResponse> {
+    this.setAuthResetHeader()
+    const response = await this.patch(`${this.urlPrefix}/resetForgotPassword
 `, payload)
     return response
   }
