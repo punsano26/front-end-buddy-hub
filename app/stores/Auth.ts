@@ -10,10 +10,16 @@ interface IToken {
   tokenExpireIn: number | null
 }
 
+interface IResetToken {
+  resetPasswordToken: string
+}
+
 interface IAuthStore {
   user: Ref<IUser>
   userToken: Ref<IToken>
+  resetToken: Ref<IResetToken>
   userLogin(user: IUser, accessToken: string, refreshToken: string): void
+  resetPassword(token: IResetToken): void
   updateUser (userValue: IUser): void
   logout (): void
 }
@@ -31,12 +37,22 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
     tokenExpireIn: null
   })
 
+  const resetPasswordToken = ref<IResetToken>({
+    resetPasswordToken: ''
+  })
+
   function userLogin (userValue: IUser, accessToken: string, refreshToken: string): void {
     user.value = userValue
     userToken.value = {
       accessToken: accessToken,
       refreshToken: refreshToken,
       tokenExpireIn: null
+    }
+  }
+
+  function resetPassword (token: IResetToken): void {
+    resetPasswordToken.value = {
+      resetPasswordToken: token.resetPasswordToken
     }
   }
 
@@ -55,11 +71,16 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
       refreshToken: '',
       tokenExpireIn: null
     }
+    resetPasswordToken.value = {
+      resetPasswordToken: ''
+    }
   }
 
   return {
     user,
     userToken,
+    resetToken: resetPasswordToken,
+    resetPassword,
     updateUser,
     userLogin,
     logout
@@ -67,7 +88,7 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
 }, {
   persist: [
     {
-      pick: ['userToken', 'user'],
+      pick: ['userToken', 'user', 'resetToken'],
       storage: piniaPluginPersistedstate.localStorage()
     }
   ]
