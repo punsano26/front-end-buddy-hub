@@ -1,23 +1,27 @@
 <template>
   <form>
     <UploadImageProfile />
-    <InputLabelField
-      label="อีเมล"
-      placeholder="อีเมลของคุณ" />
-    <InputLabelField
-      label="ชื่อผู้ใช้"
-      placeholder="ชื่อผู้ใช้ของคุณ" />
-    <InputLabelField
-      label="เพศ">
-      <Select
-        class="w-full"
-        placeholder="เลือกเพศของคุณ" />
-    </InputLabelField>
-    <InputLabelField label="วันเกิด">
-      <DatePicker
-        class="w-full"
-        placeholder="เลือกวันเกิดของคุณ" />
-    </InputLabelField>
+    <div class="grid md:flex md:gap-2 gap-4 pt-2">
+      <InputLabelField
+        label="อีเมล"
+        placeholder="อีเมลของคุณ" />
+      <InputLabelField
+        label="ชื่อผู้ใช้"
+        placeholder="ชื่อผู้ใช้ของคุณ" />
+    </div>
+    <div class="grid md:flex md:gap-2 gap-4">
+      <InputLabelField
+        label="เพศ">
+        <Select
+          class="w-full"
+          placeholder="เลือกเพศของคุณ" />
+      </InputLabelField>
+      <InputLabelField label="วันเกิด">
+        <DatePicker
+          class="w-full"
+          placeholder="เลือกวันเกิดของคุณ" />
+      </InputLabelField>
+    </div>
     <InputLabelField label="รหัสผ่าน">
       <InputPasswordField />
     </InputLabelField>
