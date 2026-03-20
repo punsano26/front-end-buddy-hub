@@ -45,12 +45,7 @@
             alt="Notifications"
             class="w-6 h-6"
             src="/svg/mdi-light--bell.svg">
-
-
-          <Avatar
-            icon="pi pi-user"
-            image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
-            size="large" />
+          <AvatarProfile />
         </div>
       </template>
     </Toolbar>
@@ -85,7 +80,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import Avatar from '~/volt/Avatar.vue'
+import AvatarProfile from './AvatarProfile.vue'
 import Button from '~/volt/Button.vue'
 import SecondaryButton from '~/volt/SecondaryButton.vue'
 import Toolbar from '~/volt/Toolbar.vue'
