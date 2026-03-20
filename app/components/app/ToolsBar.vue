@@ -45,7 +45,14 @@
             alt="Notifications"
             class="w-6 h-6"
             src="/svg/mdi-light--bell.svg">
-          <AvatarProfile />
+          <AvatarProfile v-if="authStore.user.id" />
+          <NuxtLink
+            v-else
+            :to="{ name: 'auth-verify' }">
+            <Button
+              label="Login"
+              text />
+          </NuxtLink>
         </div>
       </template>
     </Toolbar>
@@ -84,6 +91,8 @@ import AvatarProfile from './AvatarProfile.vue'
 import Button from '~/volt/Button.vue'
 import SecondaryButton from '~/volt/SecondaryButton.vue'
 import Toolbar from '~/volt/Toolbar.vue'
+
+const authStore = useAuthStore()
 
 const menuOpen = ref(false)
 </script>
