@@ -31,3 +31,7 @@ export interface IResetPasswordPayload {
   newPassword: string
   confirmNewPassword: string
 }
+
+export interface IReFreshTokenPayload {
+  refreshToken: string
+}
