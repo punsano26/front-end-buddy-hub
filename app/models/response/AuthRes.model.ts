@@ -1,5 +1,9 @@
-import type { IApiResponse, IApiTokenResponse } from './Response.model'
+import type { IApiResponse, IApiTokenResponse, IMessageResponse } from './Response.model'
 
+export interface IForgotPasswordResponse {
+  message: IMessageResponse
+  resetPasswordToken: string
+}
 export interface ICheckAuthData {
   isExists: boolean
 }
@@ -7,12 +11,9 @@ export interface ICheckAuthData {
 export interface IAuthLoginData {
   id: number
   profileImg: string | null
-  roleName: string
+  roles: string[]
 }
 
-export interface IAuthRegisterResponse {
-  message: string
-}
 
 export type ICheckAuthResponse = IApiResponse<ICheckAuthData>
 export type IAuthLoginResponse = IApiTokenResponse<IAuthLoginData>

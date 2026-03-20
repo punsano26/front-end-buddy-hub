@@ -21,3 +21,17 @@ export enum genderEnum {
   FEMALE = 'female',
   OTHER = 'other'
 }
+
+export interface IForgotPasswordPayload {
+  email: string
+  username: string
+}
+
+export interface IResetPasswordPayload {
+  newPassword: string
+  confirmNewPassword: string
+}
+
+export interface IReFreshTokenPayload {
+  refreshToken: string
+}

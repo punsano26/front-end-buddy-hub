@@ -2,8 +2,9 @@
   <form @submit.prevent="login">
     <InputLabelField
       v-model="form.account"
+      :disabled="!!route.query.account"
       label="อีเมลหรือชื่อผู้ใช้"
-      disabled
+      placeholder="กรอกอีเมลหรือชื่อผู้ใช้ของคุณ"
       required />
     <InputLabelField label="รหัสผ่าน">
       <InputPasswordField v-model="form.password" />
@@ -14,7 +15,7 @@
       pt:root:class="bg-gradient-primary border-none rounded-xl py-3"
       type="submit" />
     <NuxtLink
-      :to="{ name: 'auth-forgot-password' }"
+      :to="{ name: 'auth-forgot-password', query: { from: 'login' } }"
       class="text-center text-blue-400">
       ลืมรหัสผ่าน ?
     </NuxtLink>
@@ -69,7 +70,7 @@ function login (): void {
 }
 
 onBeforeMount((): void => {
-  if (route.query.account) return
+  if (route.query.account || route.query.from === 'reset-forgot-password') return
   router.replace({ name: 'auth-verify' })
 })
 </script>

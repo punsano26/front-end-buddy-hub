@@ -3,6 +3,10 @@ export interface IApiResponse<TData> {
   data: TData
 }
 
+export interface IMessageResponse {
+  message: string
+}
+
 export interface IApiTokenResponse<TData> {
   message: string
   accessToken: string
