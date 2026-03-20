@@ -9,6 +9,8 @@ export interface IAuthProvider {
   register (payload: IAuthRegisterPayload): Promise<IAuthLoginResponse>
   forgotPassword (payload: IForgotPasswordPayload): Promise<IForgotPasswordResponse>
   resetForgotPassword (payload: IResetPasswordPayload): Promise<IMessageResponse>
+  refreshToken (): Promise<IMessageResponse>
+  logout (): Promise<IMessageResponse>
 }
 
 class AuthProvider extends HttpRequest implements IAuthProvider {
@@ -30,15 +32,24 @@ class AuthProvider extends HttpRequest implements IAuthProvider {
   }
 
   public async forgotPassword (payload: IForgotPasswordPayload): Promise<IForgotPasswordResponse> {
-    const response = await this.post(`${this.urlPrefix}/forgotPassword
-`, payload)
+    const response = await this.post(`${this.urlPrefix}/forgotPassword`, payload)
     return response
   }
 
   public async resetForgotPassword (payload: IResetPasswordPayload): Promise<IMessageResponse> {
     this.setAuthResetHeader()
-    const response = await this.patch(`${this.urlPrefix}/resetForgotPassword
-`, payload)
+    const response = await this.patch(`${this.urlPrefix}/resetForgotPassword`, payload)
+    return response
+  }
+
+  public async logout (): Promise<IMessageResponse> {
+    this.setUserAuthHeader()
+    const response = await this.post(`${this.urlPrefix}/logout`, {})
+    return response
+  }
+
+  public async refreshToken (): Promise<IMessageResponse> {
+    const response = await this.post(`${this.urlPrefix}/refreshToken`, {})
     return response
   }
 }
