@@ -62,7 +62,6 @@ const props = withDefaults(defineProps<IProps>(), {
 })
 watch(dateOfBirthDate, (newDate: Date | null): void => {
   if (newDate) {
-    // แปลงเป็น YYYY-MM-DD format
     model.value = newDate.toISOString().split('T')[0] || ''
   } else {
     model.value = ''
