@@ -28,7 +28,7 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
   const user = ref<IUser>({
     id: 0,
     profileImg: null,
-    roleName: ''
+    roles: []
   })
 
   const userToken = ref<IToken>({
@@ -64,7 +64,7 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
     user.value = {
       id: 0,
       profileImg: null,
-      roleName: ''
+      roles: []
     }
     userToken.value = {
       accessToken: '',
