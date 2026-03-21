@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Toolbar pt:root="p-4 bg-surface-900 border-none rounded-none">
+    <Toolbar pt:root="p-2 border-none rounded-none">
       <template #start>
         <Button
           class="md:hidden"
@@ -24,18 +24,28 @@
       <template #center>
         <!-- Desktop nav: hidden on mobile -->
         <div class="hidden md:flex space-x-6">
-          <SecondaryButton
-            label="Home"
-            text />
+          <NuxtLink :to="{ name: 'public-home' }">
+            <SecondaryButton
+              :class="isActivePage('public-home') ? 'bg-gradient-primary !text-surface-900 rounded-xl' : ''"
+              label="Home"
+              pt:root:class="py-1"
+              text />
+          </NuxtLink>
           <SecondaryButton
             label="Chats"
+            pt:root:class="py-1"
             text />
           <SecondaryButton
             label="Friends"
+            pt:root:class="py-1"
             text />
-          <SecondaryButton
-            label="Profile"
-            text />
+          <NuxtLink :to="{ name: 'public-profile' }">
+            <SecondaryButton
+              :class="isActivePage('public-profile') ? 'bg-gradient-primary !text-surface-900 rounded-xl' : ''"
+              label="Profile"
+              pt:root:class="py-1"
+              text />
+          </NuxtLink>
         </div>
       </template>
 
@@ -95,4 +105,8 @@ import Toolbar from '~/volt/Toolbar.vue'
 const authStore = useAuthStore()
 
 const menuOpen = ref(false)
+
+const isActivePage = (pageName: string): boolean => {
+  return useRoute().name === pageName
+}
 </script>

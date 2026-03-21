@@ -3,7 +3,7 @@
     v-model:visible="visible"
     :closable="true"
     :show-header="true"
-    class="sm:w-100 w-9/10 bg-"
+    class="sm:w-100 w-9/10"
     pt:content:class="p-0"
     pt:header:class="!absolute !top-2 !right-2 !z-30 !p-0 !m-0 !bg-transparent !border-0 !shadow-none"
     pt:headerActions:class="!m-0 !p-0 !flex"
