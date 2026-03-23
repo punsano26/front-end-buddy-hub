@@ -1,3 +1,4 @@
+import 'primeicons/primeicons.css'
 import AnimateOnScroll from 'primevue/animateonscroll'
 import PrimeVue from 'primevue/config'
 import ConfirmationService from 'primevue/confirmationservice'
