@@ -31,10 +31,13 @@
               pt:root:class="py-1"
               text />
           </NuxtLink>
-          <SecondaryButton
-            label="Chats"
-            pt:root:class="py-1"
-            text />
+          <NuxtLink :to="{ name: 'public-chat' }">
+            <SecondaryButton
+              :class="isActivePage('public-chat') ? 'bg-gradient-primary !text-surface-900 rounded-xl' : ''"
+              label="Chats"
+              pt:root:class="py-1"
+              text />
+          </NuxtLink>
           <SecondaryButton
             label="Friends"
             pt:root:class="py-1"
