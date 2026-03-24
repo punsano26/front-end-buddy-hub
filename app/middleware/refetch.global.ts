@@ -3,7 +3,7 @@ import type { RouteLocationNormalized } from 'vue-router'
 import AuthProvider, { type IAuthProvider } from '~/resource/provider/Auth.provider'
 
 export default defineNuxtRouteMiddleware((to: RouteLocationNormalized): void => {
-  if (to.path.startsWith('/admin')) {
+  if (to.path.startsWith('/public')) {
     const authService: IAuthProvider = new AuthProvider()
     const authStore = useAuthStore()
     const { $handleLoading } = useNuxtApp()
@@ -21,6 +21,7 @@ export default defineNuxtRouteMiddleware((to: RouteLocationNormalized): void => 
       }
       const response = await authService.refreshToken(payload)
       authStore.userToken.accessToken = response.accessToken
+      authStore.userToken.refreshToken = response.refreshToken
     }
   }
 })
