@@ -7,13 +7,14 @@
         <div class="mb-1">
           <OverlayBadge>
             <Avatar
+              :image="value.profileImg ?? undefined"
+              :image-alt="value.username"
               icon="pi pi-user"
-              image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
               size="xlarge" />
           </OverlayBadge>
         </div>
         <p class="text-xs">
-          User Name
+          {{ value.username }}
         </p>
       </div>
     </template>
@@ -21,8 +22,13 @@
 </template>
 
 <script setup lang="ts">
+import type { IUserList } from '~/models/response/UserRes.model'
 import Avatar from '~/volt/Avatar.vue'
 import OverlayBadge from '~/volt/OverlayBadge.vue'
+
+defineProps<{
+  value: IUserList
+}>()
 </script>
 
 <style scoped>
