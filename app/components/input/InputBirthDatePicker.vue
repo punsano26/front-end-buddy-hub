@@ -67,6 +67,15 @@ watch(dateOfBirthDate, (newDate: Date | null): void => {
     model.value = ''
   }
 })
+
+watch(model, (val: string): void => {
+  if (!val) {
+    dateOfBirthDate.value = null
+    return
+  }
+  const parsed = new Date(val)
+  dateOfBirthDate.value = Number.isNaN(parsed.getTime()) ? null : parsed
+}, { immediate: true })
 const errorMessage = computed((): string => {
   if (!props.showError) return ''
   if (!props.rules?.length) return ''
