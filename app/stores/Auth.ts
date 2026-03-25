@@ -44,8 +44,8 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
   function userLogin (userValue: IUser, accessToken: string, refreshToken: string): void {
     user.value = userValue
     userToken.value = {
-      accessToken: accessToken,
-      refreshToken: refreshToken,
+      accessToken,
+      refreshToken,
       tokenExpireIn: null
     }
   }
