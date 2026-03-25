@@ -26,13 +26,8 @@
       </template>
     </Card>
     <div class="p-4 grid grid-cols-4 lg:grid-cols-6 gap-2 lg:gap-4">
-  <UserCard @click="visible = true"/>
-  <UserCard/>
-  <UserCard/>
-  <UserCard/>
-  <UserCard/>
-  <UserCard/>
-  <UserCard/>
+  <UserCard v-for="item in items" :key="item.id" :value="item" @click="visible = true"/>
+
 </div>
 <template>
     <div>
@@ -47,12 +42,39 @@
 import InputSearch from '~/components/input/InputSearch.vue'
 import UserCard from '~/components/user/UserCard.vue'
 import UserDetailDialog from '~/components/user/UserDetailDialog.vue'
+import type { IUserList } from '~/models/response/UserRes.model'
+import type { IUserProvider } from '~/resource/provider/User.provider'
+import UserProvider from '~/resource/provider/User.provider'
 import Card from '~/volt/Card.vue'
 import Paginator from '~/volt/Paginator.vue'
 
 const visible = ref(false)
-
+const userService: IUserProvider = new UserProvider()
+const { $handleLoading } = useNuxtApp()
+const { search, pagination, extractPagination } = usePagination()
 definePageMeta({ layout: 'navbar' })
+const items = ref<IUserList[]>([])
+
+async function useFetch (): Promise<void> {
+  const response = await userService.findAllUsersPaginate({
+    page: pagination.value.page,
+    limit: pagination.value.limit
+    // ,search: search.value,
+  })
+
+  items.value = response?.data || []
+  pagination.value = extractPagination(response)
+}
+
+function fetch (): void {
+  $handleLoading(useFetch)
+}
+
+onMounted((): void => {
+  fetch()
+})
+
+
 </script>
 
 <style scoped>
