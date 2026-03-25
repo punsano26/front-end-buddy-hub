@@ -18,7 +18,7 @@
       <template #content>
         <div class="flex flex-col md:flex-row gap-4">
           <div class="flex flex-col gap-2 ">
-            <p class="text-xl font-bold">{{ items?.username }}</p>
+            <p class="text-xl font-bold">{{ items?.username }} - {{ items?.nickname }}</p>
             <p class="text-sm text-surface-500">
               {{ items?.description }}
             </p>
@@ -33,6 +33,7 @@
           </div>
           <div>
             <Button
+              @click="visible = true"
               class="min-w-[110px] text-sm font-bold w-full"
               pt:root:class="border-none justify-center px-2 rounded-xl"
             >
@@ -55,15 +56,17 @@
         </div>
       </template>
     </Card>
+    <UserEditDetailDialog :value="items" v-model:visible="visible" @updated="fetch"/>
   </div>
 </template>
 
 <script setup lang="ts">
+import UserEditDetailDialog from '~/components/user/UserEditDetailDialog.vue'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
 import UserProvider, { type IUserProvider } from '~/resource/provider/User.provider'
 
 definePageMeta({ layout: "navbar" });
-
+const visible = ref(false)
 const userService: IUserProvider = new UserProvider()
 const { $handleLoading } = useNuxtApp()
 const items = ref<IFindOneCurrentUserData>()
