@@ -7,7 +7,7 @@ ARG VITE_ENV_BASE_API
 ENV VITE_ENV_BASE_API=$VITE_ENV_BASE_API
 
 WORKDIR /src
-COPY package.json bun.lockb ./ 
+COPY package.json bun.lock ./ 
 RUN bun install --frozen-lockfile
 
 COPY . .
