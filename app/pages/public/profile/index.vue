@@ -2,31 +2,29 @@
   <div class="flex justify-center items-center py-10 px-8">
     <Card pt:root:class="md:w-[600px]">
       <template #header>
-        <img
-          class="w-full h-32 object-cover rounded-tl-xl rounded-tr-xl"
-          src="https://picsum.photos/seed/picsum/200/300"
-          alt=""
-        />
-        <div class="flex gap-4 -mt-12 px-4">
-          <img
-            alt="user avatar"
-            class="w-26 h-26 border-2 rounded-2xl"
-            src="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
-          />
-        </div>
+       
+          <UploadImageProfile :value="items" @update="fetch"/>
+        
       </template>
       <template #content>
         <div class="flex flex-col md:flex-row gap-4">
           <div class="flex flex-col gap-2 ">
-            <p class="text-xl font-bold">username</p>
+            <p class="text-xl font-bold">{{ items?.username }} - {{ items?.nickname }}</p>
             <p class="text-sm text-surface-500">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptas,
-              voluptate.
+              {{ items?.description }}
             </p>
-            <p>Joined Jan 2025</p>
+              <div class="flex gap-2 items-center">
+
+                <p class="text-sm text-surface-500">Joined {{ dayjs(items?.createdAt).format('DD/MM/YYYY') }}</p>
+                <p class="text-sm text-surface-500">{{ items?.email }}</p>
+                <p class="text-sm text-surface-500">{{ items?.gender }}</p>
+                <p class="text-sm text-surface-500">{{ dayjs(items?.dateOfBirth).format('DD/MM/YYYY') }}</p>
+                <p class="text-sm text-surface-500">{{ items?.age }}</p>
+              </div>
           </div>
           <div>
             <Button
+              @click="visible = true"
               class="min-w-[110px] text-sm font-bold w-full"
               pt:root:class="border-none justify-center px-2 rounded-xl"
             >
@@ -49,11 +47,34 @@
         </div>
       </template>
     </Card>
+    <UserEditDetailDialog :value="items" v-model:visible="visible" @updated="fetch"/>
   </div>
 </template>
 
 <script setup lang="ts">
+import UploadImageProfile from '~/components/input/UploadImageProfile.vue'
+import UserEditDetailDialog from '~/components/user/UserEditDetailDialog.vue'
+import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
+import UserProvider, { type IUserProvider } from '~/resource/provider/User.provider'
+
 definePageMeta({ layout: "navbar" });
+const visible = ref(false)
+const userService: IUserProvider = new UserProvider()
+const { $handleLoading } = useNuxtApp()
+const dayjs = useDayjs()
+const items = ref<IFindOneCurrentUserData>()
+async function useFetch (): Promise<void> {
+const  response =  await userService.findOneCurrentUser()
+  items.value = response?.data
+}
+
+function fetch (): void {
+  $handleLoading(useFetch)
+}
+
+onMounted(() => {
+  fetch()
+})
 </script>
 
 <style scoped></style>

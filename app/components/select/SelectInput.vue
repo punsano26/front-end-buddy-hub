@@ -15,9 +15,9 @@
     </p>
 
     <slot>
-      <DatePicker
+      <Select
         v-bind="$attrs"
-        v-model="dateOfBirthDate"
+        v-model="model"
         :invalid="!!errorMessage"
         class="bg-slate-200 dark:bg-slate-900 dark:text-white"
         fluid />
@@ -43,6 +43,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import Select from '~/volt/Select.vue'
 
 interface IProps {
   tag?: 'label' | 'div'
@@ -52,7 +53,7 @@ interface IProps {
   rules?: ((v: any) => boolean | string)[]
   showError?: boolean
 }
-const dateOfBirthDate = ref<Date | null>(null)
+
 const model = defineModel<string>({ default: '' })
 const props = withDefaults(defineProps<IProps>(), {
   tag: 'label',
@@ -60,22 +61,7 @@ const props = withDefaults(defineProps<IProps>(), {
   required: false,
   bold: false
 })
-watch(dateOfBirthDate, (newDate: Date | null): void => {
-  if (newDate) {
-    model.value = newDate.toISOString().split('T')[0] || ''
-  } else {
-    model.value = ''
-  }
-})
 
-watch(model, (val: string): void => {
-  if (!val) {
-    dateOfBirthDate.value = null
-    return
-  }
-  const parsed = new Date(val)
-  dateOfBirthDate.value = Number.isNaN(parsed.getTime()) ? null : parsed
-}, { immediate: true })
 const errorMessage = computed((): string => {
   if (!props.showError) return ''
   if (!props.rules?.length) return ''

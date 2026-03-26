@@ -10,7 +10,8 @@ export default defineNuxtConfig({
     '@nuxt/fonts',
     '@nuxt/icon',
     '@pinia/nuxt',
-    'pinia-plugin-persistedstate/nuxt'
+    'pinia-plugin-persistedstate/nuxt',
+    'dayjs-nuxt'
   ],
 
   components: {
@@ -51,5 +52,11 @@ export default defineNuxtConfig({
     plugins: [
       tailwindcss()
     ]
+  },
+  dayjs: {
+    locales: ['en', 'th'],
+    plugins: ['relativeTime', 'utc', 'timezone', 'buddhistEra'],
+    defaultLocale: 'th',
+    defaultTimezone: 'Asia/Bangkok'
   }
 })

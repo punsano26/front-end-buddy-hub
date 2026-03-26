@@ -11,21 +11,21 @@
     pt:title:class="hidden"
     modal>
     <img
+      :src="value.bannerImg || 'https://picsum.photos/seed/picsum/200/300'"
       alt="user banner"
-      class="w-full h-32 object-cover rounded-tl-xl rounded-tr-xl"
-      src="https://picsum.photos/seed/picsum/200/300">
+      class="w-full h-32 object-cover rounded-tl-xl rounded-tr-xl">
     <div class="flex justify-center items-center gap-4 -mt-12 px-4">
       <img
+        :src="value.profileImg || 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'"
         alt="user avatar"
-        class="w-24 h-24 rounded-full border-4 border-surface-0"
-        src="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png">
+        class="w-24 h-24 rounded-full border-4 border-surface-0">
     </div>
     <div class="flex flex-col items-center gap-2">
       <p class="text-xl text-white font-semibold">
-        Sam Rivera
+        {{ value.nickname || value.username }}
       </p>
       <p class="text-center mx-auto max-w-[280px] text-sm text-surface-500 dark:text-surface-400">
-        Bookworm who also loves hiking. The best of both worlds!
+        {{ value.description || '-' }}
       </p>
     </div>
     <div class="flex justify-center items-center gap-2 mt-2 p-4">
@@ -44,9 +44,14 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
 import Dialog from '~/volt/Dialog.vue'
 
 const visible = ref(false)
+
+defineProps<{
+  value: IFindOneCurrentUserData
+}>()
 </script>
 
 <style scoped>

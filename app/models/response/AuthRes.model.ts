@@ -10,6 +10,7 @@ export interface ICheckAuthData {
 
 export interface IAuthLoginData {
   id: number
+  username: string
   profileImg: string | null
   roles: string[]
 }
