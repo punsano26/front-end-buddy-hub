@@ -6,7 +6,8 @@ export function useExtractPagination (input?: Partial<IPagination>): IPagination
     page: input?.page ?? 1,
     limit: input?.limit ?? 20,
     count: input?.count ?? 0,
-    totalPage: input?.totalPage ?? 1
+    totalPage: input?.totalPage ?? 1,
+    totalRecords: input?.totalRecords ?? 0
   }
 }
 
@@ -22,7 +23,8 @@ export function usePagination (): IUsePagination {
     page: 1,
     totalPage: 1,
     count: 0,
-    limit: 20
+    limit: 20,
+    totalRecords: 0
   })
 
   return {

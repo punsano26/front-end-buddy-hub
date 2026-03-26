@@ -20,6 +20,7 @@ class UserProvider extends HttpRequest implements IUserProvider {
   }
 
   public async findAllUsersPaginate (query: IFindAllUsersPaginateQuery): Promise<IFindAllUsersPaginateResponse> {
+    this.setUserAuthHeader()
     const response = await this.get(this.urlPrefix, query)
     return response
   }

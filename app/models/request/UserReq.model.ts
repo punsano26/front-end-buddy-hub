@@ -8,6 +8,8 @@ export interface IUpdateUserPayload {
   dateOfBirth?: string
 }
 
-export interface IFindUserFilters {}
+export interface IFindUserFilters {
+  gender?: genderEnum
+}
 
 export interface IFindAllUsersPaginateQuery extends IBasePaginationRequest, IFindUserFilters {}
