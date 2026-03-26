@@ -1,4 +1,4 @@
-type TPaginationLimit = 20 | 50 | 100 | 9999
+export type TPaginationLimit = 20 | 50 | 100 | 9999
 export interface IPaginationRequest {
   page?: number
   limit?: TPaginationLimit
@@ -21,6 +21,7 @@ export interface IPagination extends Omit<IPaginationRequest, 'page' | 'limit'> 
   limit: TPaginationLimit
   totalPage: number
   count: number
+  totalRecords: number
 }
 export interface IBaseOptions<T = string | number> {
   label: string
