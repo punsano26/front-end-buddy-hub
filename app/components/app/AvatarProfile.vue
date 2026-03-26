@@ -5,10 +5,11 @@
     pt:root:class="p-0 border-none bg-transparent"
     plain
     @click="toggle">
-    <Avatar
-      icon="pi pi-user"
-      image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
-      size="large" />
+    <ClientOnly>
+      <Avatar
+        :image="authStore.user?.profileImg || '/png/upload-profile.png'"
+        size="large" />
+    </ClientOnly>
   </Button>
   <Menu
     id="overlay_menu"
@@ -33,6 +34,7 @@ const menu = ref()
 const userData = computed((): IAuthLoginData => {
   return {
     id: authStore.user.id,
+    username: authStore.user.username,
     roles: authStore.user.roles,
     profileImg: authStore.user.profileImg
   }
@@ -40,7 +42,7 @@ const userData = computed((): IAuthLoginData => {
 
 const items = ref<IMenuItem[]>([
   {
-    label: `${userData.value.id}`,
+    label: `${userData.value.username}`,
     items: [
       {
         label: 'logout',

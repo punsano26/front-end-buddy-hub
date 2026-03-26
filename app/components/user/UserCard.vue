@@ -6,15 +6,17 @@
       <div class="flex flex-col justify-center items-center">
         <div class="mb-1">
           <OverlayBadge>
-            <Avatar
-              :image="value.profileImg ?? undefined"
-              :image-alt="value.username"
-              icon="pi pi-user"
-              size="xlarge" />
+            <ClientOnly>
+              <Avatar
+                :image="value.profileImg || '/png/upload-profile.png'"
+                :image-alt="value.username"
+                pt:image:class="`rounded-lg p-circle:rounded-lg p-xlarge:rounded-lg w-full h-full`"
+                size="xlarge" />
+            </ClientOnly>
           </OverlayBadge>
         </div>
         <p class="text-xs">
-          {{ value.username }}
+          {{ value.nickname || value.username }}
         </p>
       </div>
     </template>
