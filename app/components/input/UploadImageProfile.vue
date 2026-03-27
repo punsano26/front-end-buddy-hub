@@ -77,6 +77,7 @@ const bannerPreview = ref<string>('')
 const avatarPreview = ref<string>('')
 const toast = useToast()
 const UploadService: IUploadProvider = new UploadProvider()
+const authStore = useAuthStore()
 const hasSelectedImage = computed((): boolean => {
   return Boolean(bannerPreview.value || avatarPreview.value)
 })
@@ -132,12 +133,12 @@ async function useSubmit (): Promise<void> {
   }
 
   if (avatarInput.value?.files?.[0]) {
-    await handleUpload(
+    const avatarRes = await handleUpload(
       avatarInput.value.files[0], UploadCategoryEnum.PROFILE
     )
+    authStore.user.profileImg = avatarRes.url
   }
   resetPreviews()
-
   emit('update')
 }
 
