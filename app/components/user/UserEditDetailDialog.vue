@@ -1,11 +1,10 @@
 <template>
   <Dialog
     v-model:visible="visible"
-    :closable="true"
-    :show-header="true"
     class="sm:w-100 w-9/10"
     header="แก้ไขรายละเอียดโปรไฟล์"
-    pt:root:class="!relative bg-surface-900! border-none rounded-xl shadow-lg"
+    pt:root:class=" bg-surface-900! border-none rounded-xl shadow-lg"
+    dismissable-mask
     modal>
     <form @submit.prevent="update">
       <div class="grid gap-4">
@@ -89,6 +88,7 @@ const form = ref<IUpdateUserPayload>({
   gender: undefined,
   dateOfBirth: ''
 })
+
 
 watch((): boolean => props.visible, (isOpen: boolean): void => {
   if (!isOpen) return
