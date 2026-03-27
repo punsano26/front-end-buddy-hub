@@ -2,14 +2,14 @@ import type { RouteLocationNormalized } from 'vue-router'
 // import { useToast } from 'primevue/usetoast'
 import AuthProvider, { type IAuthProvider } from '~/resource/provider/Auth.provider'
 
-export default defineNuxtRouteMiddleware((to: RouteLocationNormalized): void => {
+export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Promise<void> => {
   if (to.path.startsWith('/public')) {
     const authService: IAuthProvider = new AuthProvider()
     const authStore = useAuthStore()
     const { $handleLoading } = useNuxtApp()
     // const toast = useToast()
 
-    $handleLoading(resetToken, {
+    await $handleLoading(resetToken, {
       // toast: {
       //   instance: toast
       // }
