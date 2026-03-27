@@ -1,31 +1,28 @@
-import type { NavigationGuardReturn, RouteLocationNormalized } from 'vue-router'
+import type { RouteLocationNormalized } from 'vue-router'
+// import { useToast } from 'primevue/usetoast'
 import AuthProvider, { type IAuthProvider } from '~/resource/provider/Auth.provider'
 
-export default defineNuxtRouteMiddleware(
-  async (to: RouteLocationNormalized): Promise<NavigationGuardReturn> => {
+export default defineNuxtRouteMiddleware((to: RouteLocationNormalized): void => {
+  if (to.path.startsWith('/public')) {
     const authService: IAuthProvider = new AuthProvider()
     const authStore = useAuthStore()
+    const { $handleLoading } = useNuxtApp()
+    // const toast = useToast()
 
-    const isPublicHome = to.path === '/public/home'
-    const isAuthPage = to.path.startsWith('/auth')
-
-    if (isPublicHome || isAuthPage) return
-
-    if (!authStore.userToken.refreshToken) {
-      return navigateTo('/auth/verify')
-    }
-
-    try {
+    $handleLoading(resetToken, {
+      // toast: {
+      //   instance: toast
+      // }
+    })
+    async function resetToken (): Promise<void> {
+      if (!authStore.userToken.refreshToken) return
       const payload = {
         refreshToken: authStore.userToken.refreshToken
       }
-      const res = await authService.refreshToken(payload)
-
-      authStore.userToken.accessToken = res.accessToken
-      authStore.userToken.refreshToken = res.refreshToken
-    } catch {
-      authStore.logout()
-      return navigateTo('/auth/verify')
+      const response = await authService.refreshToken(payload)
+      authStore.userToken.accessToken = response.accessToken
+      authStore.userToken.refreshToken = response.refreshToken
+      authStore.userToken.tokenExpireIn = response.tokenExpireIn
     }
   }
-)
+})
