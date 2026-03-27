@@ -27,6 +27,7 @@ interface IAuthStore {
 export const useAuthStore = defineStore('Auth', (): IAuthStore => {
   const user = ref<IUser>({
     id: 0,
+    username: '',
     profileImg: null,
     roles: []
   })
@@ -63,6 +64,7 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
   function logout (): void {
     user.value = {
       id: 0,
+      username: '',
       profileImg: null,
       roles: []
     }
