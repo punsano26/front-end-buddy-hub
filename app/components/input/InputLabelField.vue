@@ -19,7 +19,7 @@
         v-bind="$attrs"
         v-model="model"
         :invalid="!!errorMessage"
-        class="bg-slate-200 dark:bg-slate-900 dark:text-white"
+        class="bg-slate-200 dark:bg-slate-900 dark:text-white rounded-xl"
         fluid />
     </slot>
 

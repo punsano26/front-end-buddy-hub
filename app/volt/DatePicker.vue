@@ -142,20 +142,20 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import CalendarIcon from '@primevue/icons/calendar'
 import ChevronDownIcon from '@primevue/icons/chevrondown'
 import ChevronLeftIcon from '@primevue/icons/chevronleft'
 import ChevronRightIcon from '@primevue/icons/chevronright'
 import ChevronUpIcon from '@primevue/icons/chevronup'
-import DatePicker from 'primevue/datepicker'
-import { ref } from 'vue'
 import SecondaryButton from './SecondaryButton.vue'
 import { ptViewMerge } from './utils'
+import DatePicker from 'primevue/datepicker'
 
 const theme = ref({
   root: `inline-flex max-w-full relative p-fluid:flex`,
   pcInputText: {
-    root: `flex-auto w-[1%] appearance-none rounded-md outline-hidden
+    root: `flex-auto w-[1%] appearance-none rounded-xl outline-hidden
         p-has-dropdown:rounded-e-none p-has-e-icon:pe-10
         bg-surface-0 dark:bg-surface-950
         p-filled:bg-surface-50 dark:p-filled:bg-surface-800

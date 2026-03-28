@@ -22,20 +22,23 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import AngleDownIcon from '@primevue/icons/angledown'
 import AngleUpIcon from '@primevue/icons/angleup'
-import InputNumber, { type InputNumberPassThroughOptions, type InputNumberProps } from 'primevue/inputnumber'
-import { ref } from 'vue'
 import { ptViewMerge } from './utils'
+import InputNumber, {
+  type InputNumberPassThroughOptions,
+  type InputNumberProps
+} from 'primevue/inputnumber'
 
 interface Props extends /* @vue-ignore */ InputNumberProps {}
 defineProps<Props>()
 
 const theme = ref<InputNumberPassThroughOptions>({
-  root: `inline-flex relative 
+  root: `inline-flex relative  
         p-vertical:flex-col p-fluid:w-full`,
   pcInputText: {
-    root: `appearance-none rounded-md outline-hidden flex-auto
+    root: `appearance-none rounded-xl outline-hidden flex-auto w-20
         bg-surface-0 dark:bg-surface-950
         p-filled:bg-surface-50 dark:p-filled:bg-surface-800
         text-surface-700 dark:text-surface-0
