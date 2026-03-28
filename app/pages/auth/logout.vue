@@ -13,7 +13,11 @@ const authStore = useAuthStore()
 const toast = useToast()
 const { $handleLoading } = useNuxtApp()
 
+const payload = {
+  refreshToken: authStore.userToken.refreshToken
+}
 async function onLogout (): Promise<void> {
+  await authService.refreshToken(payload)
   await authService.logout()
   authStore.logout()
   router.push({ name: 'public-home' })
