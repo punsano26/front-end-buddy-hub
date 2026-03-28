@@ -19,7 +19,7 @@
           <Select
             v-model="form.gender"
             :options="gender"
-            class="w-full"
+            class="w-full rounded-xl"
             option-label="label"
             option-value="value"
             placeholder="เลือกเพศของคุณ" />
