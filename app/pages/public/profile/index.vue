@@ -14,20 +14,32 @@
               {{ items?.description }}
             </p>
               <div class="flex gap-2 items-center">
-
-                <p class="text-sm text-surface-500">Joined {{ dayjs(items?.createdAt).format('DD/MM/YYYY') }}</p>
-                <p class="text-sm text-surface-500">{{ items?.email }}</p>
-                <p class="text-sm text-surface-500">{{ items?.gender }}</p>
-                <p class="text-sm text-surface-500">{{ dayjs(items?.dateOfBirth).format('DD/MM/YYYY') }}</p>
-                <p class="text-sm text-surface-500">{{ items?.age }}</p>
+                <div class="flex gap-1 items-center">
+                 <span class="text-xs">join</span> <p class="text-sm text-surface-500">{{ dayjs(items?.createdAt).format('DD/MM/YYYY') }}</p>
+                </div>
+                <div class="flex gap-1 items-center">
+                  <i class="pi pi-envelope text-surface-500"></i>
+                  <p class="text-sm text-surface-500">{{ items?.email }}</p>
+                </div>
+                <div class="flex gap-1 items-center">
+                  <i :class="chageIconGender" :style="{ color: items?.gender === 'male' ? '#3b82f6' : items ?.gender === 'female' ? '#ec4899' : '#6b7280' }"></i>
+                  <p class="text-sm text-surface-500">{{ items?.gender }}</p>
+                </div>
+                <div class="flex gap-1 items-center">
+                  <i class="pi pi-calendar text-surface-500"></i>
+                  <p class="text-sm text-surface-500">{{ dayjs(items?.dateOfBirth).format('DD/MM/YYYY') }}</p>
+                </div>
+                <div class="flex gap-1 items-center">
+                  <i class="pi pi-heart text-surface-500"></i>
+                  <p class="text-sm text-surface-500">{{ items?.age }}</p>
+                </div>
               </div>
           </div>
           <div>
             <Button
               @click="visible = true"
               class="min-w-[110px] text-sm font-bold w-full"
-              pt:root:class="border-none justify-center px-2 rounded-xl"
-            >
+              pt:root:class="border-none justify-center px-2 rounded-xl">
               แก้ไขโปรไฟล์
             </Button>
           </div>
@@ -63,6 +75,17 @@ const userService: IUserProvider = new UserProvider()
 const { $handleLoading } = useNuxtApp()
 const dayjs = useDayjs()
 const items = ref<IFindOneCurrentUserData>()
+
+const chageIconGender = computed(() => {
+  if (items.value?.gender === 'male') {
+    return 'pi pi-mars'
+  } else if (items.value?.gender === 'female') {
+    return 'pi pi-venus'
+  } else {
+    return 'pi pi-genderless'
+  }
+})
+  
 async function useFetch (): Promise<void> {
 const  response =  await userService.findOneCurrentUser()
   items.value = response?.data

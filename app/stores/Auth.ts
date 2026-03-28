@@ -18,7 +18,7 @@ interface IAuthStore {
   user: Ref<IUser>
   userToken: Ref<IToken>
   resetToken: Ref<IResetToken>
-  userLogin(user: IUser, accessToken: string, refreshToken: string): void
+  userLogin(user: IUser, accessToken: string, refreshToken: string, tokenExpireIn: number): void
   resetPassword(token: IResetToken): void
   updateUser (userValue: IUser): void
   logout (): void
@@ -27,6 +27,7 @@ interface IAuthStore {
 export const useAuthStore = defineStore('Auth', (): IAuthStore => {
   const user = ref<IUser>({
     id: 0,
+    username: '',
     profileImg: null,
     roles: []
   })
@@ -41,12 +42,12 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
     resetPasswordToken: ''
   })
 
-  function userLogin (userValue: IUser, accessToken: string, refreshToken: string): void {
+  function userLogin (userValue: IUser, accessToken: string, refreshToken: string, tokenExpireIn: number): void {
     user.value = userValue
     userToken.value = {
       accessToken,
       refreshToken,
-      tokenExpireIn: null
+      tokenExpireIn
     }
   }
 
@@ -63,6 +64,7 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
   function logout (): void {
     user.value = {
       id: 0,
+      username: '',
       profileImg: null,
       roles: []
     }
@@ -92,6 +94,7 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
       storage: piniaPluginPersistedstate.localStorage()
     }
   ]
+
 }
 )
 

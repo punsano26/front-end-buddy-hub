@@ -1,14 +1,13 @@
 <template>
   <Dialog
     v-model:visible="visible"
-    :closable="true"
-    :show-header="true"
     class="sm:w-100 w-9/10"
     pt:content:class="p-0"
     pt:header:class="!absolute !top-2 !right-2 !z-30 !p-0 !m-0 !bg-transparent !border-0 !shadow-none"
     pt:headerActions:class="!m-0 !p-0 !flex"
     pt:root:class="!relative bg-surface-900! border-none rounded-xl shadow-lg"
     pt:title:class="hidden"
+    dismissable-mask
     modal>
     <img
       :src="value.bannerImg || 'https://picsum.photos/seed/picsum/200/300'"
@@ -23,6 +22,9 @@
     <div class="flex flex-col items-center gap-2">
       <p class="text-xl text-white font-semibold">
         {{ value.nickname || value.username }}
+      </p>
+      <p class="text-xs text-surface-400 dark:text-surface-500">
+        @{{ value.username }}
       </p>
       <p class="text-center mx-auto max-w-[280px] text-sm text-surface-500 dark:text-surface-400">
         {{ value.description || '-' }}
