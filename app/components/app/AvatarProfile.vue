@@ -42,19 +42,23 @@ const userData = computed((): IAuthLoginData => {
 
 const items = ref<IMenuItem[]>([
   {
-    label: `${userData.value.username}`,
-    items: [
-      {
-        label: 'logout',
-        icon: 'pi pi-refresh',
-        command: onLogout
-      }
-    ]
+    label: userData.value.username,
+    icon: 'pi pi-user',
+    command: goProfile
+  },
+  {
+    label: 'logout',
+    icon: 'pi pi-sign-out',
+    command: onLogout
   }
 ])
 
 function onLogout (): void {
   router.push({ name: 'auth-logout' })
+}
+
+function goProfile (): void {
+  router.push({ name: 'public-profile' })
 }
 const toggle = (event: Event): void => {
   menu.value?.toggle(event)
