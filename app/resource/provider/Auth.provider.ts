@@ -2,6 +2,7 @@ import HttpRequest from '../HttpRequest'
 import type {
   IAuthLoginPayload,
   IAuthRegisterPayload,
+  IChangeEmail,
   ICheckAuthPayload,
   IForgotPasswordPayload,
   IReFreshTokenPayload,
@@ -12,6 +13,7 @@ import type { IMessageResponse } from '~/models/response/Response.model'
 
 export interface IAuthProvider {
   checkAuth (payload: ICheckAuthPayload): Promise<ICheckAuthResponse>
+  changeEmail (payload: IChangeEmail): Promise<IMessageResponse>
   login (payload: IAuthLoginPayload): Promise<IAuthLoginResponse>
   register (payload: IAuthRegisterPayload): Promise<IAuthLoginResponse>
   forgotPassword (payload: IForgotPasswordPayload): Promise<IForgotPasswordResponse>
@@ -57,6 +59,12 @@ class AuthProvider extends HttpRequest implements IAuthProvider {
 
   public async refreshToken (payload: IReFreshTokenPayload): Promise<IAuthLoginResponse> {
     const response = await this.post(`${this.urlPrefix}/refresh`, payload)
+    return response
+  }
+
+  public async changeEmail (payload: IChangeEmail): Promise<IMessageResponse> {
+    this.setUserAuthHeader()
+    const response = await this.patch(`${this.urlPrefix}/changeEmail`, payload)
     return response
   }
 }

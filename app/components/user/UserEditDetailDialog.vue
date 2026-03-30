@@ -24,6 +24,9 @@
             option-value="value"
             placeholder="เลือกเพศของคุณ" />
         </InputLabelField>
+        <InputLabelField
+          v-model="form.email"
+          label="อีเมล" />
         <InputBirthDatePicker
           v-model="form.dateOfBirth"
           label="วันเกิด" />
@@ -44,12 +47,14 @@ import { toGenderEnum } from '~/models/enums/User.enum'
 import type { IBaseOptions } from '~/models/Global.model'
 import type { IUpdateUserPayload } from '~/models/request/UserReq.model'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
+import AuthProvider, { type IAuthProvider } from '~/resource/provider/Auth.provider'
 import type { IUserProvider } from '~/resource/provider/User.provider'
 import UserProvider from '~/resource/provider/User.provider'
 import Dialog from '~/volt/Dialog.vue'
 
 const toast = useToast()
 const userService: IUserProvider = new UserProvider()
+const authProvider: IAuthProvider = new AuthProvider()
 const { $handleLoading } = useNuxtApp()
 
 const gender = ref<IBaseOptions[]>([
@@ -86,7 +91,8 @@ const form = ref<IUpdateUserPayload>({
   nickname: '',
   description: '',
   gender: undefined,
-  dateOfBirth: ''
+  dateOfBirth: '',
+  email: ''
 })
 
 
@@ -96,11 +102,17 @@ watch((): boolean => props.visible, (isOpen: boolean): void => {
     nickname: props.value?.nickname ?? '',
     description: props.value?.description ?? '',
     gender: toGenderEnum(props.value?.gender) ?? undefined,
-    dateOfBirth: props.value?.dateOfBirth ?? ''
+    dateOfBirth: props.value?.dateOfBirth ?? '',
+    email: props.value?.email ?? ''
   }
 })
 
 async function useUpdate (): Promise<void> {
+  if (props.value?.email !== form.value.email) {
+    await authProvider.changeEmail({
+      newEmail: form.value.email ?? ''
+    })
+  }
   await userService.updateUser(form.value)
   emit('updated')
   visible.value = false

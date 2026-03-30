@@ -4,6 +4,7 @@ import type { IBasePaginationRequest } from './Request.model'
 export interface IUpdateUserPayload {
   nickname?: string
   description?: string
+  email?: string
   gender?: genderEnum
   dateOfBirth?: string
 }
