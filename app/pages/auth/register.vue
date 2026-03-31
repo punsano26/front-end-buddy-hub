@@ -65,7 +65,8 @@ import type { IAuthProvider } from '~/resource/provider/Auth.provider'
 import AuthProvider from '~/resource/provider/Auth.provider'
 
 definePageMeta({
-  title: 'สมัครสมาชิก'
+  title: 'สมัครสมาชิก',
+  backPath: { name: 'auth-verify' }
 })
 
 const authService: IAuthProvider = new AuthProvider()

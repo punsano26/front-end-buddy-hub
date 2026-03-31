@@ -39,7 +39,8 @@ const authStore = useAuthStore()
 const { $handleLoading } = useNuxtApp()
 
 definePageMeta({
-  title: 'เข้าสู่ระบบเพื่อใช้งาน'
+  title: 'เข้าสู่ระบบเพื่อใช้งาน',
+  backPath: { name: 'auth-verify' }
 })
 
 const form = ref<IAuthLoginPayload>({

@@ -38,10 +38,13 @@
               pt:root:class="py-1"
               text />
           </NuxtLink>
-          <SecondaryButton
-            label="Friends"
-            pt:root:class="py-1"
-            text />
+          <NuxtLink :to="{ name: 'public-friends' }">
+            <SecondaryButton
+              :class="isActivePage('public-friends') ? 'bg-gradient-primary !text-surface-900 rounded-xl' : ''"
+              label="Friends"
+              pt:root:class="py-1"
+              text />
+          </NuxtLink>
           <NuxtLink :to="{ name: 'public-profile' }">
             <SecondaryButton
               :class="isActivePage('public-profile') ? 'bg-gradient-primary !text-surface-900 rounded-xl' : ''"
