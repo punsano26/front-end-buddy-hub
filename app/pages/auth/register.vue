@@ -36,14 +36,13 @@
 
     <InputPasswordField
       v-model="form.password"
-      :rules="[validate.required]"
       :show-error="submitted"
       label="รหัสผ่าน" />
-
+    <CheckPasswordStrength :password="form.password" />
 
     <InputPasswordField
       v-model="form.confirmPassword"
-      :rules="[validate.required, (val) => validate.confirmPassword(val, form.password)]"
+      :rules="[validate.required, (val: string) => validate.confirmPassword(val, form.password)]"
       :show-error="submitted"
       label="ยืนยันรหัสผ่าน" />
 
@@ -57,6 +56,7 @@
 
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
+import CheckPasswordStrength from '~/components/input/CheckPasswordStrength.vue'
 import InputLabelField from '~/components/input/InputLabelField.vue'
 import type { IBaseOptions } from '~/models/Global.model'
 import { genderEnum, type IAuthRegisterPayload } from '~/models/request/AuthReq.model'
