@@ -16,13 +16,14 @@
 
     <slot>
       <Password
-        v-model="model"
         :invalid="!!errorMessage"
+        :model-value="model"
         pt:maskicon:class="hidden"
         pt:overlay:class="hidden"
         pt:unmaskicon:class="hidden"
         fluid
-        toggle-mask />
+        toggle-mask
+        @update:model-value="val => model = val" />
     </slot>
 
     <div v-if="$slots.message">
