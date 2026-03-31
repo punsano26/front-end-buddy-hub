@@ -2,11 +2,15 @@
   <form @submit.prevent="forgotPasswordRequest">
     <InputLabelField
       v-model="form.email"
+      :rules="[validate.required]"
+      :show-error="submitted"
       label="อีเมล"
       placeholder="กรอกอีเมลของคุณ"
       required />
     <InputLabelField
       v-model="form.username"
+      :rules="[validate.required]"
+      :show-error="submitted"
       label="ชื่อผู้ใช้"
       placeholder="กรอกชื่อผู้ใช้ของคุณ"
       required />
@@ -21,6 +25,7 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import type { IForgotPasswordPayload } from '~/models/request/AuthReq.model'
+import { validate } from '~/plugins/Validate'
 import type { IAuthProvider } from '~/resource/provider/Auth.provider'
 import AuthProvider from '~/resource/provider/Auth.provider'
 
@@ -28,6 +33,7 @@ const authService: IAuthProvider = new AuthProvider()
 const { $handleLoading } = useNuxtApp()
 const toast = useToast()
 const route = useRoute()
+const submitted = ref(false)
 const authStore = useAuthStore()
 const router = useRouter()
 definePageMeta({
@@ -52,6 +58,7 @@ async function onCheckEmailUsername (): Promise<void> {
 }
 
 function forgotPasswordRequest (): void {
+  submitted.value = true
   if (!form.value.email.trim() || !form.value.username.trim()) {
     return
   }

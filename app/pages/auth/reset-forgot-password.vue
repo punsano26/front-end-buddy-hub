@@ -2,12 +2,16 @@
   <form @submit.prevent="resetPassword">
     <InputLabelField
       v-model="form.newPassword"
+      :show-error="submitted"
       label="รหัสผ่านใหม่"
       placeholder="กรอกรหัสผ่านใหม่"
       type="password"
       required />
+    <CheckPasswordStrength :password="form.newPassword" />
     <InputLabelField
       v-model="form.confirmNewPassword"
+      :rules="[validate.required, (val: string) => validate.confirmPassword(val, form.newPassword)]"
+      :show-error="submitted"
       label="ยืนยันรหัสผ่าน"
       placeholder="ยืนยันรหัสผ่าน"
       type="password"
@@ -23,6 +27,7 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import type { IResetPasswordPayload } from '~/models/request/AuthReq.model'
+import { validate } from '~/plugins/Validate'
 import type { IAuthProvider } from '~/resource/provider/Auth.provider'
 import AuthProvider from '~/resource/provider/Auth.provider'
 
@@ -30,6 +35,7 @@ const authService: IAuthProvider = new AuthProvider()
 const { $handleLoading } = useNuxtApp()
 const toast = useToast()
 // const route = useRoute()
+const submitted = ref(false)
 const router = useRouter()
 definePageMeta({
   title: 'รีเซ็ตรหัสผ่าน',
@@ -58,6 +64,7 @@ async function onResetPassword (): Promise<void> {
 }
 
 function resetPassword (): void {
+  submitted.value = true
   if (!form.value.newPassword.trim() || !form.value.confirmNewPassword.trim()) {
     return
   }

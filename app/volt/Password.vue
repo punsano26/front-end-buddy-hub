@@ -41,7 +41,7 @@ defineProps<Props>()
 const theme = ref<PasswordPassThroughOptions>({
   root: `inline-flex relative p-fluid:flex`,
   pcInputText: {
-    root: `appearance-none rounded-md outline-hidden
+    root: `appearance-none rounded-md outline-hidden rounded-xl
         bg-surface-0 dark:bg-surface-950
         p-filled:bg-surface-50 dark:p-filled:bg-surface-800
         text-surface-700 dark:text-surface-0
