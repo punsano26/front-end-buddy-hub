@@ -1,14 +1,16 @@
 <template>
   <form @submit.prevent="register()">
-    <UploadImageProfile />
     <div class="grid md:flex md:gap-2 gap-4 pt-2">
       <InputLabelField
         v-model="form.email"
+        :rules="[validate.required, validate.email]"
+        :show-error="submitted"
         label="อีเมล"
         placeholder="อีเมลของคุณ" />
       <InputLabelField
         v-model="form.username"
-
+        :rules="[validate.required]"
+        :show-error="submitted"
         label="ชื่อผู้ใช้"
         placeholder="ชื่อผู้ใช้ของคุณ" />
     </div>
@@ -18,27 +20,33 @@
         <Select
           v-model="form.gender"
           :options="gender"
-          class="w-full"
+          class="rounded-xl w-full"
           option-label="label"
           option-value="value"
           placeholder="เลือกเพศของคุณ" />
       </InputLabelField>
       <InputBirthDatePicker
         v-model="form.dateOfBirth"
+        :rules="[validate.required]"
+        :show-error="submitted"
         label="วันเกิด"
         placeholder="เลือกวันเกิดของคุณ"
         required />
     </div>
-    <InputLabelField
 
-      label="รหัสผ่าน">
-      <InputPasswordField v-model="form.password" />
-    </InputLabelField>
-    <InputLabelField
+    <InputPasswordField
+      v-model="form.password"
+      :rules="[validate.required]"
+      :show-error="submitted"
+      label="รหัสผ่าน" />
 
-      label="ยืนยันรหัสผ่าน">
-      <InputPasswordField v-model="form.confirmPassword" />
-    </InputLabelField>
+
+    <InputPasswordField
+      v-model="form.confirmPassword"
+      :rules="[validate.required, (val) => validate.confirmPassword(val, form.password)]"
+      :show-error="submitted"
+      label="ยืนยันรหัสผ่าน" />
+
     <Button
       label="สมัครสมาชิก"
       pt:label:class="font-bold"
@@ -50,9 +58,9 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import InputLabelField from '~/components/input/InputLabelField.vue'
-import UploadImageProfile from '~/components/input/UploadImageProfile.vue'
 import type { IBaseOptions } from '~/models/Global.model'
 import { genderEnum, type IAuthRegisterPayload } from '~/models/request/AuthReq.model'
+import { validate } from '~/plugins/Validate'
 import type { IAuthProvider } from '~/resource/provider/Auth.provider'
 import AuthProvider from '~/resource/provider/Auth.provider'
 
@@ -66,7 +74,7 @@ const { $handleLoading } = useNuxtApp()
 const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
-
+const submitted = ref(false)
 
 const form = ref<IAuthRegisterPayload>({
   email: '',
@@ -109,11 +117,12 @@ async function onRegister (): Promise<void> {
     dateOfBirth: form.value.dateOfBirth
   }
   const response = await authService.register(payload)
-  authStore.userLogin(response.data, response.accessToken, response.refreshToken)
+  authStore.userLogin(response.data, response.accessToken, response.refreshToken, Number(response.tokenExpireIn))
   router.push({ name: 'public-home' })
 }
 
 function register (): void {
+  submitted.value = true
   if (!form.value.email.trim() || !form.value.username.trim() || !form.value.dateOfBirth.trim()
     || !form.value.password.trim() || !form.value.confirmPassword.trim()) {
     return
