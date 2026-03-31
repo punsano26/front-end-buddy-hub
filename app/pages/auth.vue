@@ -1,7 +1,7 @@
 <template>
   <Card
     class="w-full max-w-[446.68px] border-none border-(--p-gray-5) rounded-[28px] shadow-none"
-    pt:body:class="px-[42px] py-10"
+    pt:body:class="px-[30px] py-10"
     pt:content:class="
       flex flex-col items-center gap-4
       [&>div]:w-full [&>div]:flex [&>div]:flex-col [&>div]:gap-4
@@ -9,7 +9,9 @@
     ">
     <template #content>
       <div v-if="route.meta?.backPath">
-        <ButtonBack :to="route.meta?.backPath" />
+        <ButtonBack
+          :to="route.meta?.backPath"
+          icon="prime:chevron-left" />
       </div>
       <img
         alt="Buddy Hub Logo"
