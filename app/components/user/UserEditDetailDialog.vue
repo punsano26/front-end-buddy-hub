@@ -26,6 +26,8 @@
         </InputLabelField>
         <InputLabelField
           v-model="form.email"
+          :rules="[validate.required, validate.email]"
+          :show-error="submitted"
           label="อีเมล" />
         <InputBirthDatePicker
           v-model="form.dateOfBirth"
@@ -41,12 +43,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { toGenderEnum } from '~/models/enums/User.enum'
 import type { IBaseOptions } from '~/models/Global.model'
 import type { IUpdateUserPayload } from '~/models/request/UserReq.model'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
+import { validate } from '~/plugins/Validate'
 import AuthProvider, { type IAuthProvider } from '~/resource/provider/Auth.provider'
 import type { IUserProvider } from '~/resource/provider/User.provider'
 import UserProvider from '~/resource/provider/User.provider'
@@ -56,6 +59,7 @@ const toast = useToast()
 const userService: IUserProvider = new UserProvider()
 const authProvider: IAuthProvider = new AuthProvider()
 const { $handleLoading } = useNuxtApp()
+const submitted = ref(false)
 
 const gender = ref<IBaseOptions[]>([
   {
@@ -117,8 +121,11 @@ async function useUpdate (): Promise<void> {
   emit('updated')
   visible.value = false
 }
-
 function update (): void {
+  submitted.value = true
+  if (!(form.value.email ?? '').trim()) {
+    return
+  }
   $handleLoading(useUpdate, {
     toast: {
       instance: toast
