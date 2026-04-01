@@ -1,5 +1,10 @@
 <template>
+  <div v-if="route.name === 'auth-logout'">
+    <NuxtPage />
+  </div>
+
   <Card
+    v-else
     class="w-full max-w-[446.68px] border-none border-(--p-gray-5) rounded-[28px] shadow-none"
     pt:body:class="px-[42px] py-10"
     pt:content:class="

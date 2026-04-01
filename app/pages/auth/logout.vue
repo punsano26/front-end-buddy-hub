@@ -1,5 +1,12 @@
 <template>
-  <div />
+  <div class="fixed inset-0 flex flex-col items-center justify-center gap-4 bg-background z-50">
+    <ProgressSpinner
+      class="w-16 h-16"
+      stroke-width="4" />
+    <p class="text-surface-400 text-sm animate-pulse">
+      กำลังออกจากระบบ...
+    </p>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -13,10 +20,14 @@ const authStore = useAuthStore()
 const toast = useToast()
 const { $handleLoading } = useNuxtApp()
 
-const payload = {
-  refreshToken: authStore.userToken.refreshToken
-}
+definePageMeta({
+  layout: false
+})
+
 async function onLogout (): Promise<void> {
+  const payload = {
+    refreshToken: authStore.userToken.refreshToken
+  }
   await authService.refreshToken(payload)
   await authService.logout()
   authStore.logout()
@@ -34,7 +45,3 @@ onMounted((): void => {
   })
 })
 </script>
-
-<style scoped>
-
-</style>
