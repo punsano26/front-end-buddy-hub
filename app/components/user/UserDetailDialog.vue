@@ -23,10 +23,13 @@
       <p class="text-xl text-white font-semibold">
         {{ value.nickname || value.username }}
       </p>
-      <p class="text-xs text-surface-400 dark:text-surface-500">
+      <p
+        class="text-xs text-surface-400 dark:text-surface-500 hover:text-surface-300 dark:hover:text-surface-400 cursor-pointer"
+        @click="onClickUserDetail(value.id)">
         @{{ value.username }}
       </p>
-      <p class="text-center mx-auto max-w-[280px] text-sm text-surface-500 dark:text-surface-400">
+      <p
+        class="text-center mx-auto max-w-[280px] text-sm text-surface-500 dark:text-surface-400">
         {{ value.description || '-' }}
       </p>
     </div>
@@ -50,10 +53,14 @@ import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
 import Dialog from '~/volt/Dialog.vue'
 
 const visible = ref(false)
-
+const router = useRouter()
 defineProps<{
   value: IFindOneCurrentUserData
 }>()
+
+function onClickUserDetail (userId: number): void {
+  router.push({ name: 'public-profile-id', params: { id: userId } })
+}
 </script>
 
 <style scoped>
