@@ -1,6 +1,7 @@
 import type { IApiResponse, IBasePaginationResponse } from './Response.model'
 
 export interface IFindOneCurrentUserData {
+  id: number
   profileImg: string | null
   bannerImg: string | null
   username: string
@@ -8,6 +9,7 @@ export interface IFindOneCurrentUserData {
   description: string
   email: string
   createdAt: string
+  isVerified: boolean
   age: number
   gender: string
   dateOfBirth: string
