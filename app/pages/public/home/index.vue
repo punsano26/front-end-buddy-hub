@@ -43,7 +43,7 @@
         </div>
       </template>
     </Card>
-   <div class="px-4 mt-4 flex justify-start">
+  <div class="px-4 mt-4 flex justify-start">
  <UserFilter
   v-model:gender="sortByGender"
   v-model:minAge="minAge"
@@ -51,12 +51,18 @@
   @change="onFilterChange()" />
 </div>
     <div class="p-4 grid grid-cols-4 lg:grid-cols-6 gap-2 lg:gap-4">
-      <UserCard
-        v-for="item in items"
-        :key="item.id"
-        :value="item"
-        @click="onClickUser(item.id)"
-      />
+      <DataLoadingState :is-loading="isLoading">
+        <template #skeleton>
+          <UserCardSkeleton v-for="i in 12" :key="`skeleton-${i}`" />
+        </template>
+        
+        <UserCard
+          v-for="item in items"
+          :key="item.id"
+          :value="item"
+          @click="onClickUser(item.id)"
+        />
+      </DataLoadingState>
     </div>
 
     <div class="flex justify-center">
@@ -73,6 +79,8 @@
 
 <script setup lang="ts">
 import InputSearch from '~/components/input/InputSearch.vue'
+import DataLoadingState from '~/components/skeleton/DataLoadingState.vue'
+import UserCardSkeleton from '~/components/skeleton/home/UserCardSkeleton.vue'
 import Paginate from '~/components/user/Paginate.vue'
 import UserCard from '~/components/user/UserCard.vue'
 import UserDetailDialog from '~/components/user/UserDetailDialog.vue'
@@ -93,20 +101,23 @@ const details = ref<IFindOneCurrentUserData>();
 const sortByGender = ref<genderEnum | null>(null);
 const minAge = ref<number>();
 const maxAge = ref<number>();
+const isLoading = ref<boolean>(true);
 
 async function useFetch(): Promise<void> {
-  const response = await userService.findAllUsersPaginate({
-    page: pagination.value.page,
-    limit: pagination.value.limit,
-    search: search.value,
-    sortByGender: sortByGender.value || undefined,
-    minAge: minAge.value,
-    maxAge: maxAge.value
+  
+    const response = await userService.findAllUsersPaginate({
+      page: pagination.value.page,
+      limit: pagination.value.limit,
+      search: search.value,
+      sortByGender: sortByGender.value || undefined,
+      minAge: minAge.value,
+      maxAge: maxAge.value
 
-  });
+    });
 
-  items.value = response?.data || [];
-  pagination.value = extractPagination(response);
+    items.value = response?.data || [];
+    pagination.value = extractPagination(response);
+ 
 }
 
 async function useFetchDetails(userId: number): Promise<void> {
@@ -122,7 +133,7 @@ function onClickUser(userId: number): void {
 }
 
 function fetch(): void {
-  $handleLoading(useFetch);
+  $handleLoading(useFetch, { loadingUnit: isLoading });
 }
 
 onMounted((): void => {
