@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col md:flex-row md:items-center gap-2 overflow-x-auto">
+  <div class="flex flex-col md:flex-row md:items-center gap-2 overflow-x-auto md:min-h-[62px]">
     <div class="shrink-0">
       <Button
         pt:root:class="h-10 w-10 bg-gray-800/20 enabled:hover:bg-gray-800/20 rounded-xl border-none text-gray-400 hover:text-gray-200 hover:bg-gray-800/30"
