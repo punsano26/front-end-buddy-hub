@@ -10,7 +10,7 @@
               <Avatar
                 :image="value.profileImg || '/png/upload-profile.png'"
                 :image-alt="value.username"
-                pt:image:class="`rounded-lg p-circle:rounded-lg p-xlarge:rounded-lg w-full h-full`"
+                pt:image:class="`rounded-lg p-circle:rounded-lg p-xlarge:rounded-lg w-full h-full object-cover`"
                 size="xlarge" />
             </ClientOnly>
           </OverlayBadge>
