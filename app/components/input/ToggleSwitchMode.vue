@@ -201,7 +201,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 type Star = {
   id: number
@@ -220,7 +220,28 @@ type Cloud = {
   duration: number
 }
 
-const checked = ref(false)
+type Props = {
+  modelValue?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: undefined
+})
+
+const storedTheme = useState<'light' | 'dark' | null>('theme-mode-storage', (): 'light' | 'dark' | null => null)
+const globalDarkMode = useState<boolean>('theme-mode-is-dark', (): boolean => false)
+const themeInitialized = useState<boolean>('theme-mode-initialized', (): boolean => false)
+
+const checked = computed<boolean>({
+  get (): boolean {
+    return typeof props.modelValue === 'boolean' ? props.modelValue : globalDarkMode.value
+  },
+  set (value: boolean): void {
+    globalDarkMode.value = value
+    emit('update:modelValue', value)
+    applyTheme(value)
+  }
+})
 
 // ⭐ Generate random stars
 const stars = ref<Star[]>(
@@ -249,14 +270,66 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
 
-function onToggle (value: boolean): void {
-  emit('update:modelValue', value)
+function applyTheme (isDark: boolean): void {
+  if (!import.meta.client) {
+    return
+  }
+
+  document.documentElement.classList.toggle('app-dark', isDark)
+  document.documentElement.style.colorScheme = isDark ? 'dark' : 'light'
+  localStorage.setItem('theme-mode', isDark ? 'dark' : 'light')
+}
+
+function resolveInitialMode (): boolean {
+  if (!import.meta.client) {
+    return false
+  }
+
+  const persistedMode = localStorage.getItem('theme-mode')
+  storedTheme.value = persistedMode === 'dark' || persistedMode === 'light' ? persistedMode : null
+
+  if (storedTheme.value) {
+    return storedTheme.value === 'dark'
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+}
+
+function initializeTheme (): void {
+  const initialMode = typeof props.modelValue === 'boolean'
+    ? props.modelValue
+    : resolveInitialMode()
+
+  globalDarkMode.value = initialMode
+  applyTheme(initialMode)
+  themeInitialized.value = true
 }
 
 function toggleMode (): void {
   checked.value = !checked.value
-  onToggle(checked.value)
 }
+
+watch((): boolean | undefined => props.modelValue, (value: boolean | undefined): void => {
+  if (typeof value === 'boolean') {
+    globalDarkMode.value = value
+    applyTheme(value)
+  }
+})
+
+watch((): boolean => globalDarkMode.value, (value: boolean): void => {
+  if (typeof props.modelValue !== 'boolean') {
+    applyTheme(value)
+  }
+})
+
+onMounted((): void => {
+  if (!themeInitialized.value) {
+    initializeTheme()
+    return
+  }
+
+  applyTheme(checked.value)
+})
 </script>
 
 <style scoped>

@@ -78,6 +78,7 @@
             <ToggleSwitchMode class="pt-2" />
           </div>
           <img
+            v-if="authStore.user.id"
             class="hidden md:block opacity-80 hover:scale-110 transition"
             src="/svg/mdi-light--bell.svg">
 
