@@ -17,7 +17,7 @@
       <img
         :src="value.profileImg || 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'"
         alt="user avatar"
-        class="w-24 h-24 rounded-full border-4 border-surface-0">
+        class="w-24 h-24 rounded-full border-4 border-surface-0 object-cover">
     </div>
     <div class="flex flex-col items-center gap-2">
       <p class="text-xl text-white font-semibold">
