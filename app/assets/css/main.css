@@ -2,8 +2,10 @@
 @import "tailwindcss-primeui";
 @import "./primevue.css";
 
+@custom-variant dark (&:where(:root[class~="app-dark"], :root[class~="app-dark"] *));
+
 @layer base {
 	body {
-		@apply min-h-screen bg-slate-950 text-white;
+		@apply min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-white;
 	}
 }
