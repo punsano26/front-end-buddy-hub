@@ -73,14 +73,11 @@
 
 
       <template #end>
-        <div class="flex items-center justify-end w-12 h-12 md:w-auto gap-2 md:gap-3">
+        <div class="flex items-center justify-end w-20 h-12 md:w-auto gap-2 md:gap-3">
           <div class="hidden md:flex md:items-center">
             <ToggleSwitchMode class="pt-2" />
           </div>
-          <img
-            v-if="authStore.user.id"
-            class="hidden md:block opacity-80 hover:scale-110 transition"
-            src="/svg/mdi-light--bell.svg">
+          <Notification v-if="authStore.user.id" />
 
           <AvatarProfile v-if="authStore.user.id" />
 
@@ -193,6 +190,7 @@
 import { ref } from 'vue'
 import ToggleSwitchMode from '../input/ToggleSwitchMode.vue'
 import AvatarProfile from './AvatarProfile.vue'
+import Notification from './Notification.vue'
 import Button from '~/volt/Button.vue'
 import SecondaryButton from '~/volt/SecondaryButton.vue'
 import Toolbar from '~/volt/Toolbar.vue'
