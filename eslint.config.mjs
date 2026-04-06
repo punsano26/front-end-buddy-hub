@@ -105,9 +105,9 @@ export default createConfigForNuxt({
     '@stylistic/keyword-spacing': 'error',
     '@stylistic/linebreak-style': ['error', 'unix'],
     '@stylistic/lines-between-class-members': ['error', 'always'],
-    '@stylistic/no-extra-parens': 'error',
+    '@stylistic/no-extra-parens': 'off',
     '@stylistic/no-floating-decimal': 'error',
-    '@stylistic/no-mixed-operators': 'error',
+    '@stylistic/no-mixed-operators': 'off',
     '@stylistic/no-mixed-spaces-and-tabs': 'error',
     '@stylistic/no-multi-spaces': 'error',
     '@stylistic/no-multiple-empty-lines': ['error', {

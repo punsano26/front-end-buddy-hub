@@ -8,6 +8,7 @@
     <ClientOnly>
       <Avatar
         :image="authStore.user?.profileImg || '/png/upload-profile.png'"
+        pt:image:class="object-cover"
         size="large" />
     </ClientOnly>
   </Button>

@@ -2,7 +2,6 @@
   <div>
     <Toolbar
       pt:root="px-2 md:px-2 py-2 border-none bg-white/70 dark:bg-surface-900/70 backdrop-blur-xl shadow-sm">
-      <!-- 🔥 LEFT -->
       <template #start>
         <div class="flex items-center justify-start w-20 md:w-auto gap-2">
           <!-- Mobile menu -->
@@ -17,14 +16,15 @@
             </template>
           </Button>
 
-          <!-- Logo -->
-          <img
-            class="w-9 md:w-12 transition-transform duration-200 hover:scale-105"
-            src="/png/logo-buddy-hub.png">
+          <NuxtLink :to="{ name: 'public-home' }">
+            <img
+              class="w-16 md:w-12 transition-transform duration-200 hover:scale-105"
+              src="/png/logo-buddy-hub.png">
+          </NuxtLink>
         </div>
       </template>
 
-      <!-- 🔥 CENTER -->
+
       <template #center>
         <div class="flex items-center justify-center gap-8 md:gap-4 md:bg-white/40 md:dark:bg-surface-800/40 md:backdrop-blur-lg px-1.5 md:px-2 py-1 rounded-2xl shadow-inner">
           <NuxtLink :to="{ name: 'public-home' }">
@@ -71,9 +71,12 @@
         </div>
       </template>
 
-      <!-- 🔥 RIGHT -->
+
       <template #end>
         <div class="flex items-center justify-end w-12 h-12 md:w-auto gap-2 md:gap-3">
+          <div class="hidden md:flex md:items-center">
+            <ToggleSwitchMode class="pt-2" />
+          </div>
           <img
             class="hidden md:block opacity-80 hover:scale-110 transition"
             src="/svg/mdi-light--bell.svg">
@@ -176,6 +179,9 @@
               pt:root:class="w-full justify-start"
               text />
           </NuxtLink>
+          <div class="pl-3 pt-1">
+            <ToggleSwitchMode />
+          </div>
         </nav>
       </aside>
     </Transition>
@@ -184,6 +190,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import ToggleSwitchMode from '../input/ToggleSwitchMode.vue'
 import AvatarProfile from './AvatarProfile.vue'
 import Button from '~/volt/Button.vue'
 import SecondaryButton from '~/volt/SecondaryButton.vue'

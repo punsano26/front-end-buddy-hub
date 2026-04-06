@@ -13,13 +13,14 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
 
   const isAuthPath = to.path.startsWith('/auth')
   const isPublicHome = to.path === '/public/home'
+  const isLandingPage = to.path === '/'
   const hasTokenData
     = !!authStore.userToken.accessToken
       && !!authStore.userToken.refreshToken
       && authStore.userToken.tokenExpireIn !== null
 
   // 🔒 If not an auth path, not the public home page, and no valid token, redirect to verification.
-  if (!isAuthPath && !isPublicHome && !hasTokenData) {
+  if (!isAuthPath && !isPublicHome && !hasTokenData && !isLandingPage) {
     return navigateTo('/auth/verify') as any
   }
 
