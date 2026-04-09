@@ -235,7 +235,7 @@ function requestUsersViaSocket(timeoutMs = 1200): Promise<boolean> {
   })
 }
 
-function requestUserDetailViaSocket(userId: number, timeoutMs = 1000): Promise<boolean> {
+function requestUserDetailViaSocket(userId: number, timeoutMs = 200): Promise<boolean> {
   const socket = $ws()
   if (!socket || socket.readyState !== WebSocket.OPEN) return Promise.resolve(false)
 
