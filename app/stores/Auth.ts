@@ -49,6 +49,16 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
       refreshToken,
       tokenExpireIn
     }
+
+    // ✅ trigger reconnect
+    if (import.meta.client) {
+      const { $ws } = useNuxtApp()
+      const socket = $ws()
+
+      if (socket) {
+        socket.close()
+      }
+    }
   }
 
   function resetPassword (token: IResetToken): void {
@@ -62,17 +72,42 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
   }
 
   function logout (): void {
+    const { $ws } = useNuxtApp()
+
+    const socket = $ws?.()
+
+    if (socket) {
+      if (socket.readyState === WebSocket.OPEN) {
+        try {
+          socket.send(JSON.stringify({
+            event: 'user:status:update',
+            data: {
+              userId: user.value.id,
+              isOnline: false
+            }
+          }))
+        } catch {
+          // ignore send failure and continue logout flow
+        }
+      }
+
+      (socket as WebSocket & { __manualClose?: boolean }).__manualClose = true
+      socket.close()
+    }
+
     user.value = {
       id: 0,
       username: '',
       profileImg: null,
       roles: []
     }
+
     userToken.value = {
       accessToken: '',
       refreshToken: '',
       tokenExpireIn: null
     }
+
     resetPasswordToken.value = {
       resetPasswordToken: ''
     }
