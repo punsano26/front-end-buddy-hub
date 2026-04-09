@@ -5,7 +5,11 @@
     <template #content>
       <div class="flex flex-col justify-center items-center">
         <div class="mb-1">
-          <OverlayBadge>
+          <OverlayBadge
+            :show="value.isOnline"
+            :size="'large'"
+            pt:badge:class="`rounded-full`"
+            severity="success">
             <ClientOnly>
               <Avatar
                 :image="value.profileImg || '/png/upload-profile.png'"
