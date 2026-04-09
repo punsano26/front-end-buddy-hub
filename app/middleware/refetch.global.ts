@@ -7,7 +7,6 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
 
   const authService: IAuthProvider = new AuthProvider()
   const authStore = useAuthStore()
-  const { $handleLoading } = useNuxtApp()
 
   hydrateTokenFromLocalStorage()
 
@@ -24,9 +23,18 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
     return navigateTo('/auth/verify') as any
   }
 
-  // 🔄 If logged in and not on an auth path, refresh the token.
-  if (hasTokenData && !isAuthPath) {
-    await $handleLoading(resetToken)
+  const isProtectedPath = !isAuthPath && !isPublicHome && !isLandingPage
+
+  // 🔄 Refresh token only on protected pages.
+  if (hasTokenData && isProtectedPath) {
+    const isRefreshSuccess = await tryRefreshToken()
+
+    if (!isRefreshSuccess) {
+      clearPersistedAuth()
+      authStore.logout()
+
+      return navigateTo('/auth/verify') as any
+    }
   }
 
   function hydrateTokenFromLocalStorage (): void {
@@ -68,5 +76,18 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
     authStore.userToken.accessToken = response.accessToken
     authStore.userToken.refreshToken = response.refreshToken
     authStore.userToken.tokenExpireIn = response.tokenExpireIn
+  }
+
+  async function tryRefreshToken (): Promise<boolean> {
+    try {
+      await resetToken()
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  function clearPersistedAuth (): void {
+    localStorage.removeItem('Auth')
   }
 })

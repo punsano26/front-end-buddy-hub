@@ -21,6 +21,7 @@ export interface IUserList {
   nickname: string | null
   profileImg: string | null
   gender: string
+  isOnline: boolean
   dateOfBirth: string
 }
 
