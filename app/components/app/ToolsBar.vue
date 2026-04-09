@@ -32,7 +32,8 @@
               :class="navClass('public-home')"
               icon="pi pi-home"
               label="Home"
-              pt:label:class="hidden md:inline"
+              pt:icon:class="text-black! dark:text-white!"
+              pt:label:class="hidden md:inline text-black! dark:text-white!"
               pt:root:class="h-8 w-8 p-0 gap-0 rounded-xl md:h-auto md:w-auto md:px-3 md:py-1.5 md:gap-2 md:text-sm transition-all duration-200 hover:bg-white/60 dark:hover:bg-surface-700/60"
               text />
           </NuxtLink>
@@ -42,7 +43,8 @@
               :class="navClass('public-chat')"
               icon="pi pi-comment"
               label="Chats"
-              pt:label:class="hidden md:inline"
+              pt:icon:class="text-black! dark:text-white!"
+              pt:label:class="hidden md:inline text-black! dark:text-white!"
               pt:root:class="h-8 w-8 p-0 gap-0 rounded-xl md:h-auto md:w-auto md:px-3 md:py-1.5 md:gap-2 md:text-sm transition-all duration-200 hover:bg-white/60 dark:hover:bg-surface-700/60"
               text />
           </NuxtLink>
@@ -52,7 +54,8 @@
               :class="navClass('public-friends')"
               icon="pi pi-users"
               label="Friends"
-              pt:label:class="hidden md:inline"
+              pt:icon:class="text-black! dark:text-white!"
+              pt:label:class="hidden md:inline text-black! dark:text-white!"
               pt:root:class="h-8 w-8 p-0 gap-0 rounded-xl md:h-auto md:w-auto md:px-3 md:py-1.5 md:gap-2 md:text-sm transition-all duration-200 hover:bg-white/60 dark:hover:bg-surface-700/60"
               text />
           </NuxtLink>
@@ -64,7 +67,8 @@
               :class="navClass('public-profile')"
               icon="pi pi-user"
               label="Profile"
-              pt:label:class="hidden md:inline"
+              pt:icon:class="text-black! dark:text-white!"
+              pt:label:class="hidden md:inline text-black! dark:text-white!"
               pt:root:class="h-8 w-8 p-0 gap-0 rounded-xl md:h-auto md:w-auto md:px-3 md:py-1.5 md:gap-2 md:text-sm transition-all duration-200 hover:bg-white/60 dark:hover:bg-surface-700/60"
               text />
           </NuxtLink>
