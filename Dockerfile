@@ -3,8 +3,10 @@ FROM oven/bun:latest AS builder
 
 # 1. Declare the ARG so Docker can receive it
 ARG VITE_ENV_BASE_API
+ARG VITE_ENV_BASE_WS_API
 # 2. Set it as an ENV so the 'bun run build' process can see it
 ENV VITE_ENV_BASE_API=$VITE_ENV_BASE_API
+ENV VITE_ENV_BASE_WS_API=$VITE_ENV_BASE_WS_API
 
 WORKDIR /src
 COPY package.json bun.lock ./ 
