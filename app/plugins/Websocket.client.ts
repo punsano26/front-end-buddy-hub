@@ -13,7 +13,7 @@ export default defineNuxtPlugin((): any => {
     if (!token) return
 
     ws = new WebSocket(
-      `wss://buddy-hub-backend-j36s.onrender.com/ws?token=${token}`
+      `${import.meta.env.VITE_ENV_BASE_WS_API}?token=${token}`
     ) as WebSocket & { __manualClose?: boolean }
 
     ws.onopen = (): void => {
