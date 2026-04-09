@@ -63,7 +63,19 @@ function defaultErrorCallback (error?: TErrorResponse): void {
 }
 
 function authErrorCallback (error?: TErrorResponse): void {
-  if (error?.code !== 401) return
+  const statusCode = error?.code ?? error?.statusCode ?? error?.status
+  const message = String(error?.message || '').toLowerCase()
+  const isUnauthorized = statusCode === 401 || message.includes('invalid refresh token')
+
+  if (!isUnauthorized) return
+
+  const authStore = useAuthStore()
+  authStore.logout()
+
+  if (import.meta.client) {
+    localStorage.removeItem('Auth')
+  }
+
   const router = useRouter()
   router.replace({ name: 'auth-verify' })
 }
