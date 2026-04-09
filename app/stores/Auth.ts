@@ -50,7 +50,6 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
       tokenExpireIn
     }
 
-    // ✅ trigger reconnect
     if (import.meta.client) {
       const { $ws } = useNuxtApp()
       const socket = $ws()
@@ -87,7 +86,7 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
             }
           }))
         } catch {
-          // ignore send failure and continue logout flow
+          // Ignore errors during logout
         }
       }
 

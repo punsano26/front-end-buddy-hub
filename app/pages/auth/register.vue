@@ -76,7 +76,11 @@ const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 const submitted = ref(false)
-
+const accountFromQuery = computed((): string => {
+  const account = route.query.account
+  if (Array.isArray(account)) return account[0] ?? ''
+  return account ?? ''
+})
 const form = ref<IAuthRegisterPayload>({
   email: '',
   username: '',
@@ -102,6 +106,13 @@ const gender = ref<IBaseOptions[]>([
   }
 ])
 
+function checkQuery (): void {
+  const account = accountFromQuery.value.trim()
+  if (!account) return
+  const isEmail = validate.email(account) === true
+  form.value.email = isEmail ? account : ''
+  form.value.username = isEmail ? '' : account
+}
 
 async function onRegister (): Promise<void> {
   if (!form.value.email || !form.value.username || !form.value.password || !form.value.confirmPassword
@@ -136,8 +147,11 @@ function register (): void {
 }
 
 onBeforeMount((): void => {
-  if (route.query.account) return
-  router.replace({ name: 'auth-verify' })
+  if (!accountFromQuery.value) {
+    router.replace({ name: 'auth-verify' })
+    return
+  }
+  checkQuery()
 })
 </script>
 

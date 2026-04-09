@@ -5,7 +5,7 @@
         pt:root:class="h-10 w-10 bg-gray-800/20 enabled:hover:bg-gray-800/20 rounded-xl border-none text-gray-400 hover:text-gray-200 hover:bg-gray-800/30"
         size="small"
         @click="toggleFilter">
-        <i :class="['pi', isFilterOpen ? 'pi-filter-slash' : 'pi-filter']" />
+        <i :class="['pi', isFilterOpen ? 'pi-filter-slash' : 'pi-filter', 'text-black! dark:text-white!']" />
       </Button>
     </div>
 
