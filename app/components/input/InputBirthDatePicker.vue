@@ -20,6 +20,7 @@
         v-model="dateOfBirthDate"
         :invalid="!!errorMessage"
         class="bg-slate-200 dark:bg-slate-900 dark:text-white"
+        date-format="dd/mm/yy"
         fluid />
     </slot>
 
