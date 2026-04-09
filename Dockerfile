@@ -20,7 +20,9 @@ WORKDIR /src
 # If your Nuxt app needs this at runtime (server-side), 
 # you must re-declare the ARG and ENV here too.
 ARG VITE_ENV_BASE_API
+ARG VITE_ENV_BASE_WS_API
 ENV VITE_ENV_BASE_API=$VITE_ENV_BASE_API
+ENV VITE_ENV_BASE_WS_API=$VITE_ENV_BASE_WS_API
 
 COPY --from=builder /src/.output ./.output
 
