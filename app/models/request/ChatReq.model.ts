@@ -12,6 +12,10 @@ export interface IUpdateMessagePayload {
   messageText: string
 }
 
+export interface markMessagesAsReadPayload {
+  friendId: number
+}
+
 export interface IFindOneMessageFilters {}
 
 export interface IFindOneMessagePaginateQuery extends IBasePaginationRequest, IFindOneMessageFilters { friendId: number }
