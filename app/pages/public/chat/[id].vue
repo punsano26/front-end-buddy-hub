@@ -5,12 +5,15 @@
     <div class="flex-1 overflow-y-auto p-4">
       <div class="flex flex-col gap-4">
         <div
-          v-for="chat in chatData"
+          v-for="chat in orderedChatData"
+          :key="chat.id"
           :class="isOwnMessage(chat) ? 'flex justify-end' : 'flex'"
         >
           <div class="flex flex-col max-w-[70%]">
             <div class="flex items-center">
-              <DotMenu :items="items"/>
+              <DotMenu
+                v-if="isOwnMessage(chat)"
+                :items="getMessageMenuItems(chat)" />
               <div
                 class="flex flex-col gap-1 p-3 rounded-2xl shadow-sm"
                 :class="
@@ -20,37 +23,40 @@
                 "
               >
                 <p class="text-sm">{{ chat.messageText }}</p>
-                <p class="text-xs text-gray-500 mt-1">{{ chat.createdAt }}</p>
-              </div>
+                <div class="flex items-center gap-1">
+                  <p class="text-xs text-gray-500">{{ dayjs(chat.createdAt).format('hh:mm A') }}</p>
+                  <i v-if="isOwnMessage(chat)"  :class="chat.isRead ? 'text-green-600 pi pi-check-circle text-[10px]' : 'text-gray-600 pi pi-circle-off text-[10px]'"></i>
+                </div>
+                </div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <DirectMessageChatRoom @createMessage="sendMessage" class="shrink-0" />
+    <DirectMessageChatRoom
+      v-model="form.messageText"
+      :is-editing="isEditingMessage"
+      class="shrink-0"
+      @cancelEdit="cancelEditMessage"
+      @createMessage="sendMessage" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { chatEnum } from '~/models/enums/Chat.enum'
 import type { IItems } from '~/models/Global.model'
-import type { ICreateMessagePayload } from '~/models/request/ChatReq.model'
+import type { ICreateMessagePayload, IUpdateMessagePayload } from '~/models/request/ChatReq.model'
 import type { ICreateMessageData } from '~/models/response/ChatRes.model'
 import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provider'
 import { useAuthStore } from '~/stores/Auth'
 
 const authStore = useAuthStore()
 const chatService: IChatProvider = new ChatProvider()
+const dayjs = useDayjs();
 const { $handleLoading, $ws } = useNuxtApp()
 const { pagination, extractPagination } = usePagination()
 const id = computed(() => Number(useRoute().params.id))
-const items = computed((): IItems[] => {
-  return [
-    { label: 'แก้ไข', command: () => console.log('Edit message') },
-    { label: 'ลบ', command: () => console.log('Delete message') },
-  ]
-})
 definePageMeta({ layout: "chat" });
 
 const form = ref<ICreateMessagePayload>({
@@ -59,11 +65,117 @@ const form = ref<ICreateMessagePayload>({
  messageText: '',
 })
 
+const formUpdate = ref<IUpdateMessagePayload>({
+  messageId: 0,
+  messageText: '',
+})
+
 
 const chatData = ref<ICreateMessageData[]>([]);
 const wsListener = ref<((event: MessageEvent) => void) | null>(null)
 const currentSocket = ref<WebSocket | null>(null)
 const socketSyncInterval = ref<ReturnType<typeof setInterval> | null>(null)
+const editingMessageId = ref<number | null>(null)
+const isEditingMessage = computed((): boolean => editingMessageId.value !== null)
+const isSubmittingMessage = ref(false)
+const isMarkingRead = ref(false)
+const orderedChatData = computed((): ICreateMessageData[] => {
+  return [...chatData.value].sort((a: ICreateMessageData, b: ICreateMessageData): number => {
+    const aTime = Number(new Date(a.createdAt))
+    const bTime = Number(new Date(b.createdAt))
+    return aTime - bTime
+  })
+})
+
+
+function getMessageMenuItems (message: ICreateMessageData): IItems[] {
+  return [
+    { label: 'แก้ไข', command: (): void => startEditMessage(message) },
+    { label: 'ลบ', command: (): Promise<void> => confirmDeleteMessage(message) },
+  ]
+}
+
+function startEditMessage (message: ICreateMessageData): void {
+  if (!isOwnMessage(message)) return
+
+  editingMessageId.value = message.id
+  formUpdate.value.messageId = message.id
+  formUpdate.value.messageText = message.messageText
+  form.value.messageText = message.messageText
+}
+
+function cancelEditMessage (): void {
+  editingMessageId.value = null
+  formUpdate.value = {
+    messageId: 0,
+    messageText: '',
+  }
+  form.value.messageText = ''
+}
+
+async function confirmEditMessage (): Promise<void> {
+  if (!editingMessageId.value) return
+
+  const nextMessageText = formUpdate.value.messageText.trim()
+  if (!nextMessageText) return
+
+  await chatService.updateMessage({
+    messageId: editingMessageId.value,
+    messageText: nextMessageText,
+  })
+
+  const targetIndex = chatData.value.findIndex((item: ICreateMessageData): boolean => item.id === editingMessageId.value)
+  if (targetIndex >= 0) {
+    const targetMessage = chatData.value[targetIndex]
+    if (targetMessage) {
+      targetMessage.messageText = nextMessageText
+    }
+  }
+
+  cancelEditMessage()
+}
+async function confirmDeleteMessage (message: ICreateMessageData): Promise<void> {
+  await chatService.deleteMessage(message.id)
+
+  chatData.value = chatData.value.filter((item: ICreateMessageData): boolean => item.id !== message.id)
+
+  if (editingMessageId.value === message.id) {
+    cancelEditMessage()
+  }
+}
+
+async function markMessagesAsRead (): Promise<void> {
+  if (isMarkingRead.value) return
+
+  const currentUserId = authStore.user.id
+  const targetUserId = id.value
+
+  if (currentUserId <= 0 || targetUserId <= 0) return
+
+  const hasUnread = chatData.value.some((message: ICreateMessageData): boolean => (
+    message.senderId === targetUserId
+    && message.receiverId === currentUserId
+    && !message.isRead
+  ))
+
+  if (!hasUnread) return
+
+  isMarkingRead.value = true
+
+  try {
+    await chatService.markMessagesAsRead({ friendId: targetUserId })
+
+    chatData.value = chatData.value.map((message: ICreateMessageData): ICreateMessageData => {
+      if (message.senderId === targetUserId && message.receiverId === currentUserId) {
+        return { ...message, isRead: true }
+      }
+
+      return message
+    })
+  } finally {
+    isMarkingRead.value = false
+  }
+}
 
 function isChatMessageLike (value: unknown): value is ICreateMessageData {
   if (!value || typeof value !== 'object') return false
@@ -171,6 +283,10 @@ function setupSocketListener (): void {
 
       messages.forEach((message: ICreateMessageData): void => {
         upsertMessage(message)
+
+        if (message.senderId === id.value && message.receiverId === authStore.user.id) {
+          void markMessagesAsRead()
+        }
       })
     } catch {
       // Ignore non-JSON websocket payload
@@ -190,6 +306,7 @@ async function useFetch (): Promise<void> {
   })
   chatData.value = response.data || []
   pagination.value = extractPagination(response)
+  await markMessagesAsRead()
 }
 function fetch (): void {
   $handleLoading(useFetch)
@@ -208,9 +325,24 @@ async function onSendMessage (): Promise<void> {
   form.value.messageText = ''
 }
 
-function sendMessage(messageText: string): void {
+async function sendMessage(messageText: string): Promise<void> {
+  if (isSubmittingMessage.value) return
+
+  isSubmittingMessage.value = true
   form.value.messageText = messageText
-  $handleLoading(onSendMessage)
+
+  try {
+    if (isEditingMessage.value) {
+      formUpdate.value.messageId = editingMessageId.value || 0
+      formUpdate.value.messageText = messageText
+      await Promise.resolve($handleLoading(confirmEditMessage))
+      return
+    }
+
+    await Promise.resolve($handleLoading(onSendMessage))
+  } finally {
+    isSubmittingMessage.value = false
+  }
 }
 
 onMounted((): void => {
@@ -230,6 +362,7 @@ onUnmounted((): void => {
 })
 
 watch((): number => id.value, (nextId: number): void => {
+  cancelEditMessage()
   form.value.receiverId = nextId
   fetch()
 })
