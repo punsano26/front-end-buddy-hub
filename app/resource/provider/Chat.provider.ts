@@ -28,13 +28,13 @@ class ChatProvider extends HttpRequest implements IChatProvider {
 
   public async updateMessage (payload: IUpdateMessagePayload): Promise<IMessageResponse> {
     this.setUserAuthHeader()
-    const response = await this.patch(`${this.urlPrefix}/messages`, payload)
+    const response = await this.patch(`${this.urlPrefix}/edit`, payload)
     return response
   }
 
   public async deleteMessage (id: TBaseParamsId): Promise<IMessageResponse> {
     this.setUserAuthHeader()
-    const response = await this.patch(`${this.urlPrefix}/messages/${id}`, {})
+    const response = await this.patch(`${this.urlPrefix}/delete/${id}`, {})
     return response
   }
 }
