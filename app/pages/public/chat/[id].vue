@@ -1,7 +1,6 @@
 <template>
   <div class="h-full flex flex-col overflow-hidden">
     <HeaderChatRoom class="shrink-0" />
-
     <div class="flex-1 overflow-y-auto p-4">
       <div class="flex flex-col gap-4">
         <div
