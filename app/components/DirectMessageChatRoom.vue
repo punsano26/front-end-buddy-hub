@@ -3,10 +3,13 @@
     <template #content>
       <div class="flex gap-2">
         <InputLabelField
-          placeholder="พิมพ์ข้อความของคุณนี่ที่..." />
+          v-model="message"
+          placeholder="พิมพ์ข้อความของคุณนี่ที่..."
+          @keyup.enter="handleSend" />
         <Button
           class="ml-2"
-          color="primary">
+          color="primary"
+          @click="handleSend">
           ส่ง
         </Button>
       </div>
@@ -16,8 +19,16 @@
 
 <script setup lang="ts">
 import InputLabelField from './input/InputLabelField.vue'
+
+const emit = defineEmits<{
+  createMessage: [message: string]
+}>()
+
+const message = ref('')
+
+function handleSend (): void {
+  if (!message.value.trim()) return
+  emit('createMessage', message.value.trim())
+  message.value = ''
+}
 </script>
-
-<style scoped>
-
-</style>
