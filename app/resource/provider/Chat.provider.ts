@@ -9,7 +9,7 @@ export interface IChatProvider {
 }
 
 class ChatProvider extends HttpRequest implements IChatProvider {
-  private urlPrefix: string = '/chats'
+  private urlPrefix: string = '/chat'
 
   public async createMessage (payload: ICreateMessagePayload): Promise<ICreateMessageResponse> {
     this.setUserAuthHeader()
