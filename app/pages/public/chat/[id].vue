@@ -9,16 +9,19 @@
           :class="isOwnMessage(chat) ? 'flex justify-end' : 'flex'"
         >
           <div class="flex flex-col max-w-[70%]">
-            <div
-              class="flex flex-col gap-1 p-3 rounded-2xl shadow-sm"
-              :class="
-                isOwnMessage(chat)
-                  ? 'bg-gradient-primary text-black rounded-br-md'
-                  : 'bg-white text-gray-800 rounded-bl-md border border-gray-200'
-              "
-            >
-              <p class="text-sm">{{ chat.messageText }}</p>
-              <p class="text-xs text-gray-500 mt-1">{{ chat.createdAt }}</p>
+            <div class="flex items-center">
+              <DotMenu :items="items"/>
+              <div
+                class="flex flex-col gap-1 p-3 rounded-2xl shadow-sm"
+                :class="
+                  isOwnMessage(chat)
+                    ? 'bg-gradient-primary text-black rounded-br-md'
+                    : 'bg-white text-gray-800 rounded-bl-md border border-gray-200'
+                "
+              >
+                <p class="text-sm">{{ chat.messageText }}</p>
+                <p class="text-xs text-gray-500 mt-1">{{ chat.createdAt }}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -31,6 +34,7 @@
 
 <script setup lang="ts">
 import { chatEnum } from '~/models/enums/Chat.enum'
+import type { IItems } from '~/models/Global.model'
 import type { ICreateMessagePayload } from '~/models/request/ChatReq.model'
 import type { ICreateMessageData } from '~/models/response/ChatRes.model'
 import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provider'
@@ -40,8 +44,13 @@ const authStore = useAuthStore()
 const chatService: IChatProvider = new ChatProvider()
 const { $handleLoading, $ws } = useNuxtApp()
 const { pagination, extractPagination } = usePagination()
-
 const id = computed(() => Number(useRoute().params.id))
+const items = computed((): IItems[] => {
+  return [
+    { label: 'แก้ไข', command: () => console.log('Edit message') },
+    { label: 'ลบ', command: () => console.log('Delete message') },
+  ]
+})
 definePageMeta({ layout: "chat" });
 
 const form = ref<ICreateMessagePayload>({
@@ -49,6 +58,7 @@ const form = ref<ICreateMessagePayload>({
  messageType: chatEnum.TEXT,
  messageText: '',
 })
+
 
 const chatData = ref<ICreateMessageData[]>([]);
 const wsListener = ref<((event: MessageEvent) => void) | null>(null)
