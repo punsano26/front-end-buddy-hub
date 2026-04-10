@@ -9,4 +9,4 @@ export interface ICreateMessagePayload {
 
 export interface IFindOneMessageFilters {}
 
-export interface IFindOneMessagePaginateQuery extends IBasePaginationRequest, IFindOneMessageFilters {}
+export interface IFindOneMessagePaginateQuery extends IBasePaginationRequest, IFindOneMessageFilters { friendId: number }
