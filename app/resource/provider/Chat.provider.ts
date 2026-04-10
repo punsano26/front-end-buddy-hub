@@ -1,10 +1,14 @@
 import HttpRequest from '../HttpRequest'
-import type { ICreateMessagePayload, IFindOneMessagePaginateQuery } from '~/models/request/ChatReq.model'
+import type { ICreateMessagePayload, IFindOneMessagePaginateQuery, IUpdateMessagePayload } from '~/models/request/ChatReq.model'
+import type { TBaseParamsId } from '~/models/request/Request.model'
 import type { ICreateMessageResponse, IFindOneMessagePaginateResponse } from '~/models/response/ChatRes.model'
+import type { IMessageResponse } from '~/models/response/Response.model'
 
 export interface IChatProvider {
   createMessage (payload: ICreateMessagePayload): Promise<ICreateMessageResponse>
   findOneMessagePaginate (query: IFindOneMessagePaginateQuery): Promise<IFindOneMessagePaginateResponse>
+  updateMessage (payload: IUpdateMessagePayload): Promise<IMessageResponse>
+  deleteMessage (id: TBaseParamsId): Promise<IMessageResponse>
 }
 
 class ChatProvider extends HttpRequest implements IChatProvider {
@@ -19,6 +23,18 @@ class ChatProvider extends HttpRequest implements IChatProvider {
   public async findOneMessagePaginate (query: IFindOneMessagePaginateQuery): Promise<IFindOneMessagePaginateResponse> {
     this.setUserAuthHeader()
     const response = await this.get(`${this.urlPrefix}/messages`, query)
+    return response
+  }
+
+  public async updateMessage (payload: IUpdateMessagePayload): Promise<IMessageResponse> {
+    this.setUserAuthHeader()
+    const response = await this.patch(`${this.urlPrefix}/messages`, payload)
+    return response
+  }
+
+  public async deleteMessage (id: TBaseParamsId): Promise<IMessageResponse> {
+    this.setUserAuthHeader()
+    const response = await this.patch(`${this.urlPrefix}/messages/${id}`, {})
     return response
   }
 }

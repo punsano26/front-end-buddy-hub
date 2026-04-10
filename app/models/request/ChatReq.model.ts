@@ -7,6 +7,11 @@ export interface ICreateMessagePayload {
   messageText: string
 }
 
+export interface IUpdateMessagePayload {
+  messageId: number
+  messageText: string
+}
+
 export interface IFindOneMessageFilters {}
 
 export interface IFindOneMessagePaginateQuery extends IBasePaginationRequest, IFindOneMessageFilters { friendId: number }
