@@ -218,42 +218,6 @@ function upsertMessage (message: ICreateMessageData): void {
   chatData.value.push(message)
 }
 
-function extractMessagesFromSocket (payload: unknown): ICreateMessageData[] {
-  if (!payload || typeof payload !== 'object') return []
-
-  const body = payload as {
-    event?: unknown
-    data?: unknown
-    message?: unknown
-    messages?: unknown
-  }
-
-  const eventName = typeof body.event === 'string' ? body.event.toLowerCase() : ''
-  const isChatEvent = eventName.includes('chat') || eventName.includes('message')
-
-  if (!isChatEvent) return []
-
-  const candidates: unknown[] = [
-    body.data,
-    body.message,
-    body.messages,
-    (body.data as { message?: unknown })?.message,
-    (body.data as { messages?: unknown })?.messages
-  ]
-
-  for (const candidate of candidates) {
-    if (Array.isArray(candidate)) {
-      return candidate.filter((item: unknown): item is ICreateMessageData => isChatMessageLike(item))
-    }
-
-    if (isChatMessageLike(candidate)) {
-      return [candidate]
-    }
-  }
-
-  return []
-}
-
 function removeSocketListener (): void {
   if (currentSocket.value && wsListener.value) {
     currentSocket.value.removeEventListener('message', wsListener.value)
@@ -277,16 +241,74 @@ function setupSocketListener (): void {
 
   const onMessage = (event: MessageEvent): void => {
     try {
-      const payload: unknown = JSON.parse(event.data)
-      const messages = extractMessagesFromSocket(payload)
+      const data = JSON.parse(event.data)
 
-      messages.forEach((message: ICreateMessageData): void => {
-        upsertMessage(message)
+      switch (data.event) {
+        case 'chat:receive': {
+          const message = data.data as ICreateMessageData
 
-        if (message.senderId === id.value && message.receiverId === authStore.user.id) {
-          void markMessagesAsRead()
+          if (!isChatMessageLike(message) || !isCurrentConversationMessage(message)) return
+
+          upsertMessage(message)
+
+          if (message.senderId === id.value && message.receiverId === authStore.user.id) {
+            void markMessagesAsRead()
+          }
+          break
         }
-      })
+
+        case 'chat:sent': {
+          // Optional acknowledgement.
+          break
+        }
+
+        case 'chat:messages_read_receiver': {
+          const messageIds = Array.isArray(data?.data?.messageIds)
+            ? data.data.messageIds as number[]
+            : []
+
+          if (messageIds.length === 0) return
+
+          chatData.value = chatData.value.map((message: ICreateMessageData): ICreateMessageData => {
+            if (messageIds.includes(message.id)) {
+              return { ...message, isRead: true }
+            }
+            return message
+          })
+          break
+        }
+
+        case 'chat:message_deleted_sender':
+        case 'chat:message_deleted_receiver': {
+          const messageId = typeof data?.data?.messageId === 'number'
+            ? data.data.messageId
+            : null
+
+          if (messageId === null) return
+
+          chatData.value = chatData.value.filter(
+            (message: ICreateMessageData): boolean => message.id !== messageId
+          )
+
+          if (editingMessageId.value === messageId) {
+            cancelEditMessage()
+          }
+          break
+        }
+
+        case 'chat:message_edited_sender':
+        case 'chat:message_edited_receiver':
+        const updatedMessage = data.data
+          chatData.value = chatData.value.map(
+          (message: ICreateMessageData): ICreateMessageData => {
+          if (message.id === updatedMessage.id) {
+            return { ...message, messageText: updatedMessage.messageText }
+        }
+      return message
+    }
+  )
+  break
+      }
     } catch {
       // Ignore non-JSON websocket payload
     }
