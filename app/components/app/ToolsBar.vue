@@ -9,11 +9,7 @@
             class="inline-flex md:hidden"
             text
             @click="menuOpen = !menuOpen">
-            <template #icon>
-              <img
-                class="w-5 h-5 opacity-80"
-                src="/svg/flowbite--bars-outline.svg">
-            </template>
+            <i class="pi pi-bars text-lg text-black dark:text-white" />
           </Button>
 
           <NuxtLink :to="{ name: 'public-home' }">

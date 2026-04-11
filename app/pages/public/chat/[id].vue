@@ -7,12 +7,16 @@
           v-for="chat in orderedChatData"
           :key="chat.id"
           :class="isOwnMessage(chat) ? 'flex justify-end' : 'flex'"
+          class="group"
         >
           <div class="flex flex-col max-w-[70%]">
             <div class="flex items-center">
               <DotMenu
                 v-if="isOwnMessage(chat)"
-                :items="getMessageMenuItems(chat)" />
+                :items="getMessageMenuItems(chat)"
+                :message-id="chat.id"
+                class="opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                />
               <div
                 class="flex flex-col gap-1 p-3 rounded-2xl shadow-sm"
                 :class="

@@ -7,12 +7,12 @@
       class="!bg-transparent hover:!bg-transparent active:!bg-transparent !border-0 !shadow-none p-0"
       type="button"
       text
-      @click="toggle">
+      @click="toggle"
+      @touchend="onTouchEnd"
+      @touchmove="onTouchEnd"
+      @touchstart="onTouchStart">
       <template #icon>
-        <img
-          alt=""
-          src="/svg/dot-menu.svg"
-          style="width: 20px; height: 20px;">
+        <i class="pi pi-ellipsis-v text-gray-500 dark:text-white text-xs md:text-md" />
       </template>
     </Button>
     <Menu
@@ -34,6 +34,7 @@ interface IProp {
 }
 
 const menu = ref()
+const longPressTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 withDefaults(defineProps<IProp>(), {
   label: '',
@@ -42,5 +43,20 @@ withDefaults(defineProps<IProp>(), {
 
 const toggle = (event: any): void => {
   menu.value.toggle(event)
+}
+
+function onTouchStart (event: TouchEvent): void {
+  longPressTimer.value = setTimeout((): void => {
+    if (menu.value) {
+      menu.value.show(event)
+    }
+  }, 500)
+}
+
+function onTouchEnd (): void {
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
 }
 </script>
