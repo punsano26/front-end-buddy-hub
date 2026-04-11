@@ -49,8 +49,10 @@ import type { ICreateMessagePayload, IUpdateMessagePayload } from '~/models/requ
 import type { ICreateMessageData } from '~/models/response/ChatRes.model'
 import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provider'
 import { useAuthStore } from '~/stores/Auth'
+import { useChatStore } from '~/stores/Chat'
 
 const authStore = useAuthStore()
+const chatStore = useChatStore()
 const chatService: IChatProvider = new ChatProvider()
 const dayjs = useDayjs();
 const { $handleLoading, $ws } = useNuxtApp()
@@ -151,13 +153,15 @@ async function markMessagesAsRead (): Promise<void> {
 
   if (currentUserId <= 0 || targetUserId <= 0) return
 
-  const hasUnread = chatData.value.some((message: ICreateMessageData): boolean => (
+  const unreadMessageIds = chatData.value
+    .filter((message: ICreateMessageData): boolean => (
     message.senderId === targetUserId
     && message.receiverId === currentUserId
     && !message.isRead
-  ))
+    ))
+    .map((message: ICreateMessageData): number => message.id)
 
-  if (!hasUnread) return
+  if (unreadMessageIds.length === 0) return
 
   isMarkingRead.value = true
 
@@ -171,6 +175,8 @@ async function markMessagesAsRead (): Promise<void> {
 
       return message
     })
+
+    chatStore.removeUnreadMessageIds(unreadMessageIds)
   } finally {
     isMarkingRead.value = false
   }

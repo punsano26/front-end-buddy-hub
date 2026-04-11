@@ -39,14 +39,18 @@
           </NuxtLink>
 
           <NuxtLink :to="{ name: 'public-chat' }">
-            <SecondaryButton
-              :class="navClass('public-chat')"
-              icon="pi pi-comment"
-              label="Chats"
-              pt:icon:class="text-black! dark:text-white!"
-              pt:label:class="hidden md:inline text-black! dark:text-white!"
-              pt:root:class="h-8 w-8 p-0 gap-0 rounded-xl md:h-auto md:w-auto md:px-3 md:py-1.5 md:gap-2 md:text-sm transition-all duration-200 hover:bg-white/60 dark:hover:bg-surface-700/60"
-              text />
+            <OverlayBadge
+              :show="unreadCount > 0"
+              :value="unreadCount">
+              <SecondaryButton
+                :class="navClass('public-chat')"
+                icon="pi pi-comment"
+                label="Chats"
+                pt:icon:class="text-black! dark:text-white!"
+                pt:label:class="hidden md:inline text-black! dark:text-white!"
+                pt:root:class="h-8 w-8 p-0 gap-0 rounded-xl md:h-auto md:w-auto md:px-3 md:py-1.5 md:gap-2 md:text-sm transition-all duration-200 hover:bg-white/60 dark:hover:bg-surface-700/60"
+                text />
+            </OverlayBadge>
           </NuxtLink>
 
           <NuxtLink :to="{ name: 'public-friends' }">
@@ -191,15 +195,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import ToggleSwitchMode from '../input/ToggleSwitchMode.vue'
 import AvatarProfile from './AvatarProfile.vue'
 import Notification from './Notification.vue'
+import { useChatStore } from '~/stores/Chat'
 import Button from '~/volt/Button.vue'
 import SecondaryButton from '~/volt/SecondaryButton.vue'
 import Toolbar from '~/volt/Toolbar.vue'
 
 const authStore = useAuthStore()
+const chatStore = useChatStore()
+
+const unreadCount = computed((): number => chatStore.unreadCount)
 
 const menuOpen = ref(false)
 
