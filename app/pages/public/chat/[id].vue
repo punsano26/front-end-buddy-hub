@@ -34,6 +34,7 @@
             </div>
           </div>
         </div>
+        <div class="text-center text-xs text-red-500"><span >{{ sendError }}</span></div>
       </div>
     </div>
 
@@ -51,6 +52,7 @@ import { chatEnum } from '~/models/enums/Chat.enum'
 import type { IItems } from '~/models/Global.model'
 import type { ICreateMessagePayload, IUpdateMessagePayload } from '~/models/request/ChatReq.model'
 import type { ICreateMessageData } from '~/models/response/ChatRes.model'
+import type { TErrorResponse } from '~/models/response/Response.model'
 import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provider'
 import { useAuthStore } from '~/stores/Auth'
 import { useChatStore } from '~/stores/Chat'
@@ -59,7 +61,7 @@ const authStore = useAuthStore()
 const chatStore = useChatStore()
 const chatService: IChatProvider = new ChatProvider()
 const dayjs = useDayjs();
-const { $handleLoading, $ws } = useNuxtApp()
+const { $handleLoading } = useNuxtApp()
 const { pagination, extractPagination } = usePagination()
 const id = computed(() => Number(useRoute().params.id))
 definePageMeta({ layout: "chat" });
@@ -77,12 +79,10 @@ const formUpdate = ref<IUpdateMessagePayload>({
 
 
 const chatData = ref<ICreateMessageData[]>([]);
-const wsListener = ref<((event: MessageEvent) => void) | null>(null)
-const currentSocket = ref<WebSocket | null>(null)
-const socketSyncInterval = ref<ReturnType<typeof setInterval> | null>(null)
 const editingMessageId = ref<number | null>(null)
 const isEditingMessage = computed((): boolean => editingMessageId.value !== null)
 const isSubmittingMessage = ref(false)
+const sendError = ref('')
 const isMarkingRead = ref(false)
 const orderedChatData = computed((): ICreateMessageData[] => {
   return [...chatData.value].sort((a: ICreateMessageData, b: ICreateMessageData): number => {
@@ -119,7 +119,9 @@ function cancelEditMessage (): void {
 }
 
 async function confirmEditMessage (): Promise<void> {
-  if (!editingMessageId.value) return
+  
+  try {
+   if (!editingMessageId.value) return
 
   const nextMessageText = formUpdate.value.messageText.trim()
   if (!nextMessageText) return
@@ -137,16 +139,25 @@ async function confirmEditMessage (): Promise<void> {
     }
   }
 
-  cancelEditMessage()
+  cancelEditMessage() 
+  } catch (error: TErrorResponse) {
+    sendError.value = error?.message
+  }
 }
 async function confirmDeleteMessage (message: ICreateMessageData): Promise<void> {
-  await chatService.deleteMessage(message.id)
+  
+  try {
+    await chatService.deleteMessage(message.id)
 
   chatData.value = chatData.value.filter((item: ICreateMessageData): boolean => item.id !== message.id)
 
   if (editingMessageId.value === message.id) {
     cancelEditMessage()
   }
+  } catch (error: TErrorResponse) {
+     const errorMessage = error?.message
+     sendError.value = errorMessage
+}
 }
 
 async function markMessagesAsRead (): Promise<void> {
@@ -186,17 +197,6 @@ async function markMessagesAsRead (): Promise<void> {
   }
 }
 
-function isChatMessageLike (value: unknown): value is ICreateMessageData {
-  if (!value || typeof value !== 'object') return false
-
-  const record = value as Record<string, unknown>
-  return typeof record.id === 'number'
-    && typeof record.senderId === 'number'
-    && typeof record.receiverId === 'number'
-    && typeof record.messageType === 'string'
-    && typeof record.messageText === 'string'
-}
-
 function isOwnMessage (message: ICreateMessageData): boolean {
   return message.senderId === authStore.user.id
 }
@@ -228,106 +228,46 @@ function upsertMessage (message: ICreateMessageData): void {
   chatData.value.push(message)
 }
 
-function removeSocketListener (): void {
-  if (currentSocket.value && wsListener.value) {
-    currentSocket.value.removeEventListener('message', wsListener.value)
-  }
+const {
+  removeSocketListener,
+  startSocketSync,
+  stopSocketSync,
+} = useChatSocketListener({
+  onReceiveMessage: (message: ICreateMessageData): void => {
+    if (!isCurrentConversationMessage(message)) return
 
-  currentSocket.value = null
-  wsListener.value = null
-}
+    upsertMessage(message)
 
-function setupSocketListener (): void {
-  const socket = $ws()
-
-  if (!socket) {
-    removeSocketListener()
-    return
-  }
-
-  if (currentSocket.value === socket && wsListener.value) return
-
-  removeSocketListener()
-
-  const onMessage = (event: MessageEvent): void => {
-    try {
-      const data = JSON.parse(event.data)
-
-      switch (data.event) {
-        case 'chat:receive': {
-          const message = data.data as ICreateMessageData
-
-          if (!isChatMessageLike(message) || !isCurrentConversationMessage(message)) return
-
-          upsertMessage(message)
-
-          if (message.senderId === id.value && message.receiverId === authStore.user.id) {
-            void markMessagesAsRead()
-          }
-          break
-        }
-
-        case 'chat:sent': {
-          // Optional acknowledgement.
-          break
-        }
-
-        case 'chat:messages_read_receiver': {
-          const messageIds = Array.isArray(data?.data?.messageIds)
-            ? data.data.messageIds as number[]
-            : []
-
-          if (messageIds.length === 0) return
-
-          chatData.value = chatData.value.map((message: ICreateMessageData): ICreateMessageData => {
-            if (messageIds.includes(message.id)) {
-              return { ...message, isRead: true }
-            }
-            return message
-          })
-          break
-        }
-
-        case 'chat:message_deleted_sender':
-        case 'chat:message_deleted_receiver': {
-          const messageId = typeof data?.data?.messageId === 'number'
-            ? data.data.messageId
-            : null
-
-          if (messageId === null) return
-
-          chatData.value = chatData.value.filter(
-            (message: ICreateMessageData): boolean => message.id !== messageId
-          )
-
-          if (editingMessageId.value === messageId) {
-            cancelEditMessage()
-          }
-          break
-        }
-
-        case 'chat:message_edited_sender':
-        case 'chat:message_edited_receiver':
-        const updatedMessage = data.data
-          chatData.value = chatData.value.map(
-          (message: ICreateMessageData): ICreateMessageData => {
-          if (message.id === updatedMessage.id) {
-            return { ...message, messageText: updatedMessage.messageText }
-        }
-      return message
+    if (message.senderId === id.value && message.receiverId === authStore.user.id) {
+      void markMessagesAsRead()
     }
-  )
-  break
+  },
+  onMessagesRead: (messageIds: number[]): void => {
+    chatData.value = chatData.value.map((message: ICreateMessageData): ICreateMessageData => {
+      if (messageIds.includes(message.id)) {
+        return { ...message, isRead: true }
       }
-    } catch {
-      // Ignore non-JSON websocket payload
-    }
-  }
+      return message
+    })
+  },
+  onMessageDeleted: (messageId: number): void => {
+    chatData.value = chatData.value.filter(
+      (message: ICreateMessageData): boolean => message.id !== messageId
+    )
 
-  socket.addEventListener('message', onMessage)
-  currentSocket.value = socket
-  wsListener.value = onMessage
-}
+    if (editingMessageId.value === messageId) {
+      cancelEditMessage()
+    }
+  },
+  onMessageEdited: (updatedMessage: Pick<ICreateMessageData, 'id' | 'messageText'>): void => {
+    chatData.value = chatData.value.map((message: ICreateMessageData): ICreateMessageData => {
+      if (message.id === updatedMessage.id) {
+        return { ...message, messageText: updatedMessage.messageText }
+      }
+      return message
+    })
+  },
+})
 
 async function useFetch (): Promise<void> {
   const response = await chatService.findOneMessagePaginate({
@@ -349,11 +289,16 @@ async function onSendMessage (): Promise<void> {
     messageType: form.value.messageType,
     messageText: form.value.messageText.trim(),
   }
-  const response = await chatService.createMessage(payload)
+  try {
+     const response = await chatService.createMessage(payload)
   if (response.data) {
     upsertMessage(response.data)
   }
   form.value.messageText = ''
+  } catch (error: TErrorResponse) {
+     sendError.value = error?.message
+  }
+ 
 }
 
 async function sendMessage(messageText: string): Promise<void> {
@@ -378,17 +323,11 @@ async function sendMessage(messageText: string): Promise<void> {
 
 onMounted((): void => {
   fetch()
-  setupSocketListener()
-  socketSyncInterval.value = setInterval((): void => {
-    setupSocketListener()
-  }, 200)
+  startSocketSync(200)
 })
 
 onUnmounted((): void => {
-  if (socketSyncInterval.value) {
-    clearInterval(socketSyncInterval.value)
-    socketSyncInterval.value = null
-  }
+  stopSocketSync()
   removeSocketListener()
 })
 

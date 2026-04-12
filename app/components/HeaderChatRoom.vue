@@ -17,8 +17,16 @@
             <p class="font-semibold truncate">
               {{ item.nickname || item.username }}
             </p>
-            <p class="text-sm text-gray-500 truncate">
+            <p
+              v-if="item.isOnline"
+              class="text-xs text-green-500 flex items-center gap-1">
+              <span class="h-2 w-2 bg-green-500 rounded-full" />
               Online
+            </p>
+            <p
+              v-else
+              class="text-xs text-gray-500">
+              ใช้งานเมื่อ {{ dayjs(item.lastOnlineAt).fromNow() }}
             </p>
           </div>
         </div>
@@ -29,9 +37,15 @@
 </template>
 
 <script setup lang="ts">
+import 'dayjs/locale/th'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
 import type { IUserProvider } from '~/resource/provider/User.provider'
 import UserProvider from '~/resource/provider/User.provider'
+
+dayjs.extend(relativeTime)
+dayjs.locale('th')
 
 const items = ref<IFindOneCurrentUserData[]>([])
 const { $handleLoading } = useNuxtApp()
