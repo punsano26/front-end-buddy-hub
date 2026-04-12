@@ -10,6 +10,8 @@ export interface IFindOneCurrentUserData {
   email: string
   createdAt: string
   isVerified: boolean
+  isOnline: boolean
+  lastOnlineAt: string
   age: number
   gender: string
   dateOfBirth: string
