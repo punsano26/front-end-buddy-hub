@@ -34,8 +34,11 @@
       </p>
     </div>
     <div class="flex justify-center items-center gap-2 mt-2 p-4">
-      <Button class="w-full bg-gradient-to-r from-sky-500 to-pink-600 border-none text-black! enabled:hover:from-sky-600 enabled:hover:to-pink-700 active:from-sky-400 active:to-pink-500">
-        เพิ่มเพื่อน
+      <Button
+        :disabled="isSentRequest"
+        class="w-full bg-gradient-to-r from-sky-500 to-pink-600 border-none text-black! enabled:hover:from-sky-600 enabled:hover:to-pink-700 active:from-sky-400 active:to-pink-500 disabled:opacity-60 disabled:cursor-not-allowed"
+        @click="onClickAddFriend(value.id)">
+        {{ isSentRequest ? 'ส่งคำขอแล้ว' : 'เพิ่มเพื่อน' }}
       </Button>
       <Button
         class="w-full bg-gray-800! border-none enabled:hover:bg-gray-900"
@@ -52,10 +55,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
+import type { IFriendProvider } from '~/resource/provider/Friend.provider'
+import FriendProvider from '~/resource/provider/Friend.provider'
 import Dialog from '~/volt/Dialog.vue'
 
+const friendService: IFriendProvider = new FriendProvider()
 const visible = ref(false)
 const router = useRouter()
+const isSentRequest = ref(false)
+const statusSentRequest = ref<'null' | 'pending' | 'accept'>('null')
 defineProps<{
   value: IFindOneCurrentUserData
 }>()
@@ -66,6 +74,25 @@ function onClickUserDetail (userId: number): void {
 
 function onClickToOpenChat (userId: number): void {
   router.push({ name: 'public-chat-id', params: { id: userId } })
+}
+
+
+const isSubmitting = ref(false)
+
+async function onClickAddFriend (friendId: number): Promise<void> {
+  if (isSubmitting.value || statusSentRequest.value !== 'null') return
+
+  isSubmitting.value = true
+
+  try {
+    await friendService.sendAFriendRequest({ friendId })
+
+    statusSentRequest.value = 'pending'
+  } catch (error) {
+    console.error(error)
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
