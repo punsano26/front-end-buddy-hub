@@ -5,8 +5,6 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
   // Tokens are stored in localStorage, so skip auth checks during SSR.
   if (import.meta.server) return
 
-  const TOKEN_REFRESH_BUFFER_MS = 60 * 1000
-
   const authService: IAuthProvider = new AuthProvider()
   const authStore = useAuthStore()
 
@@ -27,8 +25,8 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
 
   const isProtectedPath = !isAuthPath && !isPublicHome && !isLandingPage
 
-  // 🔄 Refresh token only on protected pages when current token is close to expiring.
-  if (hasTokenData && isProtectedPath && shouldRefreshToken()) {
+  // 🔄 Refresh token only on protected pages.
+  if (hasTokenData && isProtectedPath) {
     const isRefreshSuccess = await tryRefreshToken()
 
     if (!isRefreshSuccess) {
@@ -60,27 +58,10 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
 
       authStore.userToken.accessToken = persistedToken.accessToken || ''
       authStore.userToken.refreshToken = persistedToken.refreshToken || ''
-      authStore.userToken.tokenExpireIn = normalizeTokenExpireIn(persistedToken.tokenExpireIn)
+      authStore.userToken.tokenExpireIn = persistedToken.tokenExpireIn ?? null
     } catch {
       // Ignore invalid persisted format and continue with current store state.
     }
-  }
-
-  function shouldRefreshToken (): boolean {
-    const tokenExpireIn = authStore.userToken.tokenExpireIn
-
-    if (tokenExpireIn === null) return false
-
-    return tokenExpireIn <= Date.now() + TOKEN_REFRESH_BUFFER_MS
-  }
-
-  function normalizeTokenExpireIn (tokenExpireIn: unknown): number | null {
-    if (tokenExpireIn === null || tokenExpireIn === undefined) {
-      return null
-    }
-
-    const parsedTokenExpireIn = Number(tokenExpireIn)
-    return Number.isFinite(parsedTokenExpireIn) ? parsedTokenExpireIn : null
   }
 
   async function resetToken (): Promise<void> {
@@ -94,7 +75,7 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
 
     authStore.userToken.accessToken = response.accessToken
     authStore.userToken.refreshToken = response.refreshToken
-    authStore.userToken.tokenExpireIn = normalizeTokenExpireIn(response.tokenExpireIn)
+    authStore.userToken.tokenExpireIn = response.tokenExpireIn
   }
 
   async function tryRefreshToken (): Promise<boolean> {
