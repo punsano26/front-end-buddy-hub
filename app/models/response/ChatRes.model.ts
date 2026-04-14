@@ -13,6 +13,22 @@ export interface ICreateMessageData {
   deletedAt: string
 }
 
+export interface IFindAllUnreadMessagesData {
+  unreadCount: number
+}
+
+export interface IFindAllConversationsList {
+  id: number
+  username: string
+  nickname: string | null
+  isOnline: boolean
+  lastMessage: string
+  createdAt: string
+  messageType: chatEnum
+}
+
 export type ICreateMessageResponse = IApiResponse<ICreateMessageData>
+export type IFindAllUnreadMessagesResponse = IApiResponse<IFindAllUnreadMessagesData>
 
 export interface IFindOneMessagePaginateResponse extends IBasePaginationResponse<ICreateMessageData> {}
+export interface IFindAllConversationsPaginateResponse extends IBasePaginationResponse<IFindAllConversationsList> {}
