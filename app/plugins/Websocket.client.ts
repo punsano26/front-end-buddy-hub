@@ -1,11 +1,14 @@
 import { watch } from 'vue'
+import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
 import { useAuthStore } from '~/stores/Auth'
 import { useChatStore } from '~/stores/Chat'
+import { useFriendStore } from '~/stores/Friend'
 import { useUserStore } from '~/stores/User'
 
 export default defineNuxtPlugin((): any => {
   const authStore = useAuthStore()
   const chatStore = useChatStore()
+  const friendStore = useFriendStore()
 
   let ws: (WebSocket & { __manualClose?: boolean }) | null = null
 
@@ -26,6 +29,15 @@ export default defineNuxtPlugin((): any => {
       const data = JSON.parse(event.data)
       const userStore = useUserStore()
       const currentUserId = authStore.user.id
+
+      const toNumber = (value: unknown): number | null => {
+        if (typeof value === 'number' && Number.isFinite(value)) return value
+        if (typeof value === 'string') {
+          const parsed = Number(value)
+          return Number.isFinite(parsed) ? parsed : null
+        }
+        return null
+      }
 
       const isChatMessageLike = (value: unknown): value is { id: number, receiverId: number, isRead?: boolean } => {
         if (!value || typeof value !== 'object') return false
@@ -57,7 +69,7 @@ export default defineNuxtPlugin((): any => {
         const message = data.data
 
         if (isChatMessageLike(message) && message.receiverId === currentUserId && !message.isRead) {
-          chatStore.addUnreadMessageId(message.id)
+          chatStore.addUnreadMessageId(message.id, currentUserId)
         }
       }
 
@@ -66,7 +78,7 @@ export default defineNuxtPlugin((): any => {
           ? data.data.messageIds as number[]
           : []
 
-        chatStore.removeUnreadMessageIds(messageIds)
+        chatStore.removeUnreadMessageIds(messageIds, currentUserId)
       }
 
       if (data.event === 'chat:message_deleted_sender' || data.event === 'chat:message_deleted_receiver') {
@@ -75,7 +87,53 @@ export default defineNuxtPlugin((): any => {
           : null
 
         if (messageId !== null) {
-          chatStore.removeUnreadMessageId(messageId)
+          chatStore.removeUnreadMessageId(messageId, currentUserId)
+        }
+      }
+
+      if (data.event === 'friend:request_sender') {
+        const payload = data?.data ?? data
+        const requesterId = toNumber(payload?.requesterId)
+        const receiverId = toNumber(payload?.receiverId)
+
+        if (requesterId === currentUserId && receiverId) {
+          friendStore.markOutgoingPending(receiverId)
+        }
+      }
+
+      if (data.event === 'friend:request_receiver') {
+        const payload = data?.data ?? data
+        const requesterId = toNumber(payload?.requesterId)
+        const receiverId = toNumber(payload?.receiverId)
+
+        // Receiver event is listened with exact backend name for realtime extension points.
+        if (receiverId === currentUserId && requesterId) {
+          friendStore.markIncomingPending(requesterId)
+        }
+      }
+
+      if (data.event === 'friend:request_accepted' || data.event === 'friend:request_rejected') {
+        const payload = data?.data ?? data
+        const requesterId = toNumber(payload?.requesterId)
+        const receiverId = toNumber(payload?.receiverId)
+        const status = payload?.status as FriendRequestStatusEnum | undefined
+
+        if (!currentUserId || !requesterId || !receiverId) return
+
+        const relatedFriendId = requesterId === currentUserId
+          ? receiverId
+          : receiverId === currentUserId
+            ? requesterId
+            : null
+
+        if (!relatedFriendId) return
+
+        if (status === FriendRequestStatusEnum.ACCEPTED || data.event === 'friend:request_accepted') {
+          friendStore.markRequestAccepted(relatedFriendId)
+        }
+
+        if (status === FriendRequestStatusEnum.REJECTED || data.event === 'friend:request_rejected') {
+          friendStore.markRequestRejected(relatedFriendId)
         }
       }
     }
@@ -95,12 +153,17 @@ export default defineNuxtPlugin((): any => {
   }
 
   watch((): string => authStore.userToken.accessToken, (token: string): void => {
+    if (token) {
+      chatStore.setActiveUserId(authStore.user.id)
+    }
+
     if (token && (!ws || ws.readyState === WebSocket.CLOSED)) {
       connect()
     }
 
     if (!token) {
-      chatStore.resetUnread()
+      chatStore.setActiveUserId(null)
+      friendStore.resetRealtime()
     }
   }, { immediate: true })
 

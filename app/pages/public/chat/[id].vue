@@ -191,7 +191,7 @@ async function markMessagesAsRead (): Promise<void> {
       return message
     })
 
-    chatStore.removeUnreadMessageIds(unreadMessageIds)
+    chatStore.removeUnreadMessageIds(unreadMessageIds, currentUserId)
   } finally {
     isMarkingRead.value = false
   }
