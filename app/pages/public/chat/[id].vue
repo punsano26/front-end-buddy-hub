@@ -192,6 +192,7 @@ async function markMessagesAsRead (): Promise<void> {
     })
 
     chatStore.removeUnreadMessageIds(unreadMessageIds, currentUserId)
+    chatStore.setConversationUnreadCount(targetUserId, 0, currentUserId)
   } finally {
     isMarkingRead.value = false
   }
@@ -293,6 +294,7 @@ async function onSendMessage (): Promise<void> {
      const response = await chatService.createMessage(payload)
   if (response.data) {
     upsertMessage(response.data)
+    chatStore.pushConversationActivityFromMessage(response.data, authStore.user.id)
   }
   form.value.messageText = ''
   } catch (error: TErrorResponse) {
