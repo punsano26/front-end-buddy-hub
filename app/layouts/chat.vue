@@ -1,13 +1,13 @@
 <template>
-  <div class="flex flex-col h-screen">
-    <tools-bar />
-    <div class="flex flex-1 overflow-hidden">
+  <div class="flex min-h-screen h-dvh flex-col overflow-hidden">
+    <tools-bar class="shrink-0" />
+    <div class="flex flex-1 min-h-0 overflow-hidden">
       <sidebar-chat
         :class="isChatIndex ? 'w-full block md:w-80 md:block' : 'hidden md:w-80 md:block'"
-        class="border-r border-gray-800" />
+        class="h-full min-h-0 overflow-hidden border-r border-gray-800" />
       <div
         :class="isChatIndex ? 'hidden md:block' : 'block'"
-        class="flex-1 overflow-auto">
+        class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
         <slot />
       </div>
     </div>

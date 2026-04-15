@@ -1,12 +1,24 @@
 import HttpRequest from '../HttpRequest'
-import type { ICreateMessagePayload, IFindOneMessagePaginateQuery, IUpdateMessagePayload } from '~/models/request/ChatReq.model'
+import type {
+  ICreateMessagePayload,
+  IFindAllConversationsPaginateQuery,
+  IFindOneMessagePaginateQuery,
+  IUpdateMessagePayload
+} from '~/models/request/ChatReq.model'
 import type { IFriendsIdRequest, TBaseParamsId } from '~/models/request/Request.model'
-import type { ICreateMessageResponse, IFindOneMessagePaginateResponse } from '~/models/response/ChatRes.model'
+import type {
+  ICreateMessageResponse,
+  IFindAllConversationsPaginateResponse,
+  IFindAllUnreadMessagesResponse,
+  IFindOneMessagePaginateResponse
+} from '~/models/response/ChatRes.model'
 import type { IMessageResponse } from '~/models/response/Response.model'
 
 export interface IChatProvider {
   createMessage (payload: ICreateMessagePayload): Promise<ICreateMessageResponse>
   findOneMessagePaginate (query: IFindOneMessagePaginateQuery): Promise<IFindOneMessagePaginateResponse>
+  findAllConversationsPaginate (query: IFindAllConversationsPaginateQuery): Promise<IFindAllConversationsPaginateResponse>
+  findAllUnreadMessages (id: TBaseParamsId): Promise<IFindAllUnreadMessagesResponse>
   updateMessage (payload: IUpdateMessagePayload): Promise<IMessageResponse>
   deleteMessage (id: TBaseParamsId): Promise<IMessageResponse>
   markMessagesAsRead (payload: IFriendsIdRequest): Promise<IMessageResponse>
@@ -42,6 +54,18 @@ class ChatProvider extends HttpRequest implements IChatProvider {
   public async markMessagesAsRead (payload: IFriendsIdRequest): Promise<IMessageResponse> {
     this.setUserAuthHeader()
     const response = await this.patch(`${this.urlPrefix}/read`, payload)
+    return response
+  }
+
+  public async findAllConversationsPaginate (query: IFindAllConversationsPaginateQuery): Promise<IFindAllConversationsPaginateResponse> {
+    this.setUserAuthHeader()
+    const response = await this.get(`${this.urlPrefix}/conversations`, query)
+    return response
+  }
+
+  public async findAllUnreadMessages (id: TBaseParamsId): Promise<IFindAllUnreadMessagesResponse> {
+    this.setUserAuthHeader()
+    const response = await this.get(`${this.urlPrefix}/unread/${id}`)
     return response
   }
 }

@@ -1,7 +1,7 @@
 <template>
-  <div class="h-full flex flex-col overflow-hidden">
+  <div class="h-full min-h-0 flex flex-col overflow-hidden">
     <HeaderChatRoom class="shrink-0" />
-    <div class="flex-1 overflow-y-auto p-4">
+    <div class="flex-1 min-h-0 overflow-y-auto p-4">
       <div class="flex flex-col gap-4">
         <div
           v-for="chat in orderedChatData"
@@ -192,6 +192,7 @@ async function markMessagesAsRead (): Promise<void> {
     })
 
     chatStore.removeUnreadMessageIds(unreadMessageIds, currentUserId)
+    chatStore.setConversationUnreadCount(targetUserId, 0, currentUserId)
   } finally {
     isMarkingRead.value = false
   }
@@ -293,6 +294,7 @@ async function onSendMessage (): Promise<void> {
      const response = await chatService.createMessage(payload)
   if (response.data) {
     upsertMessage(response.data)
+    chatStore.pushConversationActivityFromMessage(response.data, authStore.user.id)
   }
   form.value.messageText = ''
   } catch (error: TErrorResponse) {

@@ -15,4 +15,7 @@ export interface IUpdateMessagePayload {
 
 export interface IFindOneMessageFilters {}
 
+export interface IFindAllConversationsFilters {}
+
 export interface IFindOneMessagePaginateQuery extends IBasePaginationRequest, IFindOneMessageFilters, IFriendsIdRequest {}
+export interface IFindAllConversationsPaginateQuery extends IBasePaginationRequest, IFindAllConversationsFilters {}
