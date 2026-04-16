@@ -24,7 +24,7 @@
     --p-surface-800: #27272a;
     --p-surface-900: #18181b;
     --p-surface-950: #09090b;
-    --p-gradient-primary: linear-gradient(90deg, #39c6d6 0%, #6f8fe8 55%, #8a63db 100%);
+    --p-gradient-primary: linear-gradient(150deg, #39c6d6 0%, #6f8fe8 55%, #8a63db 100%);
     --p-content-border-radius: 6px;
 }
 
