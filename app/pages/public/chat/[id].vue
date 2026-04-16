@@ -1,7 +1,7 @@
 <template>
   <div class="h-full min-h-0 flex flex-col overflow-hidden">
     <HeaderChatRoom class="shrink-0" />
-    <div class="flex-1 min-h-0 overflow-y-auto p-4">
+    <div ref="chatScrollContainer" class="flex-1 min-h-0 overflow-y-auto p-4">
       <div class="flex flex-col gap-4">
         <div
           v-for="chat in orderedChatData"
@@ -84,6 +84,7 @@ const isEditingMessage = computed((): boolean => editingMessageId.value !== null
 const isSubmittingMessage = ref(false)
 const sendError = ref('')
 const isMarkingRead = ref(false)
+const chatScrollContainer = ref<HTMLElement | null>(null)
 const orderedChatData = computed((): ICreateMessageData[] => {
   return [...chatData.value].sort((a: ICreateMessageData, b: ICreateMessageData): number => {
     const aTime = Number(new Date(a.createdAt))
@@ -91,6 +92,12 @@ const orderedChatData = computed((): ICreateMessageData[] => {
     return aTime - bTime
   })
 })
+
+async function scrollToBottom (): Promise<void> {
+  await nextTick()
+  if (!chatScrollContainer.value) return
+  chatScrollContainer.value.scrollTop = chatScrollContainer.value.scrollHeight
+}
 
 
 function getMessageMenuItems (message: ICreateMessageData): IItems[] {
@@ -242,6 +249,8 @@ const {
     if (message.senderId === id.value && message.receiverId === authStore.user.id) {
       void markMessagesAsRead()
     }
+
+    void scrollToBottom()
   },
   onMessagesRead: (messageIds: number[]): void => {
     chatData.value = chatData.value.map((message: ICreateMessageData): ICreateMessageData => {
@@ -279,6 +288,7 @@ async function useFetch (): Promise<void> {
   chatData.value = response.data || []
   pagination.value = extractPagination(response)
   await markMessagesAsRead()
+  await scrollToBottom()
 }
 function fetch (): void {
   $handleLoading(useFetch)
@@ -295,6 +305,7 @@ async function onSendMessage (): Promise<void> {
   if (response.data) {
     upsertMessage(response.data)
     chatStore.pushConversationActivityFromMessage(response.data, authStore.user.id)
+    await scrollToBottom()
   }
   form.value.messageText = ''
   } catch (error: TErrorResponse) {
