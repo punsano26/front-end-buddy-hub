@@ -22,5 +22,16 @@ export interface IFindAllRequestList {
   responseAt: string | Date | null
 }
 
+export interface IFindAllFriendList {
+  id: number
+  username: string
+  nickname: string
+  profileImg: string
+  isOnline: boolean
+  lastOnlineAt: string
+}
+
 export type ISendAFriendRequestResponse = IApiResponse<ISendAFriendRequestData>
 export interface IFindAllRequestPaginateResponse extends IBasePaginationResponse<IFindAllRequestList> {}
+
+export interface IFindAllFriendPaginateResponse extends IBasePaginationResponse<IFindAllFriendList> {}
