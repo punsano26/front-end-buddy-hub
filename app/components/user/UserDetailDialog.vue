@@ -74,7 +74,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
-import type { IFindAllRequestList } from '~/models/response/FriendRes.model'
+import type { IFindAllFriendList, IFindAllRequestList } from '~/models/response/FriendRes.model'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
 import type { IFriendProvider } from '~/resource/provider/Friend.provider'
 import FriendProvider from '~/resource/provider/Friend.provider'
@@ -173,7 +173,7 @@ function onClickToOpenChat (userId: number): void {
 
 
 async function onClickAddFriend (friendId: number): Promise<void> {
-  if (isSubmitting.value || isFriendRequestSent.value) return
+  if (isSubmitting.value || isFriendRequestSent.value || isFriendAccepted.value) return
 
   isSubmitting.value = true
   try {
@@ -236,10 +236,54 @@ async function getRequestList (): Promise<void> {
 
   items.value = response?.data || []
 
-  if (hasIncomingPendingRequest.value) {
+  const currentUserId = authStore.user.id
+  const relatedRequests = currentUserId
+    ? items.value.filter((request: IFindAllRequestList): boolean => {
+      return (request.requesterId === props.value.id && request.receiverId === currentUserId)
+        || (request.requesterId === currentUserId && request.receiverId === props.value.id)
+    })
+    : []
+
+  const hasAcceptedRequest = relatedRequests.some((request: IFindAllRequestList): boolean => {
+    return request.status === FriendRequestStatusEnum.ACCEPTED
+  })
+  const hasIncomingPending = relatedRequests.some((request: IFindAllRequestList): boolean => {
+    return request.status === FriendRequestStatusEnum.PENDING && request.receiverId === currentUserId
+  })
+  const hasOutgoingPending = relatedRequests.some((request: IFindAllRequestList): boolean => {
+    return request.status === FriendRequestStatusEnum.PENDING && request.requesterId === currentUserId
+  })
+
+  let isAlreadyFriend = hasAcceptedRequest
+
+  if (!isAlreadyFriend && props.value.username) {
+    try {
+      const friendsResponse = await friendService.findAllFriendPaginate({
+        page: 1,
+        limit: 20,
+        search: props.value.username
+      })
+
+      const friends = friendsResponse?.data || []
+      isAlreadyFriend = friends.some((friend: IFindAllFriendList): boolean => {
+        return friend.id === props.value.id || friend.username === props.value.username
+      })
+    } catch {
+      // Keep best-effort relationship state from request list when friend list request fails.
+    }
+  }
+
+  if (isAlreadyFriend) {
+    friendStore.markRequestAccepted(props.value.id)
+  } else if (hasIncomingPending) {
     friendStore.markIncomingPending(props.value.id)
+    friendStore.clearOutgoingPending(props.value.id)
+  } else if (hasOutgoingPending) {
+    friendStore.markOutgoingPending(props.value.id)
+    friendStore.clearIncomingPending(props.value.id)
   } else {
     friendStore.clearIncomingPending(props.value.id)
+    friendStore.clearOutgoingPending(props.value.id)
   }
 
   pagination.value = extractPagination(response)
