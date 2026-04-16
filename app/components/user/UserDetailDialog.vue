@@ -60,7 +60,7 @@
         }}
       </Button>
       <Button
-        class="w-full bg-gray-800! border-none enabled:hover:bg-gray-900"
+        class="w-full bg-gray-800! text-white border-none enabled:hover:bg-gray-900"
         @click="onClickToOpenChat(value.id)">
         แชท
       </Button>
