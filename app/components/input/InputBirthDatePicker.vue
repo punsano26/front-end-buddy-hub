@@ -63,7 +63,11 @@ const props = withDefaults(defineProps<IProps>(), {
 })
 watch(dateOfBirthDate, (newDate: Date | null): void => {
   if (newDate) {
-    model.value = newDate.toISOString().split('T')[0] || ''
+    const year = newDate.getFullYear()
+    const month = String(newDate.getMonth() + 1).padStart(2, '0')
+    const day = String(newDate.getDate()).padStart(2, '0')
+
+    model.value = `${year}-${month}-${day}`
   } else {
     model.value = ''
   }
