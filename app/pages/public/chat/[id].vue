@@ -9,30 +9,26 @@
           :class="isOwnMessage(chat) ? 'flex justify-end' : 'flex'"
           class="group"
         >
-          <div class="flex flex-col max-w-[70%]">
-            <div class="flex items-center">
-              <DotMenu
-                v-if="isOwnMessage(chat)"
-                :items="getMessageMenuItems(chat)"
-                :message-id="chat.id"
-                class="opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                />
-              <div
-                class="flex flex-col gap-1 p-3 rounded-2xl shadow-sm"
-                :class="
-                  isOwnMessage(chat)
-                    ? 'bg-gradient-primary text-black rounded-br-md'
-                    : 'bg-white text-gray-800 rounded-bl-md border border-gray-200'
-                "
-              >
-                <p class="text-sm">{{ chat.messageText }}</p>
-                <div class="flex items-center gap-1">
-                  <p class="text-xs text-gray-500">{{ dayjs(chat.createdAt).format('hh:mm A') }}</p>
-                  <i v-if="isOwnMessage(chat)"  :class="chat.isRead ? 'text-green-600 pi pi-check-circle text-[10px]' : 'text-gray-600 pi pi-circle-off text-[10px]'"></i>
-                </div>
-                </div>
-            </div>
-          </div>
+          <div class="flex flex-col max-w-[70%] min-w-0">
+  <div class="flex items-center min-w-0">
+    <div
+      class="flex flex-col gap-1 p-3 rounded-2xl shadow-sm max-w-full break-words"
+      :class="isOwnMessage(chat)
+        ? 'bg-gradient-primary text-black rounded-br-md'
+        : 'bg-white text-gray-800 rounded-bl-md border border-gray-200'"
+    >
+      <p class="text-sm break-all whitespace-pre-wrap">
+        {{ chat.messageText }}
+      </p>
+
+      <div class="flex items-center gap-1">
+        <p class="text-xs text-gray-500">
+          {{ dayjs(chat.createdAt).format('hh:mm A') }}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
         </div>
         <div class="text-center text-xs text-red-500"><span >{{ sendError }}</span></div>
       </div>
