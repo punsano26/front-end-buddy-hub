@@ -17,8 +17,8 @@
         <div class="flex items-center gap-3 min-w-0">
 
           <img
-            class="w-10 h-10 rounded-sm object-cover shrink-0"
-            src="/png/upload-profile.png">
+            :src="props.conversation.profileImg || '/png/upload-profile.png'"
+            class="w-10 h-10 rounded-sm object-cover shrink-0">
 
           <div class="flex-1 min-w-0 overflow-hidden pr-2">
 
