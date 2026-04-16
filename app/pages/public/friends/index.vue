@@ -13,7 +13,8 @@
         <p class="text-sm text-gray-300">({{ itemsUserFriends.length }})</p>
         </div>
         <div class="w-full sm:w-auto">
-          <InputSearch/>
+          <InputSearch v-model="search"
+          @search="onSearch()"/>
         </div>
       </div>
       <!-- User List -->
@@ -30,35 +31,39 @@
 
 <script setup lang="ts">
 import InputSearch from '~/components/input/InputSearch.vue'
+import type { IFindAllFriendList } from '~/models/response/FriendRes.model'
+import type { IFriendProvider } from '~/resource/provider/Friend.provider'
+import FriendProvider from '~/resource/provider/Friend.provider'
 
 definePageMeta({ layout: "navbar" });
 
-const itemsUserFriends = ref<any[]>([
-  {
-    id: 1,
-    imageUrl: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png',
-    username: 'น้องใหม่',
-    description: 'เพิ่งเข้ามาใหม่ๆ ยังไม่มีอะไรเลย'
-  },
-  {
-    id: 2,
-    imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6D_mVwn1iQvRHsHN3YkN7H3llkUKKaxV7MO-WBNzsuA&s',
-    username: 'เพื่อนเก่า',
-    description: 'เป็นเพื่อนกันมานานแล้ว'
-  },
-  {
-    id: 3,
-    imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQMSNNWXH68XyeW2OcHhSYKi4QoZxBCoLqGMPPkfckW9g&s',
-    username: 'เพื่อนสนิท',
-    description: 'เป็นเพื่อนที่สนิทมากๆ'
-  },
-  {
-    id: 4,
-    imageUrl: 'https://wallpaperaccess.com/full/4595683.jpg',
-    username: 'เพื่อนร่วมงาน',
-    description: 'เป็นเพื่อนที่ทำงานด้วยกัน'
-  }
-])
+const itemsUserFriends = ref<IFindAllFriendList[]>([])
+const { search, pagination, extractPagination } = usePagination()
+const { $handleLoading } = useNuxtApp()
+const friendService: IFriendProvider = new FriendProvider()
+
+async function useFetch  (): Promise<void> {
+  const response = await friendService.findAllFriendPaginate({
+    page: pagination.value.page,
+    limit: pagination.value.limit,
+    search: search.value,
+  })
+  itemsUserFriends.value = response.data || []
+  extractPagination(response)
+}
+
+function fetch (): void {
+  $handleLoading(useFetch)
+}
+
+onMounted((): void => {
+  fetch()
+})
+
+function onSearch (): void {
+  pagination.value.page = 1
+  fetch()
+}
 </script>
 
 <style scoped>
