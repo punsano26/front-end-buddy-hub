@@ -23,6 +23,7 @@ export interface IFindAllConversationsList {
   nickname: string | null
   isOnline: boolean
   lastMessage: string
+  profileImg: string
   createdAt: string
   messageType: chatEnum
 }
