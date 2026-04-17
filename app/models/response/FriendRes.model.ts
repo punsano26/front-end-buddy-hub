@@ -10,6 +10,10 @@ export interface ISendAFriendRequestData {
   responseAt: string | null
 }
 
+export interface IRemoveFriendData {
+  count: number
+}
+
 export interface IFindAllRequestList {
   id: number
   requesterId: number
@@ -32,6 +36,7 @@ export interface IFindAllFriendList {
 }
 
 export type ISendAFriendRequestResponse = IApiResponse<ISendAFriendRequestData>
+export type IRemoveFriendResponse = IApiResponse<IRemoveFriendData>
 export interface IFindAllRequestPaginateResponse extends IBasePaginationResponse<IFindAllRequestList> {}
 
 export interface IFindAllFriendPaginateResponse extends IBasePaginationResponse<IFindAllFriendList> {}
