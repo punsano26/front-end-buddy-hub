@@ -218,6 +218,8 @@ const changeIconGender = computed((): string => {
 const isFriend = computed((): boolean => {
   if (isOwnProfile.value) return false
 
+  if (friendStore.isRemoved(targetUserId.value)) return false
+
   return friendStore.getResolvedStatus(targetUserId.value) === FriendRequestStatusEnum.ACCEPTED
 })
 

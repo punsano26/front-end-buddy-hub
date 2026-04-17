@@ -76,12 +76,12 @@ export default defineNuxtPlugin((): any => {
   }
 
   const connect = (): void => {
-    const token = authStore.userToken.accessToken
+    const userId = authStore.user.id
 
-    if (!token) return
+    if (!userId) return
 
     ws = new WebSocket(
-      `${import.meta.env.VITE_ENV_BASE_WS_API}?token=${token}`
+      `${import.meta.env.VITE_ENV_BASE_WS_API}?userId=${userId}`
     ) as WebSocket & { __manualClose?: boolean }
 
     ws.onopen = (): void => {
@@ -229,6 +229,16 @@ export default defineNuxtPlugin((): any => {
         if (status === FriendRequestStatusEnum.REJECTED || data.event === 'friend:request_rejected') {
           friendStore.markRequestRejected(relatedFriendId)
         }
+      }
+
+      if (data.event === 'friend:removed') {
+        const payload = data?.data ?? data
+        const removedFriendId = toNumber(payload?.friendId)
+          ?? toNumber(payload?.userId)
+
+        if (!currentUserId || !removedFriendId || removedFriendId === currentUserId) return
+
+        friendStore.markFriendRemoved(removedFriendId)
       }
     }
 
