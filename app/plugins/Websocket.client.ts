@@ -164,7 +164,11 @@ export default defineNuxtPlugin((): any => {
           ? data.data.messageIds as number[]
           : []
 
-        chatStore.removeUnreadMessageIds(messageIds, currentUserId)
+        const friendId = toNumber(data?.data?.friendId)
+          ?? toNumber(data?.data?.senderId)
+          ?? toNumber(data?.data?.receiverId)
+
+        chatStore.removeUnreadMessageIds(messageIds, currentUserId, friendId ?? undefined)
       }
 
       if (data.event === 'chat:message_deleted_sender' || data.event === 'chat:message_deleted_receiver') {
@@ -172,8 +176,12 @@ export default defineNuxtPlugin((): any => {
           ? data.data.messageId
           : null
 
+        const friendId = toNumber(data?.data?.friendId)
+          ?? toNumber(data?.data?.senderId)
+          ?? toNumber(data?.data?.receiverId)
+
         if (messageId !== null) {
-          chatStore.removeUnreadMessageId(messageId, currentUserId)
+          chatStore.removeUnreadMessageId(messageId, currentUserId, friendId ?? undefined)
         }
       }
 
