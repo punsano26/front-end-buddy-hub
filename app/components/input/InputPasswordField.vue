@@ -22,7 +22,6 @@
         pt:overlay:class="hidden"
         pt:unmaskicon:class="hidden"
         fluid
-        toggle-mask
         @update:model-value="val => model = val" />
     </slot>
 

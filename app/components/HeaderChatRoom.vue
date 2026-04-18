@@ -9,10 +9,13 @@
           <ButtonBack
             :to="{ name: 'public-chat' }"
             icon="mdi:arrow-left" />
-          <img
-            :src="item.profileImg || '/png/upload-profile.png'"
-            alt="Alice"
-            class="w-10 h-10 rounded-sm object-cover">
+          <NuxtLink
+            :to="{ name: 'public-profile-id', params: { id: item.id } }">
+            <img
+              :src="item.profileImg || '/png/upload-profile.png'"
+              alt="Alice"
+              class="w-10 h-10 rounded-sm object-cover">
+          </NuxtLink>
           <div class="flex-1 min-w-0">
             <p class="font-semibold truncate">
               {{ item.nickname || item.username }}
