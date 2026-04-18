@@ -12,7 +12,7 @@
           <div class="flex flex-col max-w-[70%] min-w-0">
             <div class="flex items-center min-w-0">
               <DotMenu
-                v-if="isOwnMessage(chat)"
+                v-if="isOwnMessage(chat) && !isMessagePending(chat)"
                 :items="getMessageMenuItems(chat)"
                 :message-id="chat.id"
                 class="opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0"
@@ -35,7 +35,11 @@
                     {{ dayjs(chat.createdAt).format("hh:mm A") }}
                   </p>
                   <i
-                    v-if="isOwnMessage(chat)"
+                    v-if="isOwnMessage(chat) && isMessagePending(chat)"
+                    class="pi pi-spin pi-spinner text-gray-600 text-[10px]"
+                  />
+                  <i
+                    v-else-if="isOwnMessage(chat)"
                     :class="
                       chat.isRead
                         ? 'text-green-600 pi pi-check-circle text-[10px]'
@@ -64,6 +68,7 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { chatEnum } from '~/models/enums/Chat.enum'
 import type { IItems } from '~/models/Global.model'
 import type { ICreateMessagePayload, IUpdateMessagePayload } from '~/models/request/ChatReq.model'
@@ -72,13 +77,16 @@ import type { TErrorResponse } from '~/models/response/Response.model'
 import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provider'
 import { useAuthStore } from '~/stores/Auth'
 import { useChatStore } from '~/stores/Chat'
+import { type IChatMessageItem, useChatRoomStore } from '~/stores/ChatRoom'
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
+const chatRoomStore = useChatRoomStore();
 const chatService: IChatProvider = new ChatProvider();
 const dayjs = useDayjs();
 const { $handleLoading } = useNuxtApp();
 const { pagination, extractPagination } = usePagination();
+const { messages: chatData, isSubmittingMessage, sendError } = storeToRefs(chatRoomStore);
 const id = computed(() => Number(useRoute().params.id));
 definePageMeta({ layout: "chat" });
 
@@ -93,18 +101,15 @@ const formUpdate = ref<IUpdateMessagePayload>({
   messageText: "",
 });
 
-const chatData = ref<ICreateMessageData[]>([]);
 const editingMessageId = ref<number | null>(null);
 const isEditingMessage = computed(
   (): boolean => editingMessageId.value !== null,
 );
-const isSubmittingMessage = ref(false);
-const sendError = ref("");
 const isMarkingRead = ref(false);
 const chatScrollContainer = ref<HTMLElement | null>(null);
-const orderedChatData = computed((): ICreateMessageData[] => {
+const orderedChatData = computed((): IChatMessageItem[] => {
   return [...chatData.value].sort(
-    (a: ICreateMessageData, b: ICreateMessageData): number => {
+    (a: IChatMessageItem, b: IChatMessageItem): number => {
       const aTime = Number(new Date(a.createdAt));
       const bTime = Number(new Date(b.createdAt));
       return aTime - bTime;
@@ -170,7 +175,7 @@ async function confirmEditMessage(): Promise<void> {
 
     cancelEditMessage();
   } catch (error: TErrorResponse) {
-    sendError.value = error?.message;
+    chatRoomStore.setSendError(error?.message || '');
   }
 }
 async function confirmDeleteMessage(
@@ -188,7 +193,7 @@ async function confirmDeleteMessage(
     }
   } catch (error: TErrorResponse) {
     const errorMessage = error?.message;
-    sendError.value = errorMessage;
+    chatRoomStore.setSendError(errorMessage || '');
   }
 }
 
@@ -240,6 +245,10 @@ function isOwnMessage(message: ICreateMessageData): boolean {
   return message.senderId === authStore.user.id;
 }
 
+function isMessagePending(message: IChatMessageItem): boolean {
+  return !!message.isSending;
+}
+
 function isCurrentConversationMessage(message: ICreateMessageData): boolean {
   const currentUserId = authStore.user.id;
   const targetUserId = id.value;
@@ -260,16 +269,7 @@ function isCurrentConversationMessage(message: ICreateMessageData): boolean {
 function upsertMessage(message: ICreateMessageData): void {
   if (!isCurrentConversationMessage(message)) return;
 
-  const existingIndex = chatData.value.findIndex(
-    (item: ICreateMessageData): boolean => item.id === message.id,
-  );
-
-  if (existingIndex >= 0) {
-    chatData.value[existingIndex] = message;
-    return;
-  }
-
-  chatData.value.push(message);
+  chatRoomStore.upsertMessage(message);
 }
 
 const { removeSocketListener, startSocketSync, stopSocketSync } =
@@ -327,7 +327,7 @@ async function useFetch(): Promise<void> {
     page: pagination.value.page,
     limit: pagination.value.limit,
   });
-  chatData.value = response.data || [];
+  chatRoomStore.setMessages(response.data || []);
   pagination.value = extractPagination(response);
   await markMessagesAsRead();
   await scrollToBottom();
@@ -335,46 +335,25 @@ async function useFetch(): Promise<void> {
 function fetch(): void {
   $handleLoading(useFetch);
 }
-async function onSendMessage(): Promise<void> {
-  if (!form.value.messageText.trim()) return;
-  const payload = {
-    receiverId: form.value.receiverId,
-    messageType: form.value.messageType,
-    messageText: form.value.messageText.trim(),
-  };
-  try {
-    const response = await chatService.createMessage(payload);
-    if (response.data) {
-      upsertMessage(response.data);
-      chatStore.pushConversationActivityFromMessage(
-        response.data,
-        authStore.user.id,
-      );
-      await scrollToBottom();
-    }
-    form.value.messageText = "";
-  } catch (error: TErrorResponse) {
-    sendError.value = error?.message;
-  }
-}
-
 async function sendMessage(messageText: string): Promise<void> {
-  if (isSubmittingMessage.value) return;
-
-  isSubmittingMessage.value = true;
   form.value.messageText = messageText;
 
-  try {
-    if (isEditingMessage.value) {
+  const isSuccess = await chatRoomStore.submitMessage({
+    messageText,
+    receiverId: form.value.receiverId,
+    messageType: form.value.messageType,
+    currentUserId: authStore.user.id,
+    isEditingMessage: isEditingMessage.value,
+    onEditMessage: async (nextMessageText: string): Promise<void> => {
       formUpdate.value.messageId = editingMessageId.value || 0;
-      formUpdate.value.messageText = messageText;
+      formUpdate.value.messageText = nextMessageText;
       await Promise.resolve($handleLoading(confirmEditMessage));
-      return;
-    }
+    },
+    onMessagesUpdated: scrollToBottom,
+  });
 
-    await Promise.resolve($handleLoading(onSendMessage));
-  } finally {
-    isSubmittingMessage.value = false;
+  if (isSuccess && !isEditingMessage.value) {
+    form.value.messageText = "";
   }
 }
 

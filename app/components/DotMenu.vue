@@ -29,6 +29,7 @@ import Menu from '@/volt/Menu.vue'
 import type { IItems } from '~/models/Global.model'
 
 interface IProp {
+  icon?: string
   label?: string
   items?: IItems[]
 }

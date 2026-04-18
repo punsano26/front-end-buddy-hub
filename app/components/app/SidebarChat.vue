@@ -32,13 +32,10 @@ import type { IChatProvider } from '~/resource/provider/Chat.provider'
 import ChatProvider from '~/resource/provider/Chat.provider'
 import { type ILatestConversationActivity, useChatStore } from '~/stores/Chat'
 
-const authStore = useAuthStore()
 const chatService: IChatProvider = new ChatProvider()
 const chatStore = useChatStore()
 const conversations = ref<IFindAllConversationsList[]>([])
 const isFetchingConversations = ref(false)
-const isSyncingUnreadCount = ref(false)
-const unreadPollingInterval = ref<ReturnType<typeof setInterval> | null>(null)
 const { pagination, extractPagination } = usePagination()
 const { $handleLoading } = useNuxtApp()
 
@@ -67,8 +64,6 @@ function applyRealtimeConversationActivity (activity: ILatestConversationActivit
     createdAt: activity.createdAt,
     messageType: activity.messageType
   })
-
-  void syncUnreadCountForConversation(activity.otherUserId)
 }
 
 async function useFetch (): Promise<void> {
@@ -84,92 +79,9 @@ async function useFetch (): Promise<void> {
 
     conversations.value = response.data || []
     extractPagination(response)
-    await useFetchCountUnread()
   } finally {
     isFetchingConversations.value = false
   }
-}
-
-function mapConversationUnreadCounts (
-  entries: Array<{ friendId: number, unreadCount: number }>
-): Record<number, number> {
-  const unreadCounts: Record<number, number> = {}
-
-  entries.forEach((entry: { friendId: number, unreadCount: number }): void => {
-    if (!Number.isFinite(entry.friendId) || entry.friendId <= 0) return
-    if (!Number.isFinite(entry.unreadCount) || entry.unreadCount <= 0) return
-
-    unreadCounts[entry.friendId] = Math.floor(entry.unreadCount)
-  })
-
-  return unreadCounts
-}
-
-async function syncUnreadCountForConversation (friendId: number): Promise<void> {
-  const currentUserId = authStore.user.id
-
-  if (currentUserId <= 0 || friendId <= 0) return
-
-  const response = await chatService.findAllUnreadMessages(friendId)
-  const unreadCount = response.data?.unreadCount ?? 0
-
-  chatStore.setConversationUnreadCount(friendId, unreadCount, currentUserId)
-}
-
-async function useFetchCountUnread (): Promise<void> {
-  const currentUserId = authStore.user.id
-  if (currentUserId <= 0) return
-
-  if (isSyncingUnreadCount.value) return
-
-  if (conversations.value.length === 0) {
-    chatStore.setConversationUnreadCounts({}, currentUserId)
-    return
-  }
-
-  isSyncingUnreadCount.value = true
-
-  try {
-    const snapshotConversations = [...conversations.value]
-    const unreadResults = await Promise.allSettled(
-      snapshotConversations.map((conversation: IFindAllConversationsList): Promise<Awaited<ReturnType<IChatProvider['findAllUnreadMessages']>>> => {
-        return chatService.findAllUnreadMessages(conversation.id)
-      })
-    )
-
-    const unreadEntries = unreadResults.reduce((entries: Array<{ friendId: number, unreadCount: number }>, result: PromiseSettledResult<Awaited<ReturnType<IChatProvider['findAllUnreadMessages']>>>, index: number): Array<{ friendId: number, unreadCount: number }> => {
-      if (result.status !== 'fulfilled') return entries
-
-      const targetConversation = snapshotConversations[index]
-      if (!targetConversation) return entries
-
-      entries.push({
-        friendId: targetConversation.id,
-        unreadCount: result.value.data?.unreadCount ?? 0
-      })
-
-      return entries
-    }, [])
-
-    chatStore.setConversationUnreadCounts(mapConversationUnreadCounts(unreadEntries), currentUserId)
-  } finally {
-    isSyncingUnreadCount.value = false
-  }
-}
-
-function startUnreadPolling (intervalMs: number = 5000): void {
-  stopUnreadPolling()
-
-  unreadPollingInterval.value = setInterval((): void => {
-    void useFetchCountUnread()
-  }, intervalMs)
-}
-
-function stopUnreadPolling (): void {
-  if (!unreadPollingInterval.value) return
-
-  clearInterval(unreadPollingInterval.value)
-  unreadPollingInterval.value = null
 }
 
 function fetch (): void {
@@ -178,11 +90,6 @@ function fetch (): void {
 
 onMounted((): void => {
   fetch()
-  startUnreadPolling()
-})
-
-onUnmounted((): void => {
-  stopUnreadPolling()
 })
 
 watch((): ILatestConversationActivity | null => chatStore.latestConversationActivity, (activity: ILatestConversationActivity | null): void => {

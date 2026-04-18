@@ -12,6 +12,7 @@ export interface IMenuItem {
   command?: () => void
 }
 export interface IItems {
+  icon?: string
   label: string
   command: () => void
 }

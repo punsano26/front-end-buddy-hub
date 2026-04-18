@@ -3,7 +3,7 @@
     v-model:visible="visible"
     class="sm:w-100 w-9/10"
     header="แก้ไขรายละเอียดโปรไฟล์"
-    pt:root:class=" bg-surface-900! border-none rounded-xl shadow-lg"
+    pt:root:class=" border-none rounded-xl shadow-lg"
     dismissable-mask
     modal>
     <form @submit.prevent="update">

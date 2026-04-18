@@ -37,19 +37,21 @@
       <template v-if="shouldShowFriendRequestActions">
         <Button
           :disabled="isSubmitting"
-          class="w-full bg-emerald-500 border-none text-black!"
+          class="w-full bg-gradient-to-r from-emerald-500 to-green-600 border-none text-white enabled:hover:from-emerald-600 enabled:hover:to-green-700 active:from-emerald-400 active:to-green-500"
+
           @click="onClickAcceptRequest">
           ยอมรับ
         </Button>
         <Button
           :disabled="isSubmitting"
-          class="w-full bg-red-800! border-none enabled:hover:bg-gray-900"
+          class="w-full bg-gradient-to-r from-red-500 to-rose-600 border-none text-white enabled:hover:from-red-600 enabled:hover:to-rose-700 active:from-red-400 active:to-rose-500"
+
           @click="onClickRejectRequest">
           ปฏิเสธ
         </Button>
       </template>
       <Button
-        v-else-if="shouldShowAddFriendButton"
+        v-else-if="shouldShowAddFriendButton && authStore.user.id"
         :disabled="isFriendRequestSent || isSubmitting"
         class="w-full bg-linear-to-r from-sky-500 to-pink-600 border-none text-black!"
         @click="clickAddFriend">
@@ -60,11 +62,14 @@
         }}
       </Button>
       <Button
+        v-if="authStore.user.id"
         class="w-full bg-gray-800! text-white border-none enabled:hover:bg-gray-900"
         @click="onClickToOpenChat(value.id)">
         แชท
       </Button>
-      <Button pt:root:class="w-full bg-transparent border-none text-red-500 enabled:hover:bg-red-500/10 enabled:hover:text-red-700 enabled:active:bg-red-500/20 active:text-red-700">
+      <Button
+        v-if="authStore.user.id"
+        pt:root:class="w-full bg-transparent border-none text-red-500 enabled:hover:bg-red-500/10 enabled:hover:text-red-700 enabled:active:bg-red-500/20 active:text-red-700">
         รายงาน
       </Button>
     </div>
@@ -96,6 +101,10 @@ const props = defineProps<{
 }>()
 
 const isFriendAccepted = computed((): boolean => {
+  if (friendStore.isRemoved(props.value.id)) {
+    return false
+  }
+
   if (friendStore.getResolvedStatus(props.value.id) === FriendRequestStatusEnum.ACCEPTED) {
     return true
   }
@@ -278,12 +287,15 @@ async function getRequestList (): Promise<void> {
   } else if (hasIncomingPending) {
     friendStore.markIncomingPending(props.value.id)
     friendStore.clearOutgoingPending(props.value.id)
+    friendStore.clearResolvedStatus(props.value.id)
   } else if (hasOutgoingPending) {
     friendStore.markOutgoingPending(props.value.id)
     friendStore.clearIncomingPending(props.value.id)
+    friendStore.clearResolvedStatus(props.value.id)
   } else {
     friendStore.clearIncomingPending(props.value.id)
     friendStore.clearOutgoingPending(props.value.id)
+    friendStore.clearResolvedStatus(props.value.id)
   }
 
   pagination.value = extractPagination(response)
