@@ -16,7 +16,10 @@
                 <p class="text-xl font-bold">
                   {{ items?.username }} - {{ items?.nickname }}
                 </p>
-                <i v-if="items?.isVerified === true" class="pi pi-verified text-green-400"></i>
+                <i
+                  v-if="items?.isVerified === true"
+                  class="pi pi-verified text-green-400"
+                ></i>
               </div>
               <p class="text-sm text-surface-500">
                 {{ items?.description }}
@@ -78,19 +81,20 @@
                   <Button
                     :disabled="isSubmitting"
                     size="small"
-                    class="w-full bg-linear-to-r from-gray-800 to-gray-900 border-none text-white enabled:hover:from-gray-900 enabled:hover:to-gray-950 active:from-gray-700 active:to-gray-800"
-                     @click="onClickAcceptRequest"
-                    >
+                    class="w-full bg-gradient-to-r from-emerald-500 to-green-600 border-none text-white enabled:hover:from-emerald-600 enabled:hover:to-green-700 active:from-emerald-400 active:to-green-500"
+                    @click="onClickAcceptRequest"
+                  >
                     <i class="pi pi-check"></i>
-                    ยอมรับคำขอเป็นเพื่อน
+                    ยอมรับ
                   </Button>
                   <Button
                     size="small"
-                    class="w-full bg-linear-to-r from-gray-800 to-gray-900 border-none text-white enabled:hover:from-gray-900 enabled:hover:to-gray-950 active:from-gray-700 active:to-gray-800"
                     :disabled="isSubmitting"
-                    @click="onClickRejectRequest">
+                    class="w-full bg-gradient-to-r from-red-500 to-rose-600 border-none text-white enabled:hover:from-red-600 enabled:hover:to-rose-700 active:from-red-400 active:to-rose-500"
+                    @click="onClickRejectRequest"
+                  >
                     <i class="pi pi-times"></i>
-                    ปฏิเสธคำขอเป็นเพื่อน
+                    ปฏิเสธ
                   </Button>
                 </template>
                 <Button
@@ -109,10 +113,18 @@
                   size="small"
                   class="w-full bg-linear-to-r from-sky-500 to-pink-600 border-none text-black! enabled:hover:from-sky-600 enabled:hover:to-pink-700 active:from-sky-400 active:to-pink-500"
                 >
-                  <i v-if="isSubmitting" class="pi pi-spin pi-spinner text-black!" />
-                  <i v-else-if="isFriendRequestSent" class="pi pi-clock text-surface-500 shrink-0" />
+                  <i
+                    v-if="isSubmitting"
+                    class="pi pi-spin pi-spinner text-black!"
+                  />
+                  <i
+                    v-else-if="isFriendRequestSent"
+                    class="pi pi-clock text-surface-500 shrink-0"
+                  />
                   <i v-else class="pi pi-user-plus"></i>
-                  {{ isFriendRequestSent ? 'คำขอถูกส่งแล้ว' : 'เพิ่มเป็นเพื่อน' }}
+                  {{
+                    isFriendRequestSent ? "คำขอถูกส่งแล้ว" : "เพิ่มเป็นเพื่อน"
+                  }}
                 </Button>
                 <Button
                   size="small"
@@ -154,7 +166,8 @@
       message="คุณแน่ใจว่าต้องการลบเพื่อนหรือไม่?
       คุณจะต้องส่งคำขอเป็นเพื่อนใหม่หากต้องการเป็นเพื่อนกันอีกครั้ง"
       title="คุณต้องการลบเพื่อน ?"
-      @confirm="removeFriend" />
+      @confirm="removeFriend"
+    />
     <UserEditDetailDialog
       :value="items"
       v-model:visible="visible"
@@ -178,140 +191,171 @@ import UserProvider, { type IUserProvider } from '~/resource/provider/User.provi
 import { useAuthStore } from '~/stores/Auth'
 import { useFriendStore } from '~/stores/Friend'
 
-definePageMeta({ layout: 'navbar' })
+definePageMeta({ layout: "navbar" });
 
-const visible = ref(false)
-const userService: IUserProvider = new UserProvider()
-const friendService: IFriendProvider = new FriendProvider()
-const authStore = useAuthStore()
-const friendStore = useFriendStore()
-const { $handleLoading } = useNuxtApp()
-const dayjs = useDayjs()
-const items = ref<IFindOneCurrentUserData>()
-const isLoading = ref<boolean>(true)
-const toast = useToast()
-const isSubmitting = ref(false)
-const id = computed((): number => Number(useRoute().params.id))
-const router = useRouter()
-const dialogOpenConfirmRemoveFriends = ref(false)
+const visible = ref(false);
+const userService: IUserProvider = new UserProvider();
+const friendService: IFriendProvider = new FriendProvider();
+const authStore = useAuthStore();
+const friendStore = useFriendStore();
+const { $handleLoading } = useNuxtApp();
+const dayjs = useDayjs();
+const items = ref<IFindOneCurrentUserData>();
+const isLoading = ref<boolean>(true);
+const toast = useToast();
+const isSubmitting = ref(false);
+const id = computed((): number => Number(useRoute().params.id));
+const router = useRouter();
+const dialogOpenConfirmRemoveFriends = ref(false);
 const targetUserId = computed((): number => {
-  return items.value?.id ?? id.value
-})
+  return items.value?.id ?? id.value;
+});
 
 const isOwnProfile = computed((): boolean => {
-  const currentUserId = authStore.user.id
-  return currentUserId > 0 && targetUserId.value === currentUserId
-})
+  const currentUserId = authStore.user.id;
+  return currentUserId > 0 && targetUserId.value === currentUserId;
+});
 
 const changeIconGender = computed((): string => {
-  if (items.value?.gender === 'male') {
-    return 'pi pi-mars'
+  if (items.value?.gender === "male") {
+    return "pi pi-mars";
   }
 
-  if (items.value?.gender === 'female') {
-    return 'pi pi-venus'
+  if (items.value?.gender === "female") {
+    return "pi pi-venus";
   }
 
-  return 'pi pi-genderless'
-})
+  return "pi pi-genderless";
+});
 
 const isFriend = computed((): boolean => {
-  if (isOwnProfile.value) return false
+  if (isOwnProfile.value) return false;
 
-  if (friendStore.isRemoved(targetUserId.value)) return false
+  if (friendStore.isRemoved(targetUserId.value)) return false;
 
-  return friendStore.getResolvedStatus(targetUserId.value) === FriendRequestStatusEnum.ACCEPTED
-})
+  return (
+    friendStore.getResolvedStatus(targetUserId.value) ===
+    FriendRequestStatusEnum.ACCEPTED
+  );
+});
 
 const hasIncomingPendingRequest = computed((): boolean => {
-  if (isOwnProfile.value) return false
+  if (isOwnProfile.value) return false;
 
-  return friendStore.isIncomingPending(targetUserId.value)
-})
+  return friendStore.isIncomingPending(targetUserId.value);
+});
 
 const isFriendRequestSent = computed((): boolean => {
-  if (isOwnProfile.value) return false
+  if (isOwnProfile.value) return false;
 
-  return friendStore.isOutgoingPending(targetUserId.value)
-})
+  return friendStore.isOutgoingPending(targetUserId.value);
+});
 
 const shouldShowFriendRequestActions = computed((): boolean => {
-  return hasIncomingPendingRequest.value && !isFriend.value
-})
+  return hasIncomingPendingRequest.value && !isFriend.value;
+});
 
 const shouldShowAddFriendButton = computed((): boolean => {
-  return !isOwnProfile.value && !shouldShowFriendRequestActions.value && !isFriend.value
-})
+  return (
+    !isOwnProfile.value &&
+    !shouldShowFriendRequestActions.value &&
+    !isFriend.value
+  );
+});
 
-function syncRelationshipToStore (
+function syncRelationshipToStore(
   friendId: number,
-  options: { isFriend: boolean, hasIncomingPending: boolean, hasOutgoingPending: boolean }
+  options: {
+    isFriend: boolean;
+    hasIncomingPending: boolean;
+    hasOutgoingPending: boolean;
+  },
 ): void {
   if (options.isFriend) {
-    friendStore.markRequestAccepted(friendId)
-    return
+    friendStore.markRequestAccepted(friendId);
+    return;
   }
 
   if (options.hasIncomingPending) {
-    friendStore.markIncomingPending(friendId)
-    friendStore.clearOutgoingPending(friendId)
-    friendStore.clearResolvedStatus(friendId)
-    return
+    friendStore.markIncomingPending(friendId);
+    friendStore.clearOutgoingPending(friendId);
+    friendStore.clearResolvedStatus(friendId);
+    return;
   }
 
   if (options.hasOutgoingPending) {
-    friendStore.markOutgoingPending(friendId)
-    friendStore.clearIncomingPending(friendId)
-    friendStore.clearResolvedStatus(friendId)
-    return
+    friendStore.markOutgoingPending(friendId);
+    friendStore.clearIncomingPending(friendId);
+    friendStore.clearResolvedStatus(friendId);
+    return;
   }
 
-  friendStore.clearIncomingPending(friendId)
-  friendStore.clearOutgoingPending(friendId)
-  friendStore.clearResolvedStatus(friendId)
+  friendStore.clearIncomingPending(friendId);
+  friendStore.clearOutgoingPending(friendId);
+  friendStore.clearResolvedStatus(friendId);
 }
 
-async function syncRelationshipState (): Promise<void> {
-  const currentUserId = authStore.user.id
-  const friendId = targetUserId.value
+async function syncRelationshipState(): Promise<void> {
+  const currentUserId = authStore.user.id;
+  const friendId = targetUserId.value;
 
-  if (!currentUserId || !friendId || currentUserId === friendId) return
+  if (!currentUserId || !friendId || currentUserId === friendId) return;
 
   const requestResponse = await friendService.findAllRequestPaginate({
     page: 1,
-    limit: 100
-  })
+    limit: 100,
+  });
 
-  const requestItems = requestResponse?.data || []
-  const relatedRequests = requestItems.filter((request: IFindAllRequestList): boolean => {
-    return (request.requesterId === friendId && request.receiverId === currentUserId)
-      || (request.requesterId === currentUserId && request.receiverId === friendId)
-  })
+  const requestItems = requestResponse?.data || [];
+  const relatedRequests = requestItems.filter(
+    (request: IFindAllRequestList): boolean => {
+      return (
+        (request.requesterId === friendId &&
+          request.receiverId === currentUserId) ||
+        (request.requesterId === currentUserId &&
+          request.receiverId === friendId)
+      );
+    },
+  );
 
-  const hasAcceptedRequest = relatedRequests.some((request: IFindAllRequestList): boolean => {
-    return request.status === FriendRequestStatusEnum.ACCEPTED
-  })
-  const hasIncomingPending = relatedRequests.some((request: IFindAllRequestList): boolean => {
-    return request.status === FriendRequestStatusEnum.PENDING && request.receiverId === currentUserId
-  })
-  const hasOutgoingPending = relatedRequests.some((request: IFindAllRequestList): boolean => {
-    return request.status === FriendRequestStatusEnum.PENDING && request.requesterId === currentUserId
-  })
+  const hasAcceptedRequest = relatedRequests.some(
+    (request: IFindAllRequestList): boolean => {
+      return request.status === FriendRequestStatusEnum.ACCEPTED;
+    },
+  );
+  const hasIncomingPending = relatedRequests.some(
+    (request: IFindAllRequestList): boolean => {
+      return (
+        request.status === FriendRequestStatusEnum.PENDING &&
+        request.receiverId === currentUserId
+      );
+    },
+  );
+  const hasOutgoingPending = relatedRequests.some(
+    (request: IFindAllRequestList): boolean => {
+      return (
+        request.status === FriendRequestStatusEnum.PENDING &&
+        request.requesterId === currentUserId
+      );
+    },
+  );
 
-  let isAlreadyFriend = hasAcceptedRequest
+  let isAlreadyFriend = hasAcceptedRequest;
 
   if (!isAlreadyFriend && items.value?.username) {
     try {
       const friendsResponse = await friendService.findAllFriendPaginate({
         page: 1,
         limit: 20,
-        search: items.value.username
-      })
+        search: items.value.username,
+      });
 
-      const friends = friendsResponse?.data || []
+      const friends = friendsResponse?.data || [];
       isAlreadyFriend = friends.some((friend: IFindAllFriendList): boolean => {
-        return friend.id === friendId || friend.username === items.value?.username
-      })
+        return (
+          friend.id === friendId || friend.username === items.value?.username
+        );
+      });
     } catch {
       // Best-effort fallback: keep request-based relationship state.
     }
@@ -320,123 +364,147 @@ async function syncRelationshipState (): Promise<void> {
   syncRelationshipToStore(friendId, {
     isFriend: isAlreadyFriend,
     hasIncomingPending,
-    hasOutgoingPending
-  })
+    hasOutgoingPending,
+  });
 }
 
-async function useFetchDetails (): Promise<void> {
-  const response = await userService.findOneUserById(id.value)
-  items.value = response?.data
+async function useFetchDetails(): Promise<void> {
+  const response = await userService.findOneUserById(id.value);
+  items.value = response?.data;
 
-  await syncRelationshipState()
+  await syncRelationshipState();
 }
 
-function fetch (): void {
-  $handleLoading(useFetchDetails, { loadingUnit: isLoading })
+function fetch(): void {
+  $handleLoading(useFetchDetails, { loadingUnit: isLoading });
 }
 
 onMounted(() => {
-  fetch()
-})
+  fetch();
+});
 
-watch((): number => id.value, (): void => {
-  fetch()
-})
+watch(
+  (): number => id.value,
+  (): void => {
+    fetch();
+  },
+);
 
-function onClickToOpenChat (): void {
-  router.push({ name: 'public-chat-id', params: { id: id.value } })
+function onClickToOpenChat(): void {
+  router.push({ name: "public-chat-id", params: { id: id.value } });
 }
 
-async function onClickAcceptRequest (): Promise<void> {
-  if (!targetUserId.value || isSubmitting.value || !hasIncomingPendingRequest.value) return
+async function onClickAcceptRequest(): Promise<void> {
+  if (
+    !targetUserId.value ||
+    isSubmitting.value ||
+    !hasIncomingPendingRequest.value
+  )
+    return;
 
-  isSubmitting.value = true
+  isSubmitting.value = true;
   try {
-    const response = await friendService.acceptFriendRequest(targetUserId.value)
+    const response = await friendService.acceptFriendRequest(
+      targetUserId.value,
+    );
 
     if (response.data?.status === FriendRequestStatusEnum.ACCEPTED) {
-      friendStore.markRequestAccepted(targetUserId.value)
+      friendStore.markRequestAccepted(targetUserId.value);
     }
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false;
   }
 }
 
-async function onClickRejectRequest (): Promise<void> {
-  if (!targetUserId.value || isSubmitting.value || !hasIncomingPendingRequest.value) return
+async function onClickRejectRequest(): Promise<void> {
+  if (
+    !targetUserId.value ||
+    isSubmitting.value ||
+    !hasIncomingPendingRequest.value
+  )
+    return;
 
-  isSubmitting.value = true
+  isSubmitting.value = true;
   try {
-    const response = await friendService.rejectFriendRequest(targetUserId.value)
+    const response = await friendService.rejectFriendRequest(
+      targetUserId.value,
+    );
 
     if (response.data?.status === FriendRequestStatusEnum.REJECTED) {
-      friendStore.markRequestRejected(targetUserId.value)
+      friendStore.markRequestRejected(targetUserId.value);
     }
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false;
   }
 }
 
-async function onClickAddFriend (friendId: number): Promise<void> {
-  if (!friendId || isSubmitting.value || isFriend.value || isFriendRequestSent.value || isOwnProfile.value) return
+async function onClickAddFriend(friendId: number): Promise<void> {
+  if (
+    !friendId ||
+    isSubmitting.value ||
+    isFriend.value ||
+    isFriendRequestSent.value ||
+    isOwnProfile.value
+  )
+    return;
 
-  isSubmitting.value = true
+  isSubmitting.value = true;
   try {
-    const response = await friendService.sendAFriendRequest({ friendId })
-    const status = response.data?.status
+    const response = await friendService.sendAFriendRequest({ friendId });
+    const status = response.data?.status;
 
     if (status === FriendRequestStatusEnum.PENDING) {
-      friendStore.markOutgoingPending(friendId)
+      friendStore.markOutgoingPending(friendId);
     }
 
     if (status === FriendRequestStatusEnum.ACCEPTED) {
-      friendStore.markRequestAccepted(friendId)
+      friendStore.markRequestAccepted(friendId);
     }
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false;
   }
 }
 
-function clickAddFriend (): void {
-  $handleLoading((): Promise<void> => onClickAddFriend(targetUserId.value))
+function clickAddFriend(): void {
+  $handleLoading((): Promise<void> => onClickAddFriend(targetUserId.value));
 }
 
-async function onClickRemoveFriend (): Promise<void> {
-  if (!targetUserId.value || isSubmitting.value || !isFriend.value) return
+async function onClickRemoveFriend(): Promise<void> {
+  if (!targetUserId.value || isSubmitting.value || !isFriend.value) return;
 
-  isSubmitting.value = true
+  isSubmitting.value = true;
   try {
-    const response = await friendService.removeFriend(targetUserId.value)
+    const response = await friendService.removeFriend(targetUserId.value);
 
     if (response.data?.count) {
       syncRelationshipToStore(targetUserId.value, {
         isFriend: false,
         hasIncomingPending: false,
-        hasOutgoingPending: false
-      })
-      dialogOpenConfirmRemoveFriends.value = false
+        hasOutgoingPending: false,
+      });
+      dialogOpenConfirmRemoveFriends.value = false;
     }
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false;
   }
 }
 
-function clickRemoveFriend (): void {
-  if (!targetUserId.value || isSubmitting.value || !isFriend.value) return
+function clickRemoveFriend(): void {
+  if (!targetUserId.value || isSubmitting.value || !isFriend.value) return;
 
-  dialogOpenConfirmRemoveFriends.value = true
+  dialogOpenConfirmRemoveFriends.value = true;
 }
 
-function removeFriend (): void {
+function removeFriend(): void {
   $handleLoading(onClickRemoveFriend, {
     toast: {
       instance: toast,
       error: {
-        summary: 'ไม่สามารถลบเพื่อนได้',
-        detail: 'เกิดข้อผิดพลาดในการลบเพื่อน'
-      }
-    }
-  })
+        summary: "ไม่สามารถลบเพื่อนได้",
+        detail: "เกิดข้อผิดพลาดในการลบเพื่อน",
+      },
+    },
+  });
 }
 </script>
 

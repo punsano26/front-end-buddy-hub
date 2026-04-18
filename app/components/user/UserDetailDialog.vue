@@ -37,13 +37,15 @@
       <template v-if="shouldShowFriendRequestActions">
         <Button
           :disabled="isSubmitting"
-          class="w-full bg-emerald-500 border-none text-black!"
+          class="w-full bg-gradient-to-r from-emerald-500 to-green-600 border-none text-white enabled:hover:from-emerald-600 enabled:hover:to-green-700 active:from-emerald-400 active:to-green-500"
+
           @click="onClickAcceptRequest">
           ยอมรับ
         </Button>
         <Button
           :disabled="isSubmitting"
-          class="w-full bg-red-800! border-none enabled:hover:bg-gray-900"
+          class="w-full bg-gradient-to-r from-red-500 to-rose-600 border-none text-white enabled:hover:from-red-600 enabled:hover:to-rose-700 active:from-red-400 active:to-rose-500"
+
           @click="onClickRejectRequest">
           ปฏิเสธ
         </Button>
