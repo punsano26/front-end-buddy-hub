@@ -68,6 +68,7 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { chatEnum } from '~/models/enums/Chat.enum'
 import type { IItems } from '~/models/Global.model'
 import type { ICreateMessagePayload, IUpdateMessagePayload } from '~/models/request/ChatReq.model'
@@ -76,17 +77,16 @@ import type { TErrorResponse } from '~/models/response/Response.model'
 import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provider'
 import { useAuthStore } from '~/stores/Auth'
 import { useChatStore } from '~/stores/Chat'
-
-type IChatMessageItem = ICreateMessageData & {
-  isSending?: boolean
-}
+import { type IChatMessageItem, useChatRoomStore } from '~/stores/ChatRoom'
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
+const chatRoomStore = useChatRoomStore();
 const chatService: IChatProvider = new ChatProvider();
 const dayjs = useDayjs();
 const { $handleLoading } = useNuxtApp();
 const { pagination, extractPagination } = usePagination();
+const { messages: chatData, isSubmittingMessage, sendError } = storeToRefs(chatRoomStore);
 const id = computed(() => Number(useRoute().params.id));
 definePageMeta({ layout: "chat" });
 
@@ -101,13 +101,10 @@ const formUpdate = ref<IUpdateMessagePayload>({
   messageText: "",
 });
 
-const chatData = ref<IChatMessageItem[]>([]);
 const editingMessageId = ref<number | null>(null);
 const isEditingMessage = computed(
   (): boolean => editingMessageId.value !== null,
 );
-const isSubmittingMessage = ref(false);
-const sendError = ref("");
 const isMarkingRead = ref(false);
 const chatScrollContainer = ref<HTMLElement | null>(null);
 const orderedChatData = computed((): IChatMessageItem[] => {
@@ -178,7 +175,7 @@ async function confirmEditMessage(): Promise<void> {
 
     cancelEditMessage();
   } catch (error: TErrorResponse) {
-    sendError.value = error?.message;
+    chatRoomStore.setSendError(error?.message || '');
   }
 }
 async function confirmDeleteMessage(
@@ -196,7 +193,7 @@ async function confirmDeleteMessage(
     }
   } catch (error: TErrorResponse) {
     const errorMessage = error?.message;
-    sendError.value = errorMessage;
+    chatRoomStore.setSendError(errorMessage || '');
   }
 }
 
@@ -272,16 +269,7 @@ function isCurrentConversationMessage(message: ICreateMessageData): boolean {
 function upsertMessage(message: ICreateMessageData): void {
   if (!isCurrentConversationMessage(message)) return;
 
-  const existingIndex = chatData.value.findIndex(
-    (item: ICreateMessageData): boolean => item.id === message.id,
-  );
-
-  if (existingIndex >= 0) {
-    chatData.value[existingIndex] = message;
-    return;
-  }
-
-  chatData.value.push(message);
+  chatRoomStore.upsertMessage(message);
 }
 
 const { removeSocketListener, startSocketSync, stopSocketSync } =
@@ -339,7 +327,7 @@ async function useFetch(): Promise<void> {
     page: pagination.value.page,
     limit: pagination.value.limit,
   });
-  chatData.value = response.data || [];
+  chatRoomStore.setMessages(response.data || []);
   pagination.value = extractPagination(response);
   await markMessagesAsRead();
   await scrollToBottom();
@@ -347,87 +335,25 @@ async function useFetch(): Promise<void> {
 function fetch(): void {
   $handleLoading(useFetch);
 }
-async function onSendMessage(): Promise<void> {
-  if (!form.value.messageText.trim()) return;
-
-  const payload = {
-    receiverId: form.value.receiverId,
-    messageType: form.value.messageType,
-    messageText: form.value.messageText.trim(),
-  };
-
-  const tempMessageId = -Date.now();
-  const optimisticMessage: IChatMessageItem = {
-    id: tempMessageId,
-    senderId: authStore.user.id,
-    receiverId: payload.receiverId,
-    messageType: payload.messageType,
-    messageText: payload.messageText,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    deletedAt: '',
-    isRead: false,
-    isSending: true,
-  };
-
-  upsertMessage(optimisticMessage);
-  await scrollToBottom();
-
-  try {
-    const response = await chatService.createMessage(payload);
-    if (response.data) {
-      const isMessageAlreadySynced = chatData.value.some(
-        (item: IChatMessageItem): boolean => item.id === response.data.id,
-      );
-
-      if (isMessageAlreadySynced) {
-        chatData.value = chatData.value.filter(
-          (item: IChatMessageItem): boolean => item.id !== tempMessageId,
-        );
-      } else {
-        chatData.value = chatData.value.map(
-          (item: IChatMessageItem): IChatMessageItem => {
-            if (item.id === tempMessageId) {
-              return response.data;
-            }
-
-            return item;
-          },
-        );
-      }
-
-      chatStore.pushConversationActivityFromMessage(
-        response.data,
-        authStore.user.id,
-      );
-      await scrollToBottom();
-    }
-    form.value.messageText = "";
-  } catch (error: TErrorResponse) {
-    chatData.value = chatData.value.filter(
-      (item: IChatMessageItem): boolean => item.id !== tempMessageId,
-    );
-    sendError.value = error?.message;
-  }
-}
-
 async function sendMessage(messageText: string): Promise<void> {
-  if (isSubmittingMessage.value) return;
-
-  isSubmittingMessage.value = true;
   form.value.messageText = messageText;
 
-  try {
-    if (isEditingMessage.value) {
+  const isSuccess = await chatRoomStore.submitMessage({
+    messageText,
+    receiverId: form.value.receiverId,
+    messageType: form.value.messageType,
+    currentUserId: authStore.user.id,
+    isEditingMessage: isEditingMessage.value,
+    onEditMessage: async (nextMessageText: string): Promise<void> => {
       formUpdate.value.messageId = editingMessageId.value || 0;
-      formUpdate.value.messageText = messageText;
+      formUpdate.value.messageText = nextMessageText;
       await Promise.resolve($handleLoading(confirmEditMessage));
-      return;
-    }
+    },
+    onMessagesUpdated: scrollToBottom,
+  });
 
-    await Promise.resolve($handleLoading(onSendMessage));
-  } finally {
-    isSubmittingMessage.value = false;
+  if (isSuccess && !isEditingMessage.value) {
+    form.value.messageText = "";
   }
 }
 
