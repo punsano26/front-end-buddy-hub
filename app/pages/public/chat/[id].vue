@@ -12,7 +12,7 @@
           <div class="flex flex-col max-w-[70%] min-w-0">
             <div class="flex items-center min-w-0">
               <DotMenu
-                v-if="isOwnMessage(chat)"
+                v-if="isOwnMessage(chat) && !isMessagePending(chat)"
                 :items="getMessageMenuItems(chat)"
                 :message-id="chat.id"
                 class="opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0"
@@ -35,7 +35,11 @@
                     {{ dayjs(chat.createdAt).format("hh:mm A") }}
                   </p>
                   <i
-                    v-if="isOwnMessage(chat)"
+                    v-if="isOwnMessage(chat) && isMessagePending(chat)"
+                    class="pi pi-spin pi-spinner text-gray-600 text-[10px]"
+                  />
+                  <i
+                    v-else-if="isOwnMessage(chat)"
                     :class="
                       chat.isRead
                         ? 'text-green-600 pi pi-check-circle text-[10px]'
@@ -73,6 +77,10 @@ import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provi
 import { useAuthStore } from '~/stores/Auth'
 import { useChatStore } from '~/stores/Chat'
 
+type IChatMessageItem = ICreateMessageData & {
+  isSending?: boolean
+}
+
 const authStore = useAuthStore();
 const chatStore = useChatStore();
 const chatService: IChatProvider = new ChatProvider();
@@ -93,7 +101,7 @@ const formUpdate = ref<IUpdateMessagePayload>({
   messageText: "",
 });
 
-const chatData = ref<ICreateMessageData[]>([]);
+const chatData = ref<IChatMessageItem[]>([]);
 const editingMessageId = ref<number | null>(null);
 const isEditingMessage = computed(
   (): boolean => editingMessageId.value !== null,
@@ -102,9 +110,9 @@ const isSubmittingMessage = ref(false);
 const sendError = ref("");
 const isMarkingRead = ref(false);
 const chatScrollContainer = ref<HTMLElement | null>(null);
-const orderedChatData = computed((): ICreateMessageData[] => {
+const orderedChatData = computed((): IChatMessageItem[] => {
   return [...chatData.value].sort(
-    (a: ICreateMessageData, b: ICreateMessageData): number => {
+    (a: IChatMessageItem, b: IChatMessageItem): number => {
       const aTime = Number(new Date(a.createdAt));
       const bTime = Number(new Date(b.createdAt));
       return aTime - bTime;
@@ -240,6 +248,10 @@ function isOwnMessage(message: ICreateMessageData): boolean {
   return message.senderId === authStore.user.id;
 }
 
+function isMessagePending(message: IChatMessageItem): boolean {
+  return !!message.isSending;
+}
+
 function isCurrentConversationMessage(message: ICreateMessageData): boolean {
   const currentUserId = authStore.user.id;
   const targetUserId = id.value;
@@ -337,15 +349,53 @@ function fetch(): void {
 }
 async function onSendMessage(): Promise<void> {
   if (!form.value.messageText.trim()) return;
+
   const payload = {
     receiverId: form.value.receiverId,
     messageType: form.value.messageType,
     messageText: form.value.messageText.trim(),
   };
+
+  const tempMessageId = -Date.now();
+  const optimisticMessage: IChatMessageItem = {
+    id: tempMessageId,
+    senderId: authStore.user.id,
+    receiverId: payload.receiverId,
+    messageType: payload.messageType,
+    messageText: payload.messageText,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    deletedAt: '',
+    isRead: false,
+    isSending: true,
+  };
+
+  upsertMessage(optimisticMessage);
+  await scrollToBottom();
+
   try {
     const response = await chatService.createMessage(payload);
     if (response.data) {
-      upsertMessage(response.data);
+      const isMessageAlreadySynced = chatData.value.some(
+        (item: IChatMessageItem): boolean => item.id === response.data.id,
+      );
+
+      if (isMessageAlreadySynced) {
+        chatData.value = chatData.value.filter(
+          (item: IChatMessageItem): boolean => item.id !== tempMessageId,
+        );
+      } else {
+        chatData.value = chatData.value.map(
+          (item: IChatMessageItem): IChatMessageItem => {
+            if (item.id === tempMessageId) {
+              return response.data;
+            }
+
+            return item;
+          },
+        );
+      }
+
       chatStore.pushConversationActivityFromMessage(
         response.data,
         authStore.user.id,
@@ -354,6 +404,9 @@ async function onSendMessage(): Promise<void> {
     }
     form.value.messageText = "";
   } catch (error: TErrorResponse) {
+    chatData.value = chatData.value.filter(
+      (item: IChatMessageItem): boolean => item.id !== tempMessageId,
+    );
     sendError.value = error?.message;
   }
 }
