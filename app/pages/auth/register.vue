@@ -46,7 +46,10 @@
       :show-error="submitted"
       label="ยืนยันรหัสผ่าน" />
 
+    <CheckPolicyAccept v-model="checked" />
+
     <Button
+      :disabled="!checked"
       label="สมัครสมาชิก"
       pt:label:class="font-bold"
       pt:root:class="bg-gradient-primary border-none rounded-xl py-3"
@@ -57,6 +60,7 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import CheckPasswordStrength from '~/components/input/CheckPasswordStrength.vue'
+import CheckPolicyAccept from '~/components/input/CheckPolicyAccept.vue'
 import InputLabelField from '~/components/input/InputLabelField.vue'
 import type { IBaseOptions } from '~/models/Global.model'
 import { genderEnum, type IAuthRegisterPayload } from '~/models/request/AuthReq.model'
@@ -76,6 +80,7 @@ const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 const submitted = ref(false)
+const checked = ref(false)
 const accountFromQuery = computed((): string => {
   const account = route.query.account
   if (Array.isArray(account)) return account[0] ?? ''
@@ -135,6 +140,9 @@ async function onRegister (): Promise<void> {
 
 function register (): void {
   submitted.value = true
+  if (!checked.value) {
+    return
+  }
   if (!form.value.email.trim() || !form.value.username.trim() || !form.value.dateOfBirth.trim()
     || !form.value.password.trim() || !form.value.confirmPassword.trim()) {
     return

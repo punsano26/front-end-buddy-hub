@@ -11,6 +11,7 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
   hydrateTokenFromLocalStorage()
 
   const isAuthPath = to.path.startsWith('/auth')
+  const isPolicyPath = to.path === '/policy' || to.path.startsWith('/policy/')
   const isPublicHome = to.path === '/public/home'
   const isLandingPage = to.path === '/'
   const hasTokenData
@@ -18,12 +19,12 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
       && !!authStore.userToken.refreshToken
       && authStore.userToken.tokenExpireIn !== null
 
-  // 🔒 If not an auth path, not the public home page, and no valid token, redirect to verification.
-  if (!isAuthPath && !isPublicHome && !hasTokenData && !isLandingPage) {
+  // 🔒 If not a public path and no valid token, redirect to verification.
+  if (!isAuthPath && !isPolicyPath && !isPublicHome && !hasTokenData && !isLandingPage) {
     return navigateTo('/auth/verify') as any
   }
 
-  const isProtectedPath = !isAuthPath && !isPublicHome && !isLandingPage
+  const isProtectedPath = !isAuthPath && !isPolicyPath && !isPublicHome && !isLandingPage
 
   // 🔄 Refresh token only on protected pages.
   if (hasTokenData && isProtectedPath) {
