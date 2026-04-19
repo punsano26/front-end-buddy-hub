@@ -43,8 +43,8 @@ function checkPasswordStrength (password: string): PasswordResult {
   if (!password) {
     return { score: 0, color: 'grey', message: '' }
   }
-  if (password.length > 0 && password.length < 8) {
-    return { score: 10, color: '#E73C3F', message: 'ยังไม่ครบ 8 ตัว' }
+  if (password.length > 0 && password.length < 6) {
+    return { score: 10, color: '#E73C3F', message: 'ยังไม่ครบ 6 ตัว' }
   }
 
   let typeCount = 0
