@@ -48,38 +48,68 @@
         </template>
       </Card>
 
-      <Card
-        pt:body:class="p-2"
-        pt:root:class="mt-2 border-t border-surface-200 dark:border-surface-700 hover:bg-surface-100 dark:hover:bg-surface-700">
-        <template #content>
-          <div class="flex items-center gap-2 rounded-md hover:bg-surface-100 dark:hover:bg-surface-700">
-            <Avatar
-              class="shrink-0"
-              image="/png/upload-profile.png"
-              pt:image:class="object-cover"
-              size="medium" />
-            <div class="min-w-0">
-              <p class="text-sm text-surface-900 dark:text-surface-100 break-words">
-                แจ้งเตือนการเพิ่มเพื่อน: คุณได้รับคำขอเป็นเพื่อนจากผู้ใช้ "John Doe"
-              </p>
-              <p class="text-xs text-surface-500 dark:text-surface-400">
-                5 minutes ago
-              </p>
+      <div
+        v-for="(item, index) in items"
+        :key="index">
+        <Card
+          pt:body:class="p-2"
+          pt:root:class="mt-2 border-t border-surface-200 dark:border-surface-700 hover:bg-surface-100 dark:hover:bg-surface-700">
+          <template #content>
+            <div
+
+              class="flex items-center gap-2 rounded-md hover:bg-surface-100 dark:hover:bg-surface-700">
+              <Avatar
+                class="shrink-0"
+                image="/png/upload-profile.png"
+                pt:image:class="object-cover"
+                size="medium" />
+              <div class="min-w-0">
+                <p class="text-sm text-surface-900 dark:text-surface-100 break-words">
+                  {{ item.content }}
+                </p>
+                <p class="text-xs text-surface-500 dark:text-surface-400">
+                  {{ item.createdAt }}
+                </p>
+              </div>
             </div>
-          </div>
-        </template>
-      </Card>
+          </template>
+        </Card>
+      </div>
     </div>
   </Popover>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import type { INotificationList } from '~/models/response/NotificationRes.model'
+import type { INotificationProvider } from '~/resource/provider/Notification.provider'
+import NotificationProvider from '~/resource/provider/Notification.provider'
 
 const op = ref()
 const toggle = (event: Event): void => {
   op.value.toggle(event)
 }
+const notificationService: INotificationProvider = new NotificationProvider()
+const { pagination, extractPagination } = usePagination()
+const items = ref<INotificationList[]>([])
+const { $handleLoading } = useNuxtApp()
+async function useFetch (): Promise<void> {
+  const response = await notificationService.findAllNotificationPaginate({
+    page: pagination.value.page,
+    limit: pagination.value.limit
+  })
+
+  items.value = response?.data || []
+  pagination.value = extractPagination(response)
+}
+
+function fetch (): void {
+  $handleLoading(useFetch)
+}
+
+onMounted((): void => {
+  fetch()
+})
 </script>
 
 <style scoped>
