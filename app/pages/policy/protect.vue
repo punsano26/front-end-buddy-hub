@@ -14,7 +14,7 @@
           ความปลอดภัยของคุณคือสิ่งสำคัญที่สุด เรียนรู้วิธีใช้ BuddyHub อย่างปลอดภัย โดยเฉพาะเมื่อพูดคุยกับคนแปลกหน้า
         </p>
         <p class="text-xs text-slate-500 sm:text-sm">
-          {{ policyItem?.createdAt }}
+          {{ dayjs(policyItem?.createdAt).format('DD/MM/YYYY') }}
         </p>
       </div>
       <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
@@ -50,6 +50,7 @@
 </template>
 
 <script lang="ts" setup>
+import dayjs from 'dayjs'
 import type { IFindTheLatestPolicyData } from '~/models/response/Policy.model'
 import PolicyProvider, { type IPolicyProvider } from '~/resource/provider/Policy.provider'
 
