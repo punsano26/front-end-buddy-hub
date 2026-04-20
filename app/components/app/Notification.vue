@@ -7,7 +7,7 @@
     @click="toggle" />
 
   <Popover ref="op">
-    <div class="flex justify-between">
+    <div class="flex justify-between mb-3">
       <div class="grid grid-cols-2 gap-2 items-center">
         <p class="text-sm font-bold text-surface-900 dark:text-surface-100">
           Notifications
@@ -25,12 +25,13 @@
         </Button>
       </div>
     </div>
-    <div class="w-[18rem] sm:w-72 md:w-80 max-w-[calc(100vw-2rem)]">
+
+    <div class="w-[18rem] sm:w-72 md:w-80 max-w-[calc(100vw-2rem)] max-h-[60vh] overflow-y-auto">
       <Card
         pt:body:class="p-2"
-        pt:root:class="mt-2 border-t border-surface-200 dark:border-surface-700 hover:bg-surface-100 dark:hover:bg-surface-700">
+        pt:root:class="border-t border-surface-200 dark:border-surface-700 hover:bg-surface-100 dark:hover:bg-surface-700">
         <template #content>
-          <div class="flex items-center gap-2 rounded-md hover:bg-surface-100 dark:hover:bg-surface-700">
+          <div class="flex items-center gap-2 rounded-md">
             <Avatar
               class="shrink-0"
               image="/png/logo-buddy-hub.png"
@@ -55,9 +56,7 @@
           pt:body:class="p-2"
           pt:root:class="mt-2 border-t border-surface-200 dark:border-surface-700 hover:bg-surface-100 dark:hover:bg-surface-700">
           <template #content>
-            <div
-
-              class="flex items-center gap-2 rounded-md hover:bg-surface-100 dark:hover:bg-surface-700">
+            <div class="flex items-center gap-2 rounded-md">
               <Avatar
                 class="shrink-0"
                 image="/png/upload-profile.png"
@@ -70,6 +69,20 @@
                 <p class="text-xs text-surface-500 dark:text-surface-400">
                   {{ item.createdAt }}
                 </p>
+              </div>
+              <div class="flex gap-1 ">
+                <Button
+                  pt:root:class="w-auto whitespace-nowrap"
+                  size="small"
+                  text>
+                  <i class="pi pi-check" />
+                </Button>
+                <Button
+                  pt:root:class="w-auto whitespace-nowrap"
+                  size="small"
+                  text>
+                  <i class="pi pi-times" />
+                </Button>
               </div>
             </div>
           </template>
@@ -93,6 +106,7 @@ const notificationService: INotificationProvider = new NotificationProvider()
 const { pagination, extractPagination } = usePagination()
 const items = ref<INotificationList[]>([])
 const { $handleLoading } = useNuxtApp()
+
 async function useFetch (): Promise<void> {
   const response = await notificationService.findAllNotificationPaginate({
     page: pagination.value.page,
@@ -113,5 +127,29 @@ onMounted((): void => {
 </script>
 
 <style scoped>
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
 
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+
+.dark .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
 </style>
