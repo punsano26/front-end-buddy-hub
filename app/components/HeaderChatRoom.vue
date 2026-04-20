@@ -34,6 +34,7 @@
           </div>
         </div>
         <DotMenu :items="labelMenu" />
+        <ReportModalDialog v-model:visible="isReportDialogVisible" />
       </div>
     </template>
   </Card>
@@ -67,14 +68,14 @@ function fetch (): void {
 onMounted((): void => {
   fetch()
 })
-
+const isReportDialogVisible = ref(false)
 const labelMenu = computed((): IItems[] => {
   return [
     {
       label: 'รายงานผู้ใช้',
       icon: 'pi pi-flag',
       command: (): void => {
-        console.log('hello')
+        isReportDialogVisible.value = true
       }
     }
   ]

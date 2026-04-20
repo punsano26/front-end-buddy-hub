@@ -69,9 +69,11 @@
       </Button>
       <Button
         v-if="authStore.user.id"
-        pt:root:class="w-full bg-transparent border-none text-red-500 enabled:hover:bg-red-500/10 enabled:hover:text-red-700 enabled:active:bg-red-500/20 active:text-red-700">
+        pt:root:class="w-full bg-transparent border-none text-red-500 enabled:hover:bg-red-500/10 enabled:hover:text-red-700 enabled:active:bg-red-500/20 active:text-red-700"
+        @click="() => { isReportDialogVisible = true }">
         รายงาน
       </Button>
+      <ReportModalDialog v-model:visible="isReportDialogVisible" />
     </div>
   </Dialog>
 </template>
@@ -93,6 +95,7 @@ const items = ref<IFindAllRequestList[]>([])
 const router = useRouter()
 const { $handleLoading } = useNuxtApp()
 const isSubmitting = ref(false)
+const isReportDialogVisible = ref(false)
 const authStore = useAuthStore()
 const friendStore = useFriendStore()
 const { pagination, extractPagination } = usePagination()
