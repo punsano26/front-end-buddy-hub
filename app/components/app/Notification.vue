@@ -42,7 +42,7 @@
                 แจ้งเตือนจากระบบ: ระบบจะมีการบำรุงรักษาในวันพรุ่งนี้ เวลา 02:00 - 04:00 น. กรุณาเตรียมตัวล่วงหน้า
               </p>
               <p class="text-xs text-surface-500 dark:text-surface-400">
-                5 minutes ago
+                5 วันที่แล้ว
               </p>
             </div>
           </div>
@@ -67,23 +67,27 @@
                   {{ item.content }}
                 </p>
                 <p class="text-xs text-surface-500 dark:text-surface-400">
-                  {{ item.createdAt }}
+                  {{ dayjs(item.createdAt).fromNow() }}
                 </p>
               </div>
-              <div class="flex gap-1 ">
-                <Button
-                  pt:root:class="w-auto whitespace-nowrap"
-                  size="small"
-                  text>
-                  <i class="pi pi-check" />
-                </Button>
-                <Button
-                  pt:root:class="w-auto whitespace-nowrap"
-                  size="small"
-                  text>
-                  <i class="pi pi-times" />
-                </Button>
-              </div>
+              <!-- <div class="flex gap-1 ">
+                <template v-if="item">
+                  <Button
+                    pt:root:class="w-auto whitespace-nowrap"
+                    size="small"
+                    text
+                    @click="handleAccept(item.id)">
+                    <i class="pi pi-check" />
+                  </Button>
+                  <Button
+                    pt:root:class="w-auto whitespace-nowrap"
+                    size="small"
+                    text
+                    @click="handleReject(item.id)">
+                    <i class="pi pi-times" />
+                  </Button>
+                </template>
+              </div> -->
             </div>
           </template>
         </Card>
@@ -94,7 +98,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import dayjs from 'dayjs'
 import type { INotificationList } from '~/models/response/NotificationRes.model'
+// import type { IFriendProvider } from '~/resource/provider/Friend.provider'
+// import FriendProvider from '~/resource/provider/Friend.provider'
 import type { INotificationProvider } from '~/resource/provider/Notification.provider'
 import NotificationProvider from '~/resource/provider/Notification.provider'
 
@@ -103,6 +110,7 @@ const toggle = (event: Event): void => {
   op.value.toggle(event)
 }
 const notificationService: INotificationProvider = new NotificationProvider()
+// const friendService: IFriendProvider = new FriendProvider()
 const { pagination, extractPagination } = usePagination()
 const items = ref<INotificationList[]>([])
 const { $handleLoading } = useNuxtApp()
@@ -124,6 +132,16 @@ function fetch (): void {
 onMounted((): void => {
   fetch()
 })
+
+// async function handleAccept (id: number): Promise<void> {
+//   await friendService.acceptFriendRequest(id)
+//   fetch()
+// }
+
+// async function handleReject (id: number): Promise<void> {
+//   await friendService.rejectFriendRequest(id)
+//   fetch()
+// }
 </script>
 
 <style scoped>
