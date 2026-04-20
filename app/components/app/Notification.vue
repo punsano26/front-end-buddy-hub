@@ -13,7 +13,7 @@
           Notifications
         </p>
         <p class="text-xs text-surface-500 dark:text-surface-400">
-          3 new
+          {{ items.length }}
         </p>
       </div>
       <div class="flex items-center gap-2 shrink-0">
