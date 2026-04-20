@@ -137,12 +137,14 @@
                 <Button
                   size="small"
                   pt:root:class="w-full bg-transparent border-none text-red-500 enabled:hover:bg-red-500/10 enabled:hover:text-red-700 enabled:active:bg-red-500/20 active:text-red-700"
+                  @click="isReportDialogVisible = true"
                 >
                   <i class="pi pi-flag"></i>
                   รายงาน
                 </Button>
               </div>
             </div>
+            <ReportModalDialog v-model:visible="isReportDialogVisible" />
           </div>
         </template>
         <template #footer>
@@ -201,6 +203,7 @@ const friendStore = useFriendStore();
 const { $handleLoading } = useNuxtApp();
 const dayjs = useDayjs();
 const items = ref<IFindOneCurrentUserData>();
+const isReportDialogVisible = ref(false)
 const isLoading = ref<boolean>(true);
 const toast = useToast();
 const isSubmitting = ref(false);
