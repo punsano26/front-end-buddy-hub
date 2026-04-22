@@ -135,6 +135,67 @@
 import Button from '~/volt/Button.vue'
 import Card from '~/volt/Card.vue'
 import SecondaryButton from '~/volt/SecondaryButton.vue'
+
+const runtimeConfig = useRuntimeConfig()
+const siteUrl = String(runtimeConfig.public.siteUrl || 'http://localhost:5000').replace(/\/$/, '')
+const siteName = String(runtimeConfig.public.siteName || 'Buddy Hub')
+const pageUrl = `${siteUrl}/`
+const pageTitle = 'หาเพื่อนคุยออนไลน์แบบเรียลไทม์ ปลอดภัย และใช้งานง่าย'
+const pageDescription = 'Buddy Hub ช่วยให้คุณค้นหาเพื่อนคุยใหม่ได้ทันทีผ่านห้องแชทออนไลน์ พูดคุยลื่นไหล และเริ่มต้นความสัมพันธ์ดีๆ ได้ทุกวัน'
+const defaultOgImage = String(runtimeConfig.public.defaultOgImage || '/png/logo-buddy-hub.png')
+const ogImageUrl = defaultOgImage.startsWith('http')
+  ? defaultOgImage
+  : `${siteUrl}${defaultOgImage}`
+
+useSeoMeta({
+  title: pageTitle,
+  description: pageDescription,
+  robots: 'index, follow, max-image-preview:large',
+  keywords: 'หาเพื่อนคุย, แชทออนไลน์, หาเพื่อนใหม่, buddy hub, คุยกับคนใหม่',
+  ogType: 'website',
+  ogTitle: `Buddy Hub | ${pageTitle}`,
+  ogDescription: pageDescription,
+  ogUrl: pageUrl,
+  ogImage: ogImageUrl,
+  twitterCard: 'summary_large_image',
+  twitterTitle: `Buddy Hub | ${pageTitle}`,
+  twitterDescription: pageDescription,
+  twitterImage: ogImageUrl
+})
+
+useHead({
+  script: [
+    {
+      key: 'ld-json-website',
+      type: 'application/ld+json',
+      textContent: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        'name': siteName,
+        'url': siteUrl,
+        'inLanguage': 'th-TH',
+        'description': pageDescription,
+        'potentialAction': {
+          '@type': 'SearchAction',
+          'target': `${siteUrl}/public/home?keyword={search_term_string}`,
+          'query-input': 'required name=search_term_string'
+        }
+      })
+    },
+    {
+      key: 'ld-json-organization',
+      type: 'application/ld+json',
+      textContent: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        'name': siteName,
+        'url': siteUrl,
+        'logo': ogImageUrl,
+        'sameAs': []
+      })
+    }
+  ]
+})
 </script>
 
 <style scoped>
