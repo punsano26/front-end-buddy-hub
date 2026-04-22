@@ -69,7 +69,10 @@ function isUnauthorizedError (error?: TErrorResponse): boolean {
   const statusCode = error?.code ?? error?.statusCode ?? error?.status
   const message = String(error?.message || '').toLowerCase()
 
-  return statusCode === 401 || message.includes('invalid refresh token')
+  return statusCode === 401
+    || message.includes('unauthorized')
+    || message.includes('invalid refresh token')
+    || message.includes('token expired')
 }
 
 async function refreshAccessToken (): Promise<boolean> {
