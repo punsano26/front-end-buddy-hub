@@ -71,7 +71,7 @@
 import { storeToRefs } from 'pinia'
 import { chatEnum } from '~/models/enums/Chat.enum'
 import type { IItems } from '~/models/Global.model'
-import type { ICreateMessagePayload, IUpdateMessagePayload } from '~/models/request/ChatReq.model'
+import type { ICreateMessagePayload } from '~/models/request/ChatReq.model'
 import type { ICreateMessageData } from '~/models/response/ChatRes.model'
 import type { TErrorResponse } from '~/models/response/Response.model'
 import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provider'
@@ -86,18 +86,13 @@ const chatService: IChatProvider = new ChatProvider();
 const dayjs = useDayjs();
 const { $handleLoading } = useNuxtApp();
 const { pagination, extractPagination } = usePagination();
-const { messages: chatData, isSubmittingMessage, sendError } = storeToRefs(chatRoomStore);
+const { messages: chatData, sendError } = storeToRefs(chatRoomStore);
 const id = computed(() => Number(useRoute().params.id));
 definePageMeta({ layout: "chat" });
 
 const form = ref<ICreateMessagePayload>({
   receiverId: id.value,
   messageType: chatEnum.TEXT,
-  messageText: "",
-});
-
-const formUpdate = ref<IUpdateMessagePayload>({
-  messageId: 0,
   messageText: "",
 });
 
@@ -137,46 +132,12 @@ function startEditMessage(message: ICreateMessageData): void {
   if (!isOwnMessage(message)) return;
 
   editingMessageId.value = message.id;
-  formUpdate.value.messageId = message.id;
-  formUpdate.value.messageText = message.messageText;
   form.value.messageText = message.messageText;
 }
 
 function cancelEditMessage(): void {
   editingMessageId.value = null;
-  formUpdate.value = {
-    messageId: 0,
-    messageText: "",
-  };
   form.value.messageText = "";
-}
-
-async function confirmEditMessage(): Promise<void> {
-  try {
-    if (!editingMessageId.value) return;
-
-    const nextMessageText = formUpdate.value.messageText.trim();
-    if (!nextMessageText) return;
-
-    await chatService.updateMessage({
-      messageId: editingMessageId.value,
-      messageText: nextMessageText,
-    });
-
-    const targetIndex = chatData.value.findIndex(
-      (item: ICreateMessageData): boolean => item.id === editingMessageId.value,
-    );
-    if (targetIndex >= 0) {
-      const targetMessage = chatData.value[targetIndex];
-      if (targetMessage) {
-        targetMessage.messageText = nextMessageText;
-      }
-    }
-
-    cancelEditMessage();
-  } catch (error: TErrorResponse) {
-    chatRoomStore.setSendError(error?.message || '');
-  }
 }
 async function confirmDeleteMessage(
   message: ICreateMessageData,
@@ -246,7 +207,7 @@ function isOwnMessage(message: ICreateMessageData): boolean {
 }
 
 function isMessagePending(message: IChatMessageItem): boolean {
-  return !!message.isSending;
+  return !!message.isSending || !!message.isEditing;
 }
 
 function isCurrentConversationMessage(message: ICreateMessageData): boolean {
@@ -337,6 +298,7 @@ function fetch(): void {
 }
 async function sendMessage(messageText: string): Promise<void> {
   form.value.messageText = messageText;
+  const wasEditing = isEditingMessage.value;
 
   const isSuccess = await chatRoomStore.submitMessage({
     messageText,
@@ -344,17 +306,18 @@ async function sendMessage(messageText: string): Promise<void> {
     messageType: form.value.messageType,
     currentUserId: authStore.user.id,
     isEditingMessage: isEditingMessage.value,
-    onEditMessage: async (nextMessageText: string): Promise<void> => {
-      formUpdate.value.messageId = editingMessageId.value || 0;
-      formUpdate.value.messageText = nextMessageText;
-      await Promise.resolve($handleLoading(confirmEditMessage));
-    },
+    editingMessageId: editingMessageId.value,
     onMessagesUpdated: scrollToBottom,
   });
 
-  if (isSuccess && !isEditingMessage.value) {
-    form.value.messageText = "";
+  if (!isSuccess) return;
+
+  if (wasEditing) {
+    cancelEditMessage();
+    return;
   }
+
+  form.value.messageText = "";
 }
 
 onMounted((): void => {
