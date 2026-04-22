@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: "chat" });
+definePageMeta({ layout: "chat", title: "แชท" });
 </script>
 
 <style scoped></style>

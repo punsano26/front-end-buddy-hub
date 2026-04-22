@@ -55,6 +55,8 @@ export default defineNuxtConfig({
         },
         { property: 'og:url', content: normalizedSiteUrl },
         { property: 'og:image', content: `${normalizedSiteUrl}/png/logo-buddy-hub.png` },
+        { property: 'og:image:width', content: '1200' },
+        { property: 'og:image:height', content: '630' },
         { name: 'twitter:card', content: 'summary_large_image' },
         { name: 'twitter:title', content: 'Buddy Hub | หาเพื่อนคุยออนไลน์' },
         {
@@ -64,7 +66,8 @@ export default defineNuxtConfig({
         { name: 'twitter:image', content: `${normalizedSiteUrl}/png/logo-buddy-hub.png` }
       ],
       link: [
-        { rel: 'icon', type: 'image/png', href: '/png/logo-buddy-hub.png' }
+        { rel: 'icon', type: 'image/png', href: '/png/logo-buddy-hub.png' },
+        { rel: 'canonical', href: normalizedSiteUrl }
       ]
     }
   },
