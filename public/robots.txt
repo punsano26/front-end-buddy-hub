@@ -1,2 +1,8 @@
-User-Agent: *
-Disallow:
+User-agent: *
+Allow: /
+Disallow: /auth/
+Disallow: /public/chat/
+Disallow: /public/friends/
+Disallow: /public/profile/
+
+Sitemap: /sitemap.xml

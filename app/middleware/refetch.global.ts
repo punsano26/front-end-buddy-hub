@@ -7,7 +7,7 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
 
   const authService: IAuthProvider = new AuthProvider()
   const authStore = useAuthStore()
-
+  const { $handleLoading } = useNuxtApp()
   hydrateTokenFromLocalStorage()
 
   const isAuthPath = to.path.startsWith('/auth')
@@ -81,7 +81,7 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
 
   async function tryRefreshToken (): Promise<boolean> {
     try {
-      await resetToken()
+      $handleLoading(resetToken)
       return true
     } catch {
       return false
