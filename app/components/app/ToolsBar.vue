@@ -39,7 +39,7 @@
               :show="unreadCount > 0"
               :value="unreadCount">
               <SecondaryButton
-                :class="navClass('public-chat')"
+                :class="navClass('public-chat', 'public-chat-id')"
                 icon="pi pi-comment"
                 label="Chats"
                 pt:icon:class="text-black! dark:text-white!"
@@ -209,8 +209,8 @@ const menuOpen = ref(false)
 
 const route = useRoute()
 
-const navClass = (page: string): string => {
-  return route.name === page
+const navClass = (...pages: string[]): string => {
+  return pages.includes(String(route.name))
     ? 'bg-gradient-primary dark:text-black! text-back! shadow-md'
     : 'text-surface-600 dark:text-surface-300'
 }

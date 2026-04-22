@@ -1,12 +1,14 @@
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useChatStore } from './Chat'
 import type { ICreateMessagePayload } from '~/models/request/ChatReq.model'
-import type { ICreateMessageData } from '~/models/response/ChatRes.model'
-import type { TErrorResponse } from '~/models/response/Response.model'
+import type { ICreateMessageData, ICreateMessageResponse } from '~/models/response/ChatRes.model'
+import type { IMessageResponse, TErrorResponse } from '~/models/response/Response.model'
 import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provider'
 
 export type IChatMessageItem = ICreateMessageData & {
   isSending?: boolean
+  isEditing?: boolean
 }
 
 interface ISubmitMessageOptions {
@@ -15,7 +17,7 @@ interface ISubmitMessageOptions {
   messageType: ICreateMessagePayload['messageType']
   currentUserId: number
   isEditingMessage?: boolean
-  onEditMessage?: (messageText: string) => Promise<void>
+  editingMessageId?: number | null
   onMessagesUpdated?: () => Promise<void> | void
 }
 
@@ -85,9 +87,55 @@ export const useChatRoomStore = defineStore('ChatRoom', {
       }
     },
 
+    setMessageEditingState (messageId: number, isEditing: boolean): void {
+      this.messages = this.messages.map((item: IChatMessageItem): IChatMessageItem => {
+        if (item.id !== messageId) return item
+
+        return {
+          ...item,
+          isEditing
+        }
+      })
+    },
+
+    async editMessage (messageId: number, messageText: string): Promise<boolean> {
+      const chatService: IChatProvider = new ChatProvider()
+      const { $handleLoading } = useNuxtApp()
+      const silentLoadingUnit = ref(false)
+      const nextMessageText = messageText.trim()
+
+      if (!nextMessageText || messageId <= 0) return false
+
+      if (!this.messages.some((item: IChatMessageItem): boolean => item.id === messageId)) return false
+
+      this.setMessageEditingState(messageId, true)
+
+      try {
+        const response = await $handleLoading<IMessageResponse>((): Promise<IMessageResponse> => chatService.updateMessage({ messageId, messageText: nextMessageText }), { loadingUnit: silentLoadingUnit })
+
+        if (!response) return false
+
+        this.messages = this.messages.map((item: IChatMessageItem): IChatMessageItem => {
+          if (item.id !== messageId) return item
+
+          return {
+            ...item,
+            messageText: nextMessageText,
+            isEditing: false
+          }
+        })
+
+        return true
+      } finally {
+        this.setMessageEditingState(messageId, false)
+      }
+    },
+
     async sendOptimisticMessage (options: ISubmitMessageOptions): Promise<boolean> {
       const chatService: IChatProvider = new ChatProvider()
       const chatStore = useChatStore()
+      const { $handleLoading } = useNuxtApp()
+      const silentLoadingUnit = ref(false)
       const nextMessageText = options.messageText.trim()
 
       if (!nextMessageText) return false
@@ -117,9 +165,9 @@ export const useChatRoomStore = defineStore('ChatRoom', {
       await options.onMessagesUpdated?.()
 
       try {
-        const response = await chatService.createMessage(payload)
+        const response = await $handleLoading<ICreateMessageResponse>((): Promise<ICreateMessageResponse> => chatService.createMessage(payload), { loadingUnit: silentLoadingUnit })
 
-        if (!response.data) {
+        if (!response?.data) {
           this.removeMessageById(tempMessageId)
           return false
         }
@@ -155,10 +203,9 @@ export const useChatRoomStore = defineStore('ChatRoom', {
         if (!nextMessageText) return false
 
         if (options.isEditingMessage) {
-          if (!options.onEditMessage) return false
+          const messageId = options.editingMessageId || 0
 
-          await options.onEditMessage(nextMessageText)
-          return true
+          return await this.editMessage(messageId, nextMessageText)
         }
 
         return await this.sendOptimisticMessage({

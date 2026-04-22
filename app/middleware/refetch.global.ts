@@ -1,6 +1,9 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import AuthProvider, { type IAuthProvider } from '~/resource/provider/Auth.provider'
 
+const REFRESH_BUFFER_MS = 2 * 60 * 1000
+let refreshLock: Promise<boolean> | null = null
+
 export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Promise<void> => {
   // Tokens are stored in localStorage, so skip auth checks during SSR.
   if (import.meta.server) return
@@ -65,8 +68,8 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
     }
   }
 
-  async function resetToken (): Promise<void> {
-    if (!authStore.userToken.refreshToken) return
+  async function resetToken (): Promise<boolean> {
+    if (!authStore.userToken.refreshToken) return false
 
     const payload = {
       refreshToken: authStore.userToken.refreshToken
@@ -77,15 +80,56 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
     authStore.userToken.accessToken = response.accessToken
     authStore.userToken.refreshToken = response.refreshToken
     authStore.userToken.tokenExpireIn = response.tokenExpireIn
+
+    return true
   }
 
   async function tryRefreshToken (): Promise<boolean> {
-    try {
-      $handleLoading(resetToken)
-      return true
-    } catch {
-      return false
+    if (refreshLock) {
+      return await refreshLock
     }
+
+    if (!shouldRefreshToken()) return true
+
+    refreshLock = (async (): Promise<boolean> => {
+      try {
+        const result = await $handleLoading(resetToken)
+        return result === true
+      } catch {
+        return false
+      } finally {
+        refreshLock = null
+      }
+    })()
+
+    return await refreshLock
+  }
+
+  function shouldRefreshToken (): boolean {
+    const tokenExpireIn = authStore.userToken.tokenExpireIn
+
+    if (!tokenExpireIn || tokenExpireIn <= 0) return false
+
+    const now = Date.now()
+    const expireAtMs = normalizeExpireAtMs(tokenExpireIn, now)
+
+    if (!expireAtMs) return false
+
+    return expireAtMs - now <= REFRESH_BUFFER_MS
+  }
+
+  function normalizeExpireAtMs (tokenExpireIn: number, now: number): number | null {
+    if (!Number.isFinite(tokenExpireIn) || tokenExpireIn <= 0) return null
+
+    if (tokenExpireIn > 1_000_000_000_000) {
+      return tokenExpireIn
+    }
+
+    if (tokenExpireIn > 1_000_000_000) {
+      return tokenExpireIn * 1000
+    }
+
+    return now + tokenExpireIn * 1000
   }
 
   function clearPersistedAuth (): void {

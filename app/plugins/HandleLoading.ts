@@ -3,6 +3,9 @@ import { useLoadingStore } from '@/stores/Loading'
 import type { TErrorResponse } from '@/models/response/Response.model'
 import type { ToastMessageOptions } from 'primevue/toast'
 import type { ToastServiceMethods } from 'primevue/toastservice'
+import AuthProvider, { type IAuthProvider } from '~/resource/provider/Auth.provider'
+
+let refreshTokenLock: Promise<boolean> | null = null
 
 interface IHandleToastOptions {
   instance: ToastServiceMethods
@@ -62,13 +65,45 @@ function defaultErrorCallback (error?: TErrorResponse): void {
   console.error('Unhandled Loading Error:', error)
 }
 
-function authErrorCallback (error?: TErrorResponse): void {
+function isUnauthorizedError (error?: TErrorResponse): boolean {
   const statusCode = error?.code ?? error?.statusCode ?? error?.status
   const message = String(error?.message || '').toLowerCase()
-  const isUnauthorized = statusCode === 401 || message.includes('invalid refresh token')
 
-  if (!isUnauthorized) return
+  return statusCode === 401 || message.includes('invalid refresh token')
+}
 
+async function refreshAccessToken (): Promise<boolean> {
+  if (refreshTokenLock) {
+    return await refreshTokenLock
+  }
+
+  refreshTokenLock = (async (): Promise<boolean> => {
+    const authStore = useAuthStore()
+    const refreshToken = authStore.userToken.refreshToken
+
+    if (!refreshToken) return false
+
+    const authService: IAuthProvider = new AuthProvider()
+
+    try {
+      const response = await authService.refreshToken({ refreshToken })
+
+      authStore.userToken.accessToken = response.accessToken
+      authStore.userToken.refreshToken = response.refreshToken
+      authStore.userToken.tokenExpireIn = response.tokenExpireIn
+
+      return true
+    } catch {
+      return false
+    } finally {
+      refreshTokenLock = null
+    }
+  })()
+
+  return await refreshTokenLock
+}
+
+function redirectToVerify (): void {
   const authStore = useAuthStore()
   authStore.logout()
 
@@ -78,6 +113,18 @@ function authErrorCallback (error?: TErrorResponse): void {
 
   const router = useRouter()
   router.replace({ name: 'auth-verify' })
+}
+
+async function authErrorCallback (error?: TErrorResponse): Promise<boolean> {
+  if (!isUnauthorizedError(error)) return false
+
+  const isRefreshSuccess = await refreshAccessToken()
+
+  if (!isRefreshSuccess) {
+    redirectToVerify()
+  }
+
+  return isRefreshSuccess
 }
 
 /**
@@ -112,8 +159,28 @@ export async function handleLoading<T> (
     handleToastService(toast, 'success')
     return result
   } catch (error: TErrorResponse) {
+    const isRecoveredAuthError = await authErrorCallback(error)
+
+    if (isRecoveredAuthError) {
+      try {
+        const retryResult = await callBack(...args)
+        handleToastService(toast, 'success')
+        return retryResult
+      } catch (retryError: TErrorResponse) {
+        defaultErrorCallback(retryError)
+
+        if (isUnauthorizedError(retryError)) {
+          redirectToVerify()
+          return undefined
+        }
+
+        errorCallBack?.(retryError)
+        handleToastService(toast, 'error', retryError)
+        return undefined
+      }
+    }
+
     defaultErrorCallback(error)
-    authErrorCallback(error)
     errorCallBack?.(error)
     handleToastService(toast, 'error', error)
     return undefined
