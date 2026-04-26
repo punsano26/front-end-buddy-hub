@@ -70,8 +70,8 @@
                   {{ dayjs(item.createdAt).fromNow() }}
                 </p>
               </div>
-              <!-- <div class="flex gap-1 ">
-                <template v-if="item">
+              <div class="flex gap-1 ">
+                <template v-if="item.friendRequestStatus === FriendRequestStatusEnum.PENDING">
                   <Button
                     pt:root:class="w-auto whitespace-nowrap"
                     size="small"
@@ -87,7 +87,7 @@
                     <i class="pi pi-times" />
                   </Button>
                 </template>
-              </div> -->
+              </div>
             </div>
           </template>
         </Card>
@@ -99,9 +99,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import dayjs from 'dayjs'
+import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
 import type { INotificationList } from '~/models/response/NotificationRes.model'
-// import type { IFriendProvider } from '~/resource/provider/Friend.provider'
-// import FriendProvider from '~/resource/provider/Friend.provider'
+import type { IFriendProvider } from '~/resource/provider/Friend.provider'
+import FriendProvider from '~/resource/provider/Friend.provider'
 import type { INotificationProvider } from '~/resource/provider/Notification.provider'
 import NotificationProvider from '~/resource/provider/Notification.provider'
 
@@ -110,7 +111,7 @@ const toggle = (event: Event): void => {
   op.value.toggle(event)
 }
 const notificationService: INotificationProvider = new NotificationProvider()
-// const friendService: IFriendProvider = new FriendProvider()
+const friendService: IFriendProvider = new FriendProvider()
 const { pagination, extractPagination } = usePagination()
 const items = ref<INotificationList[]>([])
 const { $handleLoading } = useNuxtApp()
@@ -133,15 +134,15 @@ onMounted((): void => {
   fetch()
 })
 
-// async function handleAccept (id: number): Promise<void> {
-//   await friendService.acceptFriendRequest(id)
-//   fetch()
-// }
+async function handleAccept (id: number): Promise<void> {
+  await friendService.acceptFriendRequest(id)
+  fetch()
+}
 
-// async function handleReject (id: number): Promise<void> {
-//   await friendService.rejectFriendRequest(id)
-//   fetch()
-// }
+async function handleReject (id: number): Promise<void> {
+  await friendService.rejectFriendRequest(id)
+  fetch()
+}
 </script>
 
 <style scoped>
