@@ -11,6 +11,8 @@ export type IChatMessageItem = ICreateMessageData & {
   isEditing?: boolean
 }
 
+const FALLBACK_SEND_ERROR = 'เกิดข้อผิดพลาดระหว่างส่งข้อความ'
+
 interface ISubmitMessageOptions {
   messageText: string
   receiverId: number
@@ -27,8 +29,23 @@ interface IChatRoomState {
   sendError: string
 }
 
+function toReadableMessage (value: unknown): string {
+  if (typeof value === 'string') return value.trim()
+
+  if (Array.isArray(value)) {
+    const firstString = value.find((item: unknown): item is string => typeof item === 'string')
+    return firstString?.trim() || ''
+  }
+
+  return ''
+}
+
 function normalizeErrorMessage (error: TErrorResponse): string {
-  return error?.message || 'เกิดข้อผิดพลาดระหว่างส่งข้อความ'
+  const topLevelMessage = toReadableMessage(error?.message)
+  if (topLevelMessage) return topLevelMessage
+
+
+  return FALLBACK_SEND_ERROR
 }
 
 export const useChatRoomStore = defineStore('ChatRoom', {
@@ -102,6 +119,7 @@ export const useChatRoomStore = defineStore('ChatRoom', {
       const chatService: IChatProvider = new ChatProvider()
       const { $handleLoading } = useNuxtApp()
       const silentLoadingUnit = ref(false)
+      let requestError: TErrorResponse | undefined
       const nextMessageText = messageText.trim()
 
       if (!nextMessageText || messageId <= 0) return false
@@ -111,9 +129,18 @@ export const useChatRoomStore = defineStore('ChatRoom', {
       this.setMessageEditingState(messageId, true)
 
       try {
-        const response = await $handleLoading<IMessageResponse>((): Promise<IMessageResponse> => chatService.updateMessage({ messageId, messageText: nextMessageText }), { loadingUnit: silentLoadingUnit })
+        const editRequest = (): Promise<IMessageResponse> => chatService.updateMessage({ messageId, messageText: nextMessageText })
+        const response = await $handleLoading<IMessageResponse>(editRequest, {
+          loadingUnit: silentLoadingUnit,
+          errorCallBack: (error?: TErrorResponse): void => {
+            requestError = error
+          }
+        })
 
-        if (!response) return false
+        if (!response) {
+          this.setSendError(normalizeErrorMessage(requestError))
+          return false
+        }
 
         this.messages = this.messages.map((item: IChatMessageItem): IChatMessageItem => {
           if (item.id !== messageId) return item
@@ -136,6 +163,7 @@ export const useChatRoomStore = defineStore('ChatRoom', {
       const chatStore = useChatStore()
       const { $handleLoading } = useNuxtApp()
       const silentLoadingUnit = ref(false)
+      let requestError: TErrorResponse | undefined
       const nextMessageText = options.messageText.trim()
 
       if (!nextMessageText) return false
@@ -165,10 +193,17 @@ export const useChatRoomStore = defineStore('ChatRoom', {
       await options.onMessagesUpdated?.()
 
       try {
-        const response = await $handleLoading<ICreateMessageResponse>((): Promise<ICreateMessageResponse> => chatService.createMessage(payload), { loadingUnit: silentLoadingUnit })
+        const createRequest = (): Promise<ICreateMessageResponse> => chatService.createMessage(payload)
+        const response = await $handleLoading<ICreateMessageResponse>(createRequest, {
+          loadingUnit: silentLoadingUnit,
+          errorCallBack: (error?: TErrorResponse): void => {
+            requestError = error
+          }
+        })
 
         if (!response?.data) {
           this.removeMessageById(tempMessageId)
+          this.setSendError(normalizeErrorMessage(requestError))
           return false
         }
 

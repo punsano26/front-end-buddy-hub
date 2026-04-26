@@ -1,7 +1,7 @@
 <template>
   <Button
     :label="text"
-    class="text-black! border-black!"
+    class=""
     variant="outlined" />
 </template>
 

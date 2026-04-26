@@ -31,19 +31,19 @@
                 </p>
 
                 <div class="flex items-center gap-1">
-                  <p class="text-xs text-gray-500">
+                  <p class="text-xs text-gray-900">
                     {{ dayjs(chat.createdAt).format("hh:mm A") }}
                   </p>
                   <i
                     v-if="isOwnMessage(chat) && isMessagePending(chat)"
-                    class="pi pi-spin pi-spinner text-gray-600 text-[10px]"
+                    class="pi pi-spin pi-spinner text-gray-900 text-[10px]"
                   />
                   <i
                     v-else-if="isOwnMessage(chat)"
                     :class="
                       chat.isRead
-                        ? 'text-green-600 pi pi-check-circle text-[10px]'
-                        : 'text-gray-600 pi pi-circle-off text-[10px]'
+                        ? 'text-green-700 pi pi-check-circle text-[10px]'
+                        : 'text-gray-900 pi pi-circle-off text-[10px]'
                     "
                   />
                 </div>

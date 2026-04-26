@@ -1,3 +1,4 @@
+import type { FriendRequestStatusEnum } from '../enums/Friend.enum'
 import type { IApiResponse, IBasePaginationResponse } from './Response.model'
 
 export interface IFindOneCurrentUserData {
@@ -11,6 +12,9 @@ export interface IFindOneCurrentUserData {
   createdAt: string
   isVerified: boolean
   isOnline: boolean
+  isFriend: boolean
+  isRequester: boolean
+  friendRequestStatus: FriendRequestStatusEnum
   lastOnlineAt: string
   age: number
   gender: string

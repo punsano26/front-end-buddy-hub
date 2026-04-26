@@ -81,7 +81,7 @@
                   <Button
                     :disabled="isSubmitting"
                     size="small"
-                    class="w-full bg-gradient-to-r from-emerald-500 to-green-600 border-none text-white enabled:hover:from-emerald-600 enabled:hover:to-green-700 active:from-emerald-400 active:to-green-500"
+                    class="w-full bg-linear-to-r from-emerald-500 to-green-600 border-none text-white enabled:hover:from-emerald-600 enabled:hover:to-green-700 active:from-emerald-400 active:to-green-500"
                     @click="onClickAcceptRequest"
                   >
                     <i class="pi pi-check"></i>
@@ -90,7 +90,7 @@
                   <Button
                     size="small"
                     :disabled="isSubmitting"
-                    class="w-full bg-gradient-to-r from-red-500 to-rose-600 border-none text-white enabled:hover:from-red-600 enabled:hover:to-rose-700 active:from-red-400 active:to-rose-500"
+                    class="w-full bg-linear-to-r from-red-500 to-rose-600 border-none text-white enabled:hover:from-red-600 enabled:hover:to-rose-700 active:from-red-400 active:to-rose-500"
                     @click="onClickRejectRequest"
                   >
                     <i class="pi pi-times"></i>
@@ -185,7 +185,6 @@ import ImageProfileDetail from '~/components/skeleton/profile/ImageProfileDetail
 import MyProfilePageSkeleton from '~/components/skeleton/profile/MyProfilePageSkeleton.vue'
 import UserEditDetailDialog from '~/components/user/UserEditDetailDialog.vue'
 import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
-import type { IFindAllFriendList, IFindAllRequestList } from '~/models/response/FriendRes.model'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
 import type { IFriendProvider } from '~/resource/provider/Friend.provider'
 import FriendProvider from '~/resource/provider/Friend.provider'
@@ -236,22 +235,69 @@ const isFriend = computed((): boolean => {
 
   if (friendStore.isRemoved(targetUserId.value)) return false;
 
-  return (
+  if (
     friendStore.getResolvedStatus(targetUserId.value) ===
     FriendRequestStatusEnum.ACCEPTED
+  ) {
+    return true;
+  }
+
+  return (
+    items.value?.isFriend === true ||
+    items.value?.friendRequestStatus === FriendRequestStatusEnum.ACCEPTED
   );
 });
 
 const hasIncomingPendingRequest = computed((): boolean => {
   if (isOwnProfile.value) return false;
 
-  return friendStore.isIncomingPending(targetUserId.value);
+  if (isFriend.value) return false;
+
+  if (
+    friendStore.getResolvedStatus(targetUserId.value) ===
+    FriendRequestStatusEnum.REJECTED
+  ) {
+    return false;
+  }
+
+  if (friendStore.isIncomingPending(targetUserId.value)) {
+    return true;
+  }
+
+  if (friendStore.isOutgoingPending(targetUserId.value)) {
+    return false;
+  }
+
+  return (
+    items.value?.friendRequestStatus === FriendRequestStatusEnum.PENDING &&
+    items.value?.isRequester === true
+  );
 });
 
 const isFriendRequestSent = computed((): boolean => {
   if (isOwnProfile.value) return false;
 
-  return friendStore.isOutgoingPending(targetUserId.value);
+  if (isFriend.value) return false;
+
+  if (
+    friendStore.getResolvedStatus(targetUserId.value) ===
+    FriendRequestStatusEnum.REJECTED
+  ) {
+    return false;
+  }
+
+  if (friendStore.isOutgoingPending(targetUserId.value)) {
+    return true;
+  }
+
+  if (friendStore.isIncomingPending(targetUserId.value)) {
+    return false;
+  }
+
+  return (
+    items.value?.friendRequestStatus === FriendRequestStatusEnum.PENDING &&
+    items.value?.isRequester === false
+  );
 });
 
 const shouldShowFriendRequestActions = computed((): boolean => {
@@ -266,116 +312,9 @@ const shouldShowAddFriendButton = computed((): boolean => {
   );
 });
 
-function syncRelationshipToStore(
-  friendId: number,
-  options: {
-    isFriend: boolean;
-    hasIncomingPending: boolean;
-    hasOutgoingPending: boolean;
-  },
-): void {
-  if (options.isFriend) {
-    friendStore.markRequestAccepted(friendId);
-    return;
-  }
-
-  if (options.hasIncomingPending) {
-    friendStore.markIncomingPending(friendId);
-    friendStore.clearOutgoingPending(friendId);
-    friendStore.clearResolvedStatus(friendId);
-    return;
-  }
-
-  if (options.hasOutgoingPending) {
-    friendStore.markOutgoingPending(friendId);
-    friendStore.clearIncomingPending(friendId);
-    friendStore.clearResolvedStatus(friendId);
-    return;
-  }
-
-  friendStore.clearIncomingPending(friendId);
-  friendStore.clearOutgoingPending(friendId);
-  friendStore.clearResolvedStatus(friendId);
-}
-
-async function syncRelationshipState(): Promise<void> {
-  const currentUserId = authStore.user.id;
-  const friendId = targetUserId.value;
-
-  if (!currentUserId || !friendId || currentUserId === friendId) return;
-
-  const requestResponse = await friendService.findAllRequestPaginate({
-    page: 1,
-    limit: 100,
-  });
-
-  const requestItems = requestResponse?.data || [];
-  const relatedRequests = requestItems.filter(
-    (request: IFindAllRequestList): boolean => {
-      return (
-        (request.requesterId === friendId &&
-          request.receiverId === currentUserId) ||
-        (request.requesterId === currentUserId &&
-          request.receiverId === friendId)
-      );
-    },
-  );
-
-  const hasAcceptedRequest = relatedRequests.some(
-    (request: IFindAllRequestList): boolean => {
-      return request.status === FriendRequestStatusEnum.ACCEPTED;
-    },
-  );
-  const hasIncomingPending = relatedRequests.some(
-    (request: IFindAllRequestList): boolean => {
-      return (
-        request.status === FriendRequestStatusEnum.PENDING &&
-        request.receiverId === currentUserId
-      );
-    },
-  );
-  const hasOutgoingPending = relatedRequests.some(
-    (request: IFindAllRequestList): boolean => {
-      return (
-        request.status === FriendRequestStatusEnum.PENDING &&
-        request.requesterId === currentUserId
-      );
-    },
-  );
-
-  let isAlreadyFriend = hasAcceptedRequest;
-
-  if (!isAlreadyFriend && items.value?.username) {
-    try {
-      const friendsResponse = await friendService.findAllFriendPaginate({
-        page: 1,
-        limit: 20,
-        search: items.value.username,
-      });
-
-      const friends = friendsResponse?.data || [];
-      isAlreadyFriend = friends.some((friend: IFindAllFriendList): boolean => {
-        return (
-          friend.id === friendId || friend.username === items.value?.username
-        );
-      });
-    } catch {
-      // Best-effort fallback: keep request-based relationship state.
-    }
-  }
-
-  syncRelationshipToStore(friendId, {
-    isFriend: isAlreadyFriend,
-    hasIncomingPending,
-    hasOutgoingPending,
-  });
-}
-
 async function useFetchDetails(): Promise<void> {
   const response = await userService.findOneUserById(id.value);
   items.value = response?.data;
-
-  await syncRelationshipState();
 }
 
 function fetch(): void {
@@ -480,11 +419,7 @@ async function onClickRemoveFriend(): Promise<void> {
     const response = await friendService.removeFriend(targetUserId.value);
 
     if (response.data?.count) {
-      syncRelationshipToStore(targetUserId.value, {
-        isFriend: false,
-        hasIncomingPending: false,
-        hasOutgoingPending: false,
-      });
+      friendStore.markFriendRemoved(targetUserId.value);
       dialogOpenConfirmRemoveFriends.value = false;
     }
   } finally {

@@ -1,3 +1,4 @@
+import type { FriendRequestStatusEnum } from '../enums/Friend.enum'
 import type { IBasePaginationResponse } from './Response.model'
 
 export interface INotificationList {
@@ -9,6 +10,8 @@ export interface INotificationList {
   createdAt: string
   updatedAt: string
   deletedAt: string
+  notificationType: string
+  friendRequestStatus: FriendRequestStatusEnum
 }
 
 export interface IFindAllNotificationPaginateResponse extends IBasePaginationResponse<INotificationList> {}
