@@ -37,14 +37,14 @@
       <template v-if="shouldShowFriendRequestActions">
         <Button
           :disabled="isSubmitting"
-          class="w-full bg-gradient-to-r from-emerald-500 to-green-600 border-none text-white enabled:hover:from-emerald-600 enabled:hover:to-green-700 active:from-emerald-400 active:to-green-500"
+          class="w-full bg-linear-to-r from-emerald-500 to-green-600 border-none text-white enabled:hover:from-emerald-600 enabled:hover:to-green-700 active:from-emerald-400 active:to-green-500"
 
           @click="onClickAcceptRequest">
           ยอมรับ
         </Button>
         <Button
           :disabled="isSubmitting"
-          class="w-full bg-gradient-to-r from-red-500 to-rose-600 border-none text-white enabled:hover:from-red-600 enabled:hover:to-rose-700 active:from-red-400 active:to-rose-500"
+          class="w-full bg-linear-to-r from-red-500 to-rose-600 border-none text-white enabled:hover:from-red-600 enabled:hover:to-rose-700 active:from-red-400 active:to-rose-500"
 
           @click="onClickRejectRequest">
           ปฏิเสธ
@@ -79,9 +79,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
-import type { IFindAllFriendList, IFindAllRequestList } from '~/models/response/FriendRes.model'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
 import type { IFriendProvider } from '~/resource/provider/Friend.provider'
 import FriendProvider from '~/resource/provider/Friend.provider'
@@ -91,14 +90,12 @@ import Dialog from '~/volt/Dialog.vue'
 
 const friendService: IFriendProvider = new FriendProvider()
 const visible = defineModel<boolean>('visible', { default: false })
-const items = ref<IFindAllRequestList[]>([])
 const router = useRouter()
 const { $handleLoading } = useNuxtApp()
 const isSubmitting = ref(false)
 const isReportDialogVisible = ref(false)
 const authStore = useAuthStore()
 const friendStore = useFriendStore()
-const { pagination, extractPagination } = usePagination()
 const props = defineProps<{
   value: IFindOneCurrentUserData
 }>()
@@ -112,30 +109,27 @@ const isFriendAccepted = computed((): boolean => {
     return true
   }
 
-  const currentUserId = authStore.user.id
-  if (!currentUserId) return false
-
-  return items.value.some((request: IFindAllRequestList): boolean => {
-    const isBetweenUsers = (request.requesterId === props.value.id && request.receiverId === currentUserId)
-      || (request.requesterId === currentUserId && request.receiverId === props.value.id)
-
-    return isBetweenUsers && request.status === FriendRequestStatusEnum.ACCEPTED
-  })
+  return props.value.isFriend || props.value.friendRequestStatus === FriendRequestStatusEnum.ACCEPTED
 })
 
 const hasIncomingPendingRequest = computed((): boolean => {
+  if (isFriendAccepted.value) {
+    return false
+  }
+
+  if (friendStore.getResolvedStatus(props.value.id) === FriendRequestStatusEnum.REJECTED) {
+    return false
+  }
+
   if (friendStore.isIncomingPending(props.value.id)) {
     return true
   }
 
-  const currentUserId = authStore.user.id
-  if (!currentUserId) return false
+  if (friendStore.isOutgoingPending(props.value.id)) {
+    return false
+  }
 
-  return items.value.some((request: IFindAllRequestList): boolean => {
-    return request.status === FriendRequestStatusEnum.PENDING
-      && request.receiverId === currentUserId
-      && request.requesterId === props.value.id
-  })
+  return props.value.friendRequestStatus === FriendRequestStatusEnum.PENDING && props.value.isRequester
 })
 
 const shouldShowFriendRequestActions = computed((): boolean => {
@@ -147,33 +141,24 @@ const shouldShowAddFriendButton = computed((): boolean => {
 })
 
 const isFriendRequestSent = computed((): boolean => {
+  if (isFriendAccepted.value) {
+    return false
+  }
+
+  if (friendStore.getResolvedStatus(props.value.id) === FriendRequestStatusEnum.REJECTED) {
+    return false
+  }
+
   if (friendStore.isOutgoingPending(props.value.id)) {
     return true
   }
 
-  const currentUserId = authStore.user.id
-  if (!currentUserId) return false
-
-  return items.value.some((request: IFindAllRequestList): boolean => {
-    return request.status === FriendRequestStatusEnum.PENDING
-      && request.receiverId === props.value.id
-      && request.requesterId === currentUserId
-  })
-})
-
-function updateIncomingRequestStatus (status: FriendRequestStatusEnum, responseAt: string | null = null): void {
-  const currentUserId = authStore.user.id
-  if (!currentUserId) return
-
-  const request = items.value.find((item: IFindAllRequestList): boolean => {
-    return item.requesterId === props.value.id && item.receiverId === currentUserId
-  })
-
-  if (request) {
-    request.status = status
-    request.responseAt = responseAt || request.responseAt
+  if (friendStore.isIncomingPending(props.value.id)) {
+    return false
   }
-}
+
+  return props.value.friendRequestStatus === FriendRequestStatusEnum.PENDING && !props.value.isRequester
+})
 
 function onClickUserDetail (userId: number): void {
   router.push({ name: 'public-profile-id', params: { id: userId } })
@@ -217,7 +202,6 @@ async function onClickAcceptRequest (): Promise<void> {
 
     if (response.data?.status === FriendRequestStatusEnum.ACCEPTED) {
       friendStore.markRequestAccepted(props.value.id)
-      updateIncomingRequestStatus(FriendRequestStatusEnum.ACCEPTED, response.data.responseAt)
     }
   } finally {
     isSubmitting.value = false
@@ -233,87 +217,11 @@ async function onClickRejectRequest (): Promise<void> {
 
     if (response.data?.status === FriendRequestStatusEnum.REJECTED) {
       friendStore.markRequestRejected(props.value.id)
-      updateIncomingRequestStatus(FriendRequestStatusEnum.REJECTED, response.data.responseAt)
     }
   } finally {
     isSubmitting.value = false
   }
 }
-
-async function getRequestList (): Promise<void> {
-  const response = await friendService.findAllRequestPaginate({
-    page: pagination.value.page,
-    limit: pagination.value.limit
-  })
-
-  items.value = response?.data || []
-
-  const currentUserId = authStore.user.id
-  const relatedRequests = currentUserId
-    ? items.value.filter((request: IFindAllRequestList): boolean => {
-      return (request.requesterId === props.value.id && request.receiverId === currentUserId)
-        || (request.requesterId === currentUserId && request.receiverId === props.value.id)
-    })
-    : []
-
-  const hasAcceptedRequest = relatedRequests.some((request: IFindAllRequestList): boolean => {
-    return request.status === FriendRequestStatusEnum.ACCEPTED
-  })
-  const hasIncomingPending = relatedRequests.some((request: IFindAllRequestList): boolean => {
-    return request.status === FriendRequestStatusEnum.PENDING && request.receiverId === currentUserId
-  })
-  const hasOutgoingPending = relatedRequests.some((request: IFindAllRequestList): boolean => {
-    return request.status === FriendRequestStatusEnum.PENDING && request.requesterId === currentUserId
-  })
-
-  let isAlreadyFriend = hasAcceptedRequest
-
-  if (!isAlreadyFriend && props.value.username) {
-    try {
-      const friendsResponse = await friendService.findAllFriendPaginate({
-        page: 1,
-        limit: 20,
-        search: props.value.username
-      })
-
-      const friends = friendsResponse?.data || []
-      isAlreadyFriend = friends.some((friend: IFindAllFriendList): boolean => {
-        return friend.id === props.value.id || friend.username === props.value.username
-      })
-    } catch {
-      // Keep best-effort relationship state from request list when friend list request fails.
-    }
-  }
-
-  if (isAlreadyFriend) {
-    friendStore.markRequestAccepted(props.value.id)
-  } else if (hasIncomingPending) {
-    friendStore.markIncomingPending(props.value.id)
-    friendStore.clearOutgoingPending(props.value.id)
-    friendStore.clearResolvedStatus(props.value.id)
-  } else if (hasOutgoingPending) {
-    friendStore.markOutgoingPending(props.value.id)
-    friendStore.clearIncomingPending(props.value.id)
-    friendStore.clearResolvedStatus(props.value.id)
-  } else {
-    friendStore.clearIncomingPending(props.value.id)
-    friendStore.clearOutgoingPending(props.value.id)
-    friendStore.clearResolvedStatus(props.value.id)
-  }
-
-  pagination.value = extractPagination(response)
-}
-
-
-watch(
-  (): [boolean, number] => [visible.value, props.value.id], ([isVisible, userId]: [boolean, number],
-    [wasVisible, previousId]: [boolean, number]): void => {
-    if (!isVisible || !userId) return
-    if (!wasVisible || userId !== previousId) {
-      $handleLoading(getRequestList)
-    }
-  }
-)
 </script>
 
 <style scoped>

@@ -1,7 +1,7 @@
 <template>
   <Card
     class="w-full"
-    pt:body:class="p-2 rounded-lg border-none">
+    pt:body:class="p-2 rounded-lg border-none dark:bg-surface-900 bg-surface-100">
     <template #content>
       <div class="flex flex-col justify-center items-center">
         <div class="mb-1">
