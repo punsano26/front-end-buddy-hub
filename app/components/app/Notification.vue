@@ -76,14 +76,14 @@
                     pt:root:class="w-auto whitespace-nowrap"
                     size="small"
                     text
-                    @click="handleAccept(item.id)">
+                    @click="handleAccept(item.userId)">
                     <i class="pi pi-check" />
                   </Button>
                   <Button
                     pt:root:class="w-auto whitespace-nowrap"
                     size="small"
                     text
-                    @click="handleReject(item.id)">
+                    @click="handleReject(item.userId)">
                     <i class="pi pi-times" />
                   </Button>
                 </template>
@@ -114,6 +114,7 @@ const notificationService: INotificationProvider = new NotificationProvider()
 const friendService: IFriendProvider = new FriendProvider()
 const { pagination, extractPagination } = usePagination()
 const items = ref<INotificationList[]>([])
+// const friendIds = computed((): void => items.value.map((item): number => item.friendId))
 const { $handleLoading } = useNuxtApp()
 
 async function useFetch (): Promise<void> {
@@ -134,13 +135,13 @@ onMounted((): void => {
   fetch()
 })
 
-async function handleAccept (id: number): Promise<void> {
-  await friendService.acceptFriendRequest(id)
+async function handleAccept (userId: number): Promise<void> {
+  await friendService.acceptFriendRequest(userId)
   fetch()
 }
 
-async function handleReject (id: number): Promise<void> {
-  await friendService.rejectFriendRequest(id)
+async function handleReject (userId: number): Promise<void> {
+  await friendService.rejectFriendRequest(userId)
   fetch()
 }
 </script>

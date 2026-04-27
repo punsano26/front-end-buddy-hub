@@ -7,7 +7,7 @@
         class="h-full min-h-0 overflow-hidden border-r border-gray-800" />
       <div
         :class="isChatIndex ? 'hidden md:block' : 'block'"
-        class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
+        class="flex flex-1 min-h-0 flex-col overflow-hidden overscroll-y-contain">
         <slot />
       </div>
     </div>
