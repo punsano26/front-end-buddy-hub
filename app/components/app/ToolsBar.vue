@@ -22,7 +22,7 @@
 
 
       <template #center>
-        <div class="flex items-center justify-center gap-8 md:gap-4 md:bg-white/40 md:dark:bg-surface-800/40 md:backdrop-blur-lg px-1.5 md:px-2 py-1 rounded-2xl shadow-inner">
+        <div class="flex items-center justify-center gap-4 md:gap-4 md:bg-white/40 md:dark:bg-surface-800/40 md:backdrop-blur-lg px-1.5 md:px-2 py-1 rounded-2xl shadow-inner">
           <NuxtLink :to="{ name: 'public-home' }">
             <SecondaryButton
               :class="navClass('public-home')"
@@ -47,6 +47,17 @@
                 pt:root:class="h-8 w-8 p-0 gap-0 rounded-xl md:h-auto md:w-auto md:px-3 md:py-1.5 md:gap-2 md:text-sm transition-all duration-200 hover:bg-white/60 dark:hover:bg-surface-700/60"
                 text />
             </OverlayBadge>
+          </NuxtLink>
+
+          <NuxtLink :to="{ name: 'public-find-match' }">
+            <SecondaryButton
+              :class="navClass('public-find-match')"
+              icon="pi pi-link"
+              label="Find Match"
+              pt:icon:class="text-black! dark:text-white!"
+              pt:label:class="hidden md:inline text-black! dark:text-white!"
+              pt:root:class="h-8 w-8 p-0 gap-0 rounded-xl md:h-auto md:w-auto md:px-3 md:py-1.5 md:gap-2 md:text-sm transition-all duration-200 hover:bg-white/60 dark:hover:bg-surface-700/60"
+              text />
           </NuxtLink>
 
           <NuxtLink :to="{ name: 'public-friends' }">
@@ -153,6 +164,18 @@
               :class="drawerNavClass('public-chat')"
               class="justify-start w-full"
               icon="pi pi-comment"
+              label="Chats"
+              pt:root:class="w-full justify-start"
+              text />
+          </NuxtLink>
+
+          <NuxtLink
+            :to="{ name: 'public-find-match' }"
+            @click="menuOpen = false">
+            <SecondaryButton
+              :class="drawerNavClass('public-find-match')"
+              class="justify-start w-full"
+              icon="pi pi-link"
               label="Chats"
               pt:root:class="w-full justify-start"
               text />
