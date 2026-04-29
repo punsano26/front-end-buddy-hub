@@ -16,6 +16,24 @@ export default defineNuxtPlugin((): any => {
   let ws: (WebSocket & { __manualClose?: boolean }) | null = null
   let isSyncingUnreadOnLogin = false
   let unreadSyncedUserId: number | null = null
+  const notificationAudio = typeof Audio !== 'undefined'
+    ? new Audio('/sound/notisound.wav')
+    : null
+
+  if (notificationAudio) {
+    notificationAudio.volume = 0.6
+  }
+
+  const playNotificationSound = async (): Promise<void> => {
+    if (!notificationAudio) return
+
+    try {
+      notificationAudio.currentTime = 0
+      await notificationAudio.play()
+    } catch {
+      // Autoplay can be blocked; ignore and keep realtime updates.
+    }
+  }
 
   const syncUnreadCountOnLogin = async (): Promise<void> => {
     const currentUserId = authStore.user.id
@@ -156,6 +174,11 @@ export default defineNuxtPlugin((): any => {
 
         if (isChatMessageLike(message) && message.receiverId === currentUserId && !message.isRead) {
           chatStore.addUnreadMessageId(message.id, currentUserId, message.senderId)
+        }
+
+        if (isChatMessageLike(message) && message.receiverId === currentUserId) {
+          // Play notification sound for every incoming message.
+          void playNotificationSound()
         }
       }
 
