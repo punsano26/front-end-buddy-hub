@@ -1,5 +1,5 @@
 <template>
-  <div class="w-screen h-screen grid place-items-center px-2">
+  <div class="w-full min-h-dvh grid place-items-center overflow-x-hidden">
     <slot />
   </div>
 </template>
