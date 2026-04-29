@@ -1,11 +1,13 @@
 <template>
-  <div class="landing-root w-screen h-screen overflow-hidden">
+  <div class="landing-root relative w-full min-h-dvh overflow-hidden">
     <div class="ambient ambient-cyan" />
     <div class="ambient ambient-indigo" />
+    <div class="ambient ambient-aurora" />
     <div class="ambient ambient-grid" />
+    <div class="ambient ambient-vignette" />
 
-    <main class="relative z-10 h-full w-full px-4 py-6 md:px-10 md:py-10">
-      <div class="mx-auto grid h-full max-w-6xl items-center gap-8 lg:grid-cols-2">
+    <main class="relative z-10 min-h-dvh w-full px-4 py-6 md:px-10 md:py-10">
+      <div class="mx-auto grid min-h-full max-w-6xl items-center gap-8 lg:grid-cols-2">
         <section class="space-y-6">
           <p class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs tracking-[0.2em] text-white/80 uppercase backdrop-blur-sm">
             บัดดี้ ฮับ
@@ -203,6 +205,7 @@ useHead({
   background: radial-gradient(circle at 12% 20%, #0f2a46 0%, transparent 42%),
     radial-gradient(circle at 88% 80%, #28184a 0%, transparent 40%),
     linear-gradient(145deg, #040b18 0%, #091827 45%, #060915 100%);
+  isolation: isolate;
 }
 
 .ambient {
@@ -212,13 +215,23 @@ useHead({
 }
 
 .ambient-cyan {
-  background: radial-gradient(circle at 20% 30%, rgba(57, 198, 214, 0.24) 0%, transparent 38%);
+  background: radial-gradient(circle at 20% 30%, rgba(57, 198, 214, 0.26) 0%, transparent 38%);
+  filter: blur(6px);
   animation: driftA 12s ease-in-out infinite alternate;
 }
 
 .ambient-indigo {
-  background: radial-gradient(circle at 78% 70%, rgba(111, 143, 232, 0.28) 0%, transparent 40%);
+  background: radial-gradient(circle at 78% 70%, rgba(111, 143, 232, 0.3) 0%, transparent 40%);
+  filter: blur(8px);
   animation: driftB 15s ease-in-out infinite alternate;
+}
+
+.ambient-aurora {
+  background: conic-gradient(from 140deg at 50% 50%, rgba(16, 185, 129, 0.09), rgba(59, 130, 246, 0.12), rgba(99, 102, 241, 0.11), rgba(16, 185, 129, 0.09));
+  mix-blend-mode: screen;
+  opacity: 0.65;
+  transform-origin: center;
+  animation: auroraSpin 26s linear infinite;
 }
 
 .ambient-grid {
@@ -227,6 +240,10 @@ useHead({
   background-size: 42px 42px;
   mask-image: radial-gradient(circle at center, black 10%, transparent 88%);
   opacity: 0.25;
+}
+
+.ambient-vignette {
+  background: radial-gradient(circle at center, transparent 55%, rgba(2, 6, 23, 0.55) 100%);
 }
 
 .scene-wrap {
@@ -238,7 +255,7 @@ useHead({
 .scene {
   position: relative;
   width: min(520px, 92vw);
-  height: 420px;
+  height: clamp(300px, 44vw, 420px);
   transform-style: preserve-3d;
 }
 
@@ -267,7 +284,7 @@ useHead({
 
 .layer-float-a {
   top: 20px;
-  right: -8px;
+  right: 0;
   transform: rotateY(-18deg) rotateX(8deg) translateZ(86px);
   animation: levitateA 5.4s ease-in-out infinite;
 }
@@ -292,19 +309,28 @@ useHead({
 
 @keyframes driftA {
   from {
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(-8px, -6px, 0) scale(1);
   }
   to {
-    transform: translate3d(0, 20px, 0);
+    transform: translate3d(12px, 18px, 0) scale(1.05);
   }
 }
 
 @keyframes driftB {
   from {
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(8px, -8px, 0) scale(1);
   }
   to {
-    transform: translate3d(0, -22px, 0);
+    transform: translate3d(-10px, 20px, 0) scale(1.06);
+  }
+}
+
+@keyframes auroraSpin {
+  from {
+    transform: rotate(0deg) scale(1.15);
+  }
+  to {
+    transform: rotate(360deg) scale(1.15);
   }
 }
 
@@ -330,7 +356,8 @@ useHead({
 
 @media (max-width: 1024px) {
   .scene {
-    height: 360px;
+    width: min(500px, 96vw);
+    height: clamp(280px, 62vw, 360px);
   }
 
   .layer-base {
@@ -341,15 +368,19 @@ useHead({
 @media (max-width: 640px) {
   .scene {
     width: 100%;
-    height: 320px;
+    height: clamp(260px, 72vw, 320px);
   }
 
   .layer-float {
-    width: 180px;
+    width: min(46vw, 180px);
   }
 
   .layer-float-a {
-    right: -2px;
+    right: 2px;
+  }
+
+  .layer-base {
+    inset: 18px 12px 16px 8px;
   }
 }
 </style>

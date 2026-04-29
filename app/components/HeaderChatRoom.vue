@@ -1,39 +1,40 @@
 <template>
-  <Card pt:root:class="w-full rounded-none">
+  <Card
+    pt:body:class="px-3 md:px-5 py-2.5 md:py-3"
+    pt:root:class="w-full rounded-none border-b border-surface-200 dark:border-surface-700">
     <template #content>
-      <div class="flex items-center justify-between">
-        <div
-          v-for="(item, index) in items"
-          :key="index"
-          class="flex items-center gap-4">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-3 min-w-0">
           <ButtonBack
             :to="{ name: 'public-chat' }"
             icon="mdi:arrow-left" />
           <NuxtLink
-            :to="{ name: 'public-profile-id', params: { id: item.id } }">
+            :to="{ name: 'public-profile-id', params: { id: user?.id } }"
+            class="shrink-0">
             <img
-              :src="item.profileImg || '/png/upload-profile.png'"
-              alt="Alice"
-              class="w-10 h-10 rounded-sm object-cover">
+              :src="user?.profileImg || '/png/upload-profile.png'"
+              class="w-9 h-9 md:w-10 md:h-10 rounded-lg object-cover">
           </NuxtLink>
-          <div class="flex-1 min-w-0">
-            <p class="font-semibold truncate">
-              {{ item.nickname || item.username }}
+          <div class="min-w-0 leading-tight">
+            <p class="font-semibold text-sm md:text-base truncate">
+              {{ user?.nickname || user?.username }}
             </p>
             <p
-              v-if="item.isOnline"
+              v-if="user?.isOnline"
               class="text-xs text-green-500 flex items-center gap-1">
               <span class="h-2 w-2 bg-green-500 rounded-full" />
               Online
             </p>
             <p
               v-else
-              class="text-xs text-gray-500">
-              ใช้งานเมื่อ {{ dayjs(item.lastOnlineAt).fromNow() }}
+              class="text-xs text-surface-500 truncate">
+              ใช้งานเมื่อ {{ dayjs(user?.lastOnlineAt).fromNow() }}
             </p>
           </div>
         </div>
-        <DotMenu :items="labelMenu" />
+        <div class="flex items-center gap-1">
+          <DotMenu :items="labelMenu" />
+        </div>
         <ReportModalDialog v-model:visible="isReportDialogVisible" />
       </div>
     </template>
@@ -53,6 +54,7 @@ dayjs.extend(relativeTime)
 dayjs.locale('th')
 
 const items = ref<IFindOneCurrentUserData[]>([])
+const user = computed((): IFindOneCurrentUserData | undefined => items.value[0])
 const { $handleLoading } = useNuxtApp()
 const id = computed((): number => Number(useRoute().params.id))
 const userService: IUserProvider = new UserProvider()

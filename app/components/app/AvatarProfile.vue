@@ -48,6 +48,11 @@ const items = ref<IMenuItem[]>([
     command: goProfile
   },
   {
+    label: 'จัดการ VIP',
+    icon: 'pi pi-crown',
+    command: goVip
+  },
+  {
     label: 'logout',
     icon: 'pi pi-sign-out',
     command: onLogout
@@ -56,6 +61,10 @@ const items = ref<IMenuItem[]>([
 
 function onLogout (): void {
   router.push({ name: 'auth-logout' })
+}
+
+function goVip (): void {
+  router.push({ name: 'public-vip' })
 }
 
 function goProfile (): void {
