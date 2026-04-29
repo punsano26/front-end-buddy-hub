@@ -2,7 +2,7 @@
   <div class="h-full min-h-0 flex flex-col overflow-hidden">
     <HeaderChatRoom class="shrink-0" />
     <div ref="chatScrollContainer" class="flex-1 min-h-0 overflow-y-auto p-4">
-      <div class="flex min-h-full flex-col justify-end gap-2">
+       <div class="flex flex-col gap-2">
         <div
           v-for="chat in orderedChatData"
           :key="chat.id"
