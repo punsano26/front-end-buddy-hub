@@ -176,7 +176,7 @@
               :class="drawerNavClass('public-find-match')"
               class="justify-start w-full"
               icon="pi pi-link"
-              label="Chats"
+              label="Find Match"
               pt:root:class="w-full justify-start"
               text />
           </NuxtLink>
