@@ -10,12 +10,12 @@
     dismissable-mask
     modal>
     <img
-      :src="value.bannerImg || 'https://picsum.photos/seed/picsum/200/300'"
+      :src="value.bannerImg || '/png/upload-banner.png'"
       alt="user banner"
       class="w-full h-32 object-cover rounded-tl-xl rounded-tr-xl">
     <div class="flex justify-center items-center gap-4 -mt-12 px-4">
       <img
-        :src="value.profileImg || 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png'"
+        :src="value.profileImg || '/png/upload-profile.png'"
         alt="user avatar"
         class="w-24 h-24 rounded-full border-4 border-surface-0 object-cover">
     </div>
@@ -81,6 +81,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
+import type { ISendAFriendRequestResponse } from '~/models/response/FriendRes.model'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
 import type { IFriendProvider } from '~/resource/provider/Friend.provider'
 import FriendProvider from '~/resource/provider/Friend.provider'
@@ -193,33 +194,31 @@ function clickAddFriend (): void {
   $handleLoading((): Promise<void> => onClickAddFriend(props.value.id))
 }
 
+async function acceptFriendRequest (): Promise<ISendAFriendRequestResponse> {
+  return await friendService.acceptFriendRequest(props.value.id)
+}
+
 async function onClickAcceptRequest (): Promise<void> {
   if (!hasIncomingPendingRequest.value || isSubmitting.value) return
 
-  isSubmitting.value = true
-  try {
-    const response = await friendService.acceptFriendRequest(props.value.id)
+  const response = await $handleLoading(acceptFriendRequest, { loadingUnit: isSubmitting })
 
-    if (response.data?.status === FriendRequestStatusEnum.ACCEPTED) {
-      friendStore.markRequestAccepted(props.value.id)
-    }
-  } finally {
-    isSubmitting.value = false
+  if (response?.data?.status === FriendRequestStatusEnum.ACCEPTED) {
+    friendStore.markRequestAccepted(props.value.id)
   }
+}
+
+async function rejectFriendRequest (): Promise<ISendAFriendRequestResponse> {
+  return await friendService.rejectFriendRequest(props.value.id)
 }
 
 async function onClickRejectRequest (): Promise<void> {
   if (!hasIncomingPendingRequest.value || isSubmitting.value) return
 
-  isSubmitting.value = true
-  try {
-    const response = await friendService.rejectFriendRequest(props.value.id)
+  const response = await $handleLoading(rejectFriendRequest, { loadingUnit: isSubmitting })
 
-    if (response.data?.status === FriendRequestStatusEnum.REJECTED) {
-      friendStore.markRequestRejected(props.value.id)
-    }
-  } finally {
-    isSubmitting.value = false
+  if (response?.data?.status === FriendRequestStatusEnum.REJECTED) {
+    friendStore.markRequestRejected(props.value.id)
   }
 }
 </script>
