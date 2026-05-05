@@ -14,7 +14,7 @@
 
           <NuxtLink :to="{ name: 'public-home' }">
             <img
-              class="w-16 md:w-12 transition-transform duration-200 hover:scale-105"
+              class="w-16 md:w-14 transition-transform duration-200 hover:scale-105"
               src="/png/logo-buddy-hub.png">
           </NuxtLink>
         </div>
