@@ -46,4 +46,21 @@ useSeoMeta({
   ogImage: (): string => ogImageUrl.value,
   twitterImage: (): string => ogImageUrl.value
 })
+
+const updateAppHeight = (): void => {
+  if (typeof window === 'undefined') return
+  const height = window.visualViewport?.height ?? window.innerHeight
+  document.documentElement.style.setProperty('--app-height', `${height}px`)
+}
+
+onMounted((): void => {
+  updateAppHeight()
+  window.addEventListener('resize', updateAppHeight)
+  window.visualViewport?.addEventListener('resize', updateAppHeight)
+})
+
+onUnmounted((): void => {
+  window.removeEventListener('resize', updateAppHeight)
+  window.visualViewport?.removeEventListener('resize', updateAppHeight)
+})
 </script>
