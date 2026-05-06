@@ -1,5 +1,5 @@
 <template>
-  <div class="flex min-h-screen h-dvh flex-col overflow-hidden">
+  <div class="flex min-h-[100dvh] h-[100dvh] flex-col overflow-hidden">
     <tools-bar :class="isChatIndex ? 'block md:block' : 'hidden md:block'" />
     <div class="flex flex-1 min-h-0 overflow-hidden">
       <sidebar-chat
