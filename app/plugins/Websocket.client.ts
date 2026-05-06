@@ -16,20 +16,44 @@ export default defineNuxtPlugin((): any => {
   let ws: (WebSocket & { __manualClose?: boolean }) | null = null
   let isSyncingUnreadOnLogin = false
   let unreadSyncedUserId: number | null = null
+
   const notificationAudio = typeof Audio !== 'undefined'
     ? new Audio('/sound/notisound.wav')
+    : null
+
+  const notificationAudioPublicChat = typeof Audio !== 'undefined'
+    ? new Audio('/sound/notisoundtwo.mp3')
     : null
 
   if (notificationAudio) {
     notificationAudio.volume = 0.6
   }
 
-  const playNotificationSound = async (): Promise<void> => {
-    if (!notificationAudio) return
+  if (notificationAudioPublicChat) {
+    notificationAudioPublicChat.volume = 0.6
+  }
+
+  const getPublicChatId = (): number | null => {
+    if (typeof window === 'undefined') return null
+
+    const match = window.location.pathname.match(/^\/public\/chat\/(\d+)/)
+    if (!match) return null
+
+    const parsed = Number(match[1])
+    return Number.isFinite(parsed) ? parsed : null
+  }
+
+  const playNotificationSound = async (senderId?: number): Promise<void> => {
+    const publicChatId = getPublicChatId()
+    const usePublicChatSound = publicChatId !== null
+      && typeof senderId === 'number'
+      && senderId === publicChatId
+    const audio = usePublicChatSound ? notificationAudioPublicChat : notificationAudio
+    if (!audio) return
 
     try {
-      notificationAudio.currentTime = 0
-      await notificationAudio.play()
+      audio.currentTime = 0
+      await audio.play()
     } catch {
       // Autoplay can be blocked; ignore and keep realtime updates.
     }
@@ -178,7 +202,7 @@ export default defineNuxtPlugin((): any => {
 
         if (isChatMessageLike(message) && message.receiverId === currentUserId) {
           // Play notification sound for every incoming message.
-          void playNotificationSound()
+          void playNotificationSound(message.senderId)
         }
       }
 

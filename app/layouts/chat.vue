@@ -1,6 +1,6 @@
 <template>
   <div class="flex min-h-screen h-dvh flex-col overflow-hidden">
-    <tools-bar class="shrink-0" />
+    <tools-bar :class="isChatIndex ? 'block md:block' : 'hidden md:block'" />
     <div class="flex flex-1 min-h-0 overflow-hidden">
       <sidebar-chat
         :class="isChatIndex ? 'w-full block md:w-80 md:block' : 'hidden md:w-80 md:block'"

@@ -1,7 +1,7 @@
 <template>
   <div>
     <Card
-      pt:root:class="bg-gradient-to-r from-sky-950 to-cyan-950 rounded-none"
+      pt:root:class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-black dark:via-slate-950 dark:to-black rounded-none"
     >
       <template #content>
         <div class="p-6 flex flex-col gap-4 justify-center items-center">

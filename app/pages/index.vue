@@ -7,25 +7,25 @@
     <div class="ambient ambient-vignette" />
 
     <main class="relative z-10 min-h-dvh w-full px-4 py-6 md:px-10 md:py-10">
-      <div class="mx-auto grid min-h-full max-w-6xl items-center gap-8 lg:grid-cols-2">
-        <section class="space-y-6">
-          <p class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs tracking-[0.2em] text-white/80 uppercase backdrop-blur-sm">
+      <div class="md:h-screen md:mt-[-5rem] mx-auto grid min-h-full max-w-5xl grid-cols-1 items-center gap-10 text-center md:grid-cols-2 md:text-left">
+        <section class="w-full space-y-6">
+          <p class="mx-auto inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs tracking-[0.2em] text-white/80 uppercase backdrop-blur-sm">
             บัดดี้ ฮับ
             <span class="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_18px_2px_rgba(16,185,129,0.8)]" />
           </p>
 
           <div class="space-y-3">
-            <h1 class="text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">
+            <h1 class="mx-auto text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">
               ค้นหาเพื่อนคุยใหม่
               <span class="bg-gradient-primary bg-clip-text text-transparent">ในวันที่เหงาใจ</span>
             </h1>
-            <p class="max-w-xl text-sm text-surface-200 sm:text-base">
+            <p class="mx-auto max-w-xl text-sm text-surface-200 sm:text-base">
               มาที่นี่แล้วคุณจะได้พบคนใหม่ที่คุยสนุก เข้าใจ และพร้อมเปิดใจในทุกโมเมนต์
               ทุกห้องแชทคือโอกาสใหม่ ทุกการทักคือจุดเริ่มต้นที่น่าจดจำ
             </p>
           </div>
 
-          <div class="flex flex-wrap items-center gap-3 text-xs text-surface-200">
+          <div class="flex flex-wrap items-center justify-center gap-3 text-xs text-surface-200">
             <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1">
               <i class="pi pi-comments" />
               แชททันใจแบบเรียลไทม์
@@ -40,7 +40,7 @@
             </span>
           </div>
 
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div class="flex flex-col items-center justify-center gap-3 sm:flex-row sm:items-center">
             <NuxtLink
               class="w-full sm:w-auto"
               to="/public/home">
@@ -64,7 +64,7 @@
           </div>
         </section>
 
-        <section class="scene-wrap">
+        <section class="scene-wrap w-full">
           <div class="scene perspective">
             <Card pt:root:class="layer layer-base">
               <template #content>
@@ -100,8 +100,8 @@
                   <p class="text-xs uppercase tracking-[0.18em] text-surface-300">
                     ออนไลน์ตอนนี้
                   </p>
-                  <p class="text-3xl font-black text-white">
-                    1,234
+                  <p :class="['text-3xl font-black text-white', { 'online-count-bump': isOnlineCountAnimating }]">
+                    {{ formattedOnlineCount }}
                   </p>
                   <p class="text-xs text-surface-300">
                     คนกำลังคุยสนุกในชั่วโมงนี้
@@ -134,16 +134,129 @@
 </template>
 
 <script lang="ts" setup>
+import { useAuthStore } from '~/stores/Auth'
+import { useUserStore } from '~/stores/User'
 import Button from '~/volt/Button.vue'
 import Card from '~/volt/Card.vue'
 import SecondaryButton from '~/volt/SecondaryButton.vue'
+
+interface IUserPresence {
+  id?: number
+  isOnline?: boolean
+}
+
+const authStore = useAuthStore()
+const userStore = useUserStore()
+const { $ws } = useNuxtApp()
+const fallbackOnlineCount = 1234
+const isOnlineCountAnimating = ref(false)
+const lastOnlineCount = ref<number>(fallbackOnlineCount)
+const safeUsers = computed<IUserPresence[]>((): IUserPresence[] => {
+  return Array.isArray(userStore.users) ? userStore.users : []
+})
+const onlineCount = computed<number>((): number => {
+  if (!safeUsers.value.length) return fallbackOnlineCount
+
+  const currentUserId = authStore.user.id
+  const onlineFromUsers = safeUsers.value.filter((user: IUserPresence): boolean => !!user?.isOnline).length
+  const hasCurrentUserInList = currentUserId > 0
+    && safeUsers.value.some((user: IUserPresence): boolean => user?.id === currentUserId)
+
+  // Socket user list can exclude current user; include self once when logged in.
+  return hasCurrentUserInList ? onlineFromUsers : onlineFromUsers + (currentUserId > 0 ? 1 : 0)
+})
+const formattedOnlineCount = computed<string>((): string => {
+  return new Intl.NumberFormat('en-US').format(onlineCount.value)
+})
+
+let socketMessageListener: ((event: MessageEvent) => void) | null = null
+let syncTimer: ReturnType<typeof setInterval> | null = null
+
+function requestUsersViaSocket (): void {
+  const socket = $ws()
+  if (!socket || socket.readyState !== WebSocket.OPEN) return
+
+  socket.send(JSON.stringify({
+    event: 'users:paginate',
+    data: {
+      page: 1,
+      limit: 200
+    }
+  }))
+}
+
+function setupRealtimeOnlineCount (): void {
+  const socket = $ws()
+  if (!socket || socket.readyState !== WebSocket.OPEN) return
+  if (socketMessageListener) return
+
+  socketMessageListener = (event: MessageEvent): void => {
+    try {
+      const payload = JSON.parse(event.data)
+      const isUsersEvent = payload?.event === 'users:update'
+        || payload?.event === 'users:list'
+        || payload?.event === 'users:paginate:response'
+
+      if (!isUsersEvent) return
+
+      const incoming = Array.isArray(payload.data)
+        ? payload.data
+        : Array.isArray(payload.data?.users)
+          ? payload.data.users
+          : []
+
+      userStore.setUsers(incoming)
+    } catch {
+      // Ignore non-JSON websocket payloads.
+    }
+  }
+
+  socket.addEventListener('message', socketMessageListener)
+  requestUsersViaSocket()
+  syncTimer = setInterval(requestUsersViaSocket, 15000)
+}
+
+function teardownRealtimeOnlineCount (): void {
+  const socket = $ws()
+  if (socket && socketMessageListener) {
+    socket.removeEventListener('message', socketMessageListener)
+  }
+  socketMessageListener = null
+
+  if (syncTimer) {
+    clearInterval(syncTimer)
+    syncTimer = null
+  }
+}
+
+watch(onlineCount, (newValue: number, oldValue: number): void => {
+  if (newValue === oldValue || newValue === lastOnlineCount.value) return
+
+  lastOnlineCount.value = newValue
+  isOnlineCountAnimating.value = false
+
+  requestAnimationFrame((): void => {
+    isOnlineCountAnimating.value = true
+    setTimeout((): void => {
+      isOnlineCountAnimating.value = false
+    }, 380)
+  })
+})
+
+onMounted((): void => {
+  setupRealtimeOnlineCount()
+})
+
+onBeforeUnmount((): void => {
+  teardownRealtimeOnlineCount()
+})
 
 const runtimeConfig = useRuntimeConfig()
 const siteUrl = String(runtimeConfig.public.siteUrl || 'http://localhost:5000').replace(/\/$/, '')
 const siteName = String(runtimeConfig.public.siteName || 'Buddy Hub')
 const pageUrl = `${siteUrl}/`
-const pageTitle = 'หาเพื่อนคุยออนไลน์แบบเรียลไทม์ ปลอดภัย และใช้งานง่าย'
-const pageDescription = 'Buddy Hub ช่วยให้คุณค้นหาเพื่อนคุยใหม่ได้ทันทีผ่านห้องแชทออนไลน์ พูดคุยลื่นไหล และเริ่มต้นความสัมพันธ์ดีๆ ได้ทุกวัน'
+const pageTitle = 'หาเพื่อนคุยออนไลน์ ปลอดภัย และใช้งานง่าย'
+const pageDescription = 'Buddy Hub ช่วยให้คุณค้นหาเพื่อนคุยใหม่ได้ทันทีผ่านห้องแชทออนไลน์ พูดคุยลื่นไหล และเริ่มต้นความสัมพันธ์ดีๆ สามารถหาที่ปรึกษาทางใจหรือเล่าเรื่องราว ได้ทุกวัน'
 const defaultOgImage = String(runtimeConfig.public.defaultOgImage || '/png/logo-buddy-hub.png')
 const ogImageUrl = defaultOgImage.startsWith('http')
   ? defaultOgImage
@@ -289,6 +402,10 @@ useHead({
   animation: levitateA 5.4s ease-in-out infinite;
 }
 
+.online-count-bump {
+  animation: onlineCountBump 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .layer-float-b {
   bottom: 0;
   left: 10px;
@@ -351,6 +468,21 @@ useHead({
   }
   50% {
     transform: rotateY(-10deg) rotateX(6deg) translateZ(74px) translateY(-10px);
+  }
+}
+
+@keyframes onlineCountBump {
+  0% {
+    transform: translateY(0) scale(1);
+    text-shadow: 0 0 0 rgba(96, 165, 250, 0);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.07);
+    text-shadow: 0 0 16px rgba(96, 165, 250, 0.5);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    text-shadow: 0 0 0 rgba(96, 165, 250, 0);
   }
 }
 
