@@ -6,8 +6,8 @@
       size="21" />
     <InputText
       v-model="model"
+      :placeholder="placeholder || 'ค้นหาเพื่อนใหม่'"
       class=" border-0 border-b rounded-xl shadow-none focus:shadow-input"
-      placeholder="ค้นหาเพื่อนใหม่"
       pt:root="ps-8 bg-gray-800 text-gray-100 placeholder:text-gray-300 focus:text-white focus:placeholder:text-gray-200"
       variant="outlined"
       fluid
@@ -30,6 +30,10 @@ const emits = defineEmits<IEmits>()
 
 const route = useRoute()
 const router = useRouter()
+
+defineProps<{
+  placeholder?: string
+}>()
 
 function emitSearch (): void {
   router.replace({
