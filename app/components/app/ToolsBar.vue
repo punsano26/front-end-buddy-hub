@@ -60,6 +60,19 @@
               text />
           </NuxtLink>
 
+          <NuxtLink
+            :to="{ name: 'public-rent' }"
+            class="hidden md:inline-flex">
+            <SecondaryButton
+              :class="navClass('public-rent')"
+              icon="pi pi-wallet"
+              label="Rent"
+              pt:icon:class="text-black! dark:text-white!"
+              pt:label:class="hidden md:inline text-black! dark:text-white!"
+              pt:root:class="h-8 w-8 p-0 gap-0 rounded-xl md:h-auto md:w-auto md:px-3 md:py-1.5 md:gap-2 md:text-sm transition-all duration-200 hover:bg-white/60 dark:hover:bg-surface-700/60"
+              text />
+          </NuxtLink>
+
           <NuxtLink :to="{ name: 'public-friends' }">
             <SecondaryButton
               :class="navClass('public-friends')"
@@ -177,6 +190,18 @@
               class="justify-start w-full"
               icon="pi pi-link"
               label="Find Match"
+              pt:root:class="w-full justify-start"
+              text />
+          </NuxtLink>
+
+          <NuxtLink
+            :to="{ name: 'public-rent' }"
+            @click="menuOpen = false">
+            <SecondaryButton
+              :class="drawerNavClass('public-rent')"
+              class="justify-start w-full"
+              icon="pi pi-wallet"
+              label="Rent"
               pt:root:class="w-full justify-start"
               text />
           </NuxtLink>
