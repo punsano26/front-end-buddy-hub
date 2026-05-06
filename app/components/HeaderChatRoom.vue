@@ -1,7 +1,7 @@
 <template>
   <Card
-    pt:body:class="px-3 md:px-5 py-2.5 md:py-3"
-    pt:root:class="w-full rounded-none border-b border-surface-200 dark:border-surface-700">
+    pt:body:class="px-3 md:px-5 lg:px-8 xl:px-10 py-2.5 md:py-3"
+    pt:root:class="w-full rounded-none border-b border-surface-200 dark:border-surface-700 pt-[env(safe-area-inset-top)]">
     <template #content>
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-3 min-w-0">

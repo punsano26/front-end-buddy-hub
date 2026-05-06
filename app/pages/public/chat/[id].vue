@@ -1,69 +1,76 @@
 <template>
-  <div class="h-full min-h-0 flex flex-col overflow-hidden">
+  <div class="flex h-full min-h-0 flex-col overflow-hidden">
     <HeaderChatRoom class="shrink-0" />
-    <div ref="chatScrollContainer" class="flex-1 min-h-0 overflow-y-auto p-4">
-       <div class="flex flex-col gap-2">
-        <div
-          v-for="chat in orderedChatData"
-          :key="chat.id"
-          :class="isOwnMessage(chat) ? 'flex justify-end' : 'flex'"
-          class="group"
-        >
-          <div class="flex flex-col max-w-[70%] min-w-0">
-            <div class="flex items-center min-w-0">
-              <DotMenu
-                v-if="isOwnMessage(chat) && !isMessagePending(chat)"
-                :items="getMessageMenuItems(chat)"
-                :message-id="chat.id"
-                class="opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0"
-              />
-
+    <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div
+        ref="chatScrollContainer"
+        class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-2 sm:px-3 lg:px-6 xl:px-8 2xl:px-10 py-3 sm:py-4"
+      >
+        <div class="flex w-full flex-col gap-2">
+          <div
+            v-for="chat in orderedChatData"
+            :key="chat.id"
+            class="group flex w-full"
+            :class="isOwnMessage(chat) ? 'justify-end' : 'justify-start'"
+          >
+            <div class="flex min-w-0 max-w-[90%] flex-col sm:max-w-[75%] lg:max-w-[60%] xl:max-w-[55%]">
               <div
-                class="flex flex-col gap-1 p-3 rounded-2xl shadow-sm max-w-full min-w-0"
-                :class="
-                  isOwnMessage(chat)
-                    ? 'bg-gradient-primary text-black rounded-br-md'
-                    : 'bg-white text-gray-800 rounded-bl-md border border-gray-200'
-                "
+                class="flex items-end gap-1.5 min-w-0"
               >
-                <p class="text-sm break-all whitespace-pre-wrap">
-                  {{ chat.messageText }}
-                </p>
+                <DotMenu
+                  v-if="isOwnMessage(chat) && !isMessagePending(chat)"
+                  :items="getMessageMenuItems(chat)"
+                  :message-id="chat.id"
+                  class="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150 shrink-0"
+                />
 
-                <div class="flex items-center gap-1">
-                  <p class="text-xs text-gray-900">
-                    {{ dayjs(chat.createdAt).format("hh:mm A") }}
+                <div
+                  class="flex flex-col gap-1 p-3 rounded-2xl shadow-sm max-w-full min-w-0"
+                  :class="
+                    isOwnMessage(chat)
+                      ? 'bg-gradient-primary text-black rounded-br-md'
+                      : 'bg-white text-gray-800 rounded-bl-md border border-gray-200'
+                  "
+                >
+                  <p class="text-sm break-words whitespace-pre-wrap">
+                    {{ chat.messageText }}
                   </p>
-                  <i
-                    v-if="isOwnMessage(chat) && isMessagePending(chat)"
-                    class="pi pi-spin pi-spinner text-gray-900 text-[10px]"
-                  />
-                  <i
-                    v-else-if="isOwnMessage(chat)"
-                    :class="
-                      chat.isRead
-                        ? 'text-green-700 pi pi-check-circle text-[10px]'
-                        : 'text-gray-900 pi pi-circle-off text-[10px]'
-                    "
-                  />
+
+                  <div class="flex items-center gap-1">
+                    <p class="text-xs text-gray-900">
+                      {{ dayjs(chat.createdAt).format("hh:mm A") }}
+                    </p>
+                    <i
+                      v-if="isOwnMessage(chat) && isMessagePending(chat)"
+                      class="pi pi-spin pi-spinner text-gray-900 text-[10px]"
+                    />
+                    <i
+                      v-else-if="isOwnMessage(chat)"
+                      :class="
+                        chat.isRead
+                          ? 'text-green-700 pi pi-check-circle text-[10px]'
+                          : 'text-gray-900 pi pi-circle-off text-[10px]'
+                      "
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="text-center text-xs text-red-500">
-          <span>{{ sendError }}</span>
+          <div class="text-center text-xs text-red-500">
+            <span>{{ sendError }}</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <DirectMessageChatRoom
-      v-model="form.messageText"
-      :is-editing="isEditingMessage"
-      class="shrink-0"
-      @cancelEdit="cancelEditMessage"
-      @createMessage="sendMessage"
-    />
+      <DirectMessageChatRoom
+        v-model="form.messageText"
+        :is-editing="isEditingMessage"
+        class="shrink-0"
+        @cancelEdit="cancelEditMessage"
+        @createMessage="sendMessage"
+      />
+    </div>
   </div>
 </template>
 
