@@ -3,7 +3,6 @@
     pt:body:class="px-3 md:px-4 lg:px-8 xl:px-10 py-2 md:py-3"
     pt:root:class="w-full rounded-none border-t border-surface-200 dark:border-surface-700 pb-[env(safe-area-inset-bottom)]">
     <template #content>
-      <!-- ✏️ Editing banner -->
       <div
         v-if="isEditing"
         class="mb-2 flex items-center justify-between gap-2 rounded-lg
@@ -20,10 +19,7 @@
           ✕
         </button>
       </div>
-
-      <!-- 💬 Input row -->
       <div class="flex items-center gap-2">
-        <!-- input -->
         <div class="flex-1">
           <InputLabelField
             v-model="messageModel"
@@ -31,8 +27,6 @@
             class="w-full"
             @keyup.enter="handleSend" />
         </div>
-
-        <!-- send button -->
         <Button
           :disabled="!messageModel?.trim()"
           class="shrink-0 rounded-xl px-4 py-2
@@ -41,7 +35,8 @@
                  hover:scale-105 active:scale-95
                  disabled:opacity-50 disabled:cursor-not-allowed
                  transition-all duration-150"
-          @click="handleSend">
+          @click="handleSend"
+          @pointerdown.prevent>
           <i
             v-if="!isEditing"
             class="pi pi-send text-sm" />
