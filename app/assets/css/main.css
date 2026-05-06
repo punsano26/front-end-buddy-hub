@@ -1,3 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Athiti:wght@200;300;400;500;600;700&display=swap');
+
 @import "tailwindcss";
 @import "tailwindcss-primeui";
-@import "./primevue.css"
+@import "./primevue.css";
+
+@custom-variant dark (&:where(:root[class~="app-dark"], :root[class~="app-dark"] *));
+
+@layer base {
+  body {
+    @apply m-0 min-h-screen overflow-x-hidden bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-white;
+    font-family: 'Athiti', sans-serif;
+  }
+}
+
