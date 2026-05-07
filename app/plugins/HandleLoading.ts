@@ -93,7 +93,7 @@ async function refreshAccessToken (): Promise<boolean> {
 
       authStore.userToken.accessToken = response.accessToken
       authStore.userToken.refreshToken = response.refreshToken
-      authStore.userToken.tokenExpireIn = response.tokenExpireIn
+      authStore.userToken.tokenExpiresIn = response.tokenExpiresIn
 
       return true
     } catch {
