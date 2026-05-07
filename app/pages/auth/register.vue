@@ -62,8 +62,9 @@ import { useToast } from 'primevue/usetoast'
 import CheckPasswordStrength from '~/components/input/CheckPasswordStrength.vue'
 import CheckPolicyAccept from '~/components/input/CheckPolicyAccept.vue'
 import InputLabelField from '~/components/input/InputLabelField.vue'
+import { genderEnum } from '~/models/enums/User.enum'
 import type { IBaseOptions } from '~/models/Global.model'
-import { genderEnum, type IAuthRegisterPayload } from '~/models/request/AuthReq.model'
+import type { IAuthRegisterPayload } from '~/models/request/AuthReq.model'
 import { validate } from '~/plugins/Validate'
 import type { IAuthProvider } from '~/resource/provider/Auth.provider'
 import AuthProvider from '~/resource/provider/Auth.provider'
@@ -99,15 +100,15 @@ const form = ref<IAuthRegisterPayload>({
 const gender = ref<IBaseOptions[]>([
   {
     label: 'ผู้ชาย',
-    value: 'male'
+    value: genderEnum.MALE
   },
   {
     label: 'ผู้หญิง',
-    value: 'female'
+    value: genderEnum.FEMALE
   },
   {
     label: 'อื่นๆ',
-    value: 'other'
+    value: genderEnum.OTHER
   }
 ])
 
@@ -134,7 +135,7 @@ async function onRegister (): Promise<void> {
     dateOfBirth: form.value.dateOfBirth
   }
   const response = await authService.register(payload)
-  authStore.userLogin(response.data, response.accessToken, response.refreshToken, Number(response.tokenExpireIn))
+  authStore.userLogin(response.data, response.accessToken, response.refreshToken, Number(response.tokenExpiresIn))
   router.push({ name: 'public-home' })
 }
 

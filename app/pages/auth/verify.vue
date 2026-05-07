@@ -1,5 +1,7 @@
 <template>
-  <form @submit.prevent="onSubmit">
+  <form
+    class="flex flex-col gap-4"
+    @submit.prevent="onSubmit">
     <InputLabelField
       v-model="account"
       :rules="[validate.required]"
@@ -7,6 +9,7 @@
       label="อีเมลหรือชื่อผู้ใช้"
       placeholder="อีเมลหรือชื่อผู้ใช้"
       required />
+
     <Button
       label="ถัดไป"
       pt:label:class="font-bold"
@@ -16,6 +19,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import InputLabelField from '~/components/input/InputLabelField.vue'
 import { validate } from '~/plugins/Validate'
@@ -29,36 +34,54 @@ definePageMeta({
 })
 
 const authService: IAuthProvider = new AuthProvider()
-const router = useRouter()
-const { $handleLoading } = useNuxtApp()
-const toast = useToast()
-const account = ref<string>('')
 
+const router = useRouter()
+const toast = useToast()
+const { $handleLoading } = useNuxtApp()
+
+const account = ref<string>('')
 const submitted = ref(false)
 
 async function onVerify (): Promise<void> {
-  if (!account.value) return
-  const payload = {
-    account: account.value
+  const value = account.value?.trim()
+
+  if (!value) {
+    return
   }
+
+  const payload = {
+    account: value
+  }
+
   const response = await authService.checkAuth(payload)
-  router.push({
-    name: response.data.isExists ? 'auth-login' : 'auth-register',
+
+  console.log('CHECK AUTH RESPONSE', response)
+
+  const exists = response?.data?.exists
+
+  await router.push({
+    name: exists ? 'auth-login' : 'auth-register',
     query: {
-      account: account.value
+      account: value
     }
   })
 }
 
-function onSubmit (): void {
+async function onSubmit (): Promise<void> {
   submitted.value = true
-  if (!account.value.trim()) {
+
+  if (!account.value?.trim()) {
     return
   }
-  $handleLoading(onVerify, {
-    toast: {
-      instance: toast
+
+  await $handleLoading(
+    async (): Promise<void> => {
+      await onVerify()
+    }, {
+      toast: {
+        instance: toast
+      }
     }
-  })
+  )
 }
 </script>
