@@ -20,7 +20,7 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
   const hasTokenData
     = !!authStore.userToken.accessToken
       && !!authStore.userToken.refreshToken
-      && authStore.userToken.tokenExpireIn !== null
+      && authStore.userToken.tokenExpiresIn !== null
 
   // 🔒 If not a public path and no valid token, redirect to verification.
   if (!isAuthPath && !isPolicyPath && !isPublicHome && !hasTokenData && !isLandingPage) {
@@ -46,7 +46,7 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
     if (
       authStore.userToken.accessToken
       && authStore.userToken.refreshToken
-      && authStore.userToken.tokenExpireIn !== null
+      && authStore.userToken.tokenExpiresIn !== null
     ) {
       return
     }
@@ -62,7 +62,7 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
 
       authStore.userToken.accessToken = persistedToken.accessToken || ''
       authStore.userToken.refreshToken = persistedToken.refreshToken || ''
-      authStore.userToken.tokenExpireIn = persistedToken.tokenExpireIn ?? null
+      authStore.userToken.tokenExpiresIn = persistedToken.tokenExpiresIn ?? null
     } catch {
       // Ignore invalid persisted format and continue with current store state.
     }
@@ -79,7 +79,7 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
 
     authStore.userToken.accessToken = response.accessToken
     authStore.userToken.refreshToken = response.refreshToken
-    authStore.userToken.tokenExpireIn = response.tokenExpireIn
+    authStore.userToken.tokenExpiresIn = response.tokenExpiresIn
 
     return true
   }
@@ -106,30 +106,30 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
   }
 
   function shouldRefreshToken (): boolean {
-    const tokenExpireIn = authStore.userToken.tokenExpireIn
+    const tokenExpiresIn = authStore.userToken.tokenExpiresIn
 
-    if (!tokenExpireIn || tokenExpireIn <= 0) return false
+    if (!tokenExpiresIn || tokenExpiresIn <= 0) return false
 
     const now = Date.now()
-    const expireAtMs = normalizeExpireAtMs(tokenExpireIn, now)
+    const expireAtMs = normalizeExpireAtMs(tokenExpiresIn, now)
 
     if (!expireAtMs) return false
 
     return expireAtMs - now <= REFRESH_BUFFER_MS
   }
 
-  function normalizeExpireAtMs (tokenExpireIn: number, now: number): number | null {
-    if (!Number.isFinite(tokenExpireIn) || tokenExpireIn <= 0) return null
+  function normalizeExpireAtMs (tokenExpiresIn: number, now: number): number | null {
+    if (!Number.isFinite(tokenExpiresIn) || tokenExpiresIn <= 0) return null
 
-    if (tokenExpireIn > 1_000_000_000_000) {
-      return tokenExpireIn
+    if (tokenExpiresIn > 1_000_000_000_000) {
+      return tokenExpiresIn
     }
 
-    if (tokenExpireIn > 1_000_000_000) {
-      return tokenExpireIn * 1000
+    if (tokenExpiresIn > 1_000_000_000) {
+      return tokenExpiresIn * 1000
     }
 
-    return now + tokenExpireIn * 1000
+    return now + tokenExpiresIn * 1000
   }
 
   function clearPersistedAuth (): void {

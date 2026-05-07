@@ -12,7 +12,7 @@
             :to="{ name: 'public-profile-id', params: { id: user?.id } }"
             class="shrink-0">
             <img
-              :src="user?.profileImg || '/png/upload-profile.png'"
+              :src="user?.profileImg ? imageBaseUrl + user.profileImg : '/png/upload-profile.png'"
               class="w-9 h-9 md:w-10 md:h-10 rounded-lg object-cover">
           </NuxtLink>
           <div class="min-w-0 leading-tight">
@@ -52,6 +52,8 @@ import UserProvider from '~/resource/provider/User.provider'
 
 dayjs.extend(relativeTime)
 dayjs.locale('th')
+
+const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
 
 const items = ref<IFindOneCurrentUserData[]>([])
 const user = computed((): IFindOneCurrentUserData | undefined => items.value[0])

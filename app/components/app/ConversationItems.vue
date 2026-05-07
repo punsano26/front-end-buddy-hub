@@ -17,7 +17,7 @@
         <div class="flex items-center gap-3 min-w-0">
 
           <img
-            :src="props.conversation.profileImg || '/png/upload-profile.png'"
+            :src="props.conversation.profileImg ? imageBaseUrl + props.conversation.profileImg : '/png/upload-profile.png'"
             class="w-10 h-10 rounded-sm object-cover shrink-0">
 
           <div class="flex-1 min-w-0 overflow-hidden pr-2">
@@ -51,6 +51,7 @@ const props = defineProps<{
 }>()
 
 const chatStore = useChatStore()
+const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
 
 const unreadCount = computed((): number => {
   return chatStore.unreadConversationCount(props.conversation.id)

@@ -13,11 +13,15 @@ export interface IApiTokenResponse<TData> {
   message: string
   accessToken: string
   refreshToken: string
-  tokenExpireIn: number | null
+  tokenExpiresIn: number | null
   data: TData
 }
 
-export interface IBasePaginationResponse<T = unknown> extends IApiResponse<T[]>, IPagination {}
+export interface IBasePaginationResponse<T = unknown> {
+  message: string
+  pagination: IPagination
+  data: T[]
+}
 
 export interface IErrorResponse {
   code: number

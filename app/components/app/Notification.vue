@@ -124,7 +124,7 @@ async function useFetch (): Promise<void> {
   })
 
   items.value = response?.data || []
-  pagination.value = extractPagination(response)
+  pagination.value = extractPagination(response?.pagination)
 }
 
 function fetch (): void {

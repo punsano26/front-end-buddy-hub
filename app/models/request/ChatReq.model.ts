@@ -1,5 +1,5 @@
 import type { chatEnum } from '../enums/Chat.enum'
-import type { IBasePaginationRequest, IFriendsIdRequest } from './Request.model'
+import type { IBasePaginationRequest, IPartnerIdRequest, TBaseParamsId } from './Request.model'
 
 export interface ICreateMessagePayload {
   receiverId: number
@@ -8,7 +8,7 @@ export interface ICreateMessagePayload {
 }
 
 export interface IUpdateMessagePayload {
-  messageId: number
+  messageId: TBaseParamsId
   messageText: string
 }
 
@@ -17,5 +17,5 @@ export interface IFindOneMessageFilters {}
 
 export interface IFindAllConversationsFilters {}
 
-export interface IFindOneMessagePaginateQuery extends IBasePaginationRequest, IFindOneMessageFilters, IFriendsIdRequest {}
+export interface IFindOneMessagePaginateQuery extends IBasePaginationRequest, IFindOneMessageFilters, IPartnerIdRequest {}
 export interface IFindAllConversationsPaginateQuery extends IBasePaginationRequest, IFindAllConversationsFilters {}

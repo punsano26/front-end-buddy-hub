@@ -4,14 +4,18 @@ import type { IApiResponse, IBasePaginationResponse } from './Response.model'
 export interface ISendAFriendRequestData {
   id: number
   requesterId: number
+  requesterUsername: string
+  requesterNickname: string | null
+  requesterProfileImg: string | null
   receiverId: number
   status: FriendRequestStatusEnum
   createdAt: string
-  responseAt: string | null
+  respondedAt: string | null
 }
 
 export interface IRemoveFriendData {
-  count: number
+  userId: number
+  friendId: number
 }
 
 export interface IFindAllRequestList {
@@ -23,16 +27,16 @@ export interface IFindAllRequestList {
   receiverId: number
   status: FriendRequestStatusEnum
   createdAt: string | Date
-  responseAt: string | Date | null
+  respondedAt: string | Date | null
 }
 
 export interface IFindAllFriendList {
   id: number
   username: string
-  nickname: string
-  profileImg: string
+  nickname: string | null
+  profileImg: string | null
   isOnline: boolean
-  lastOnlineAt: string
+  lastOnlineAt: string | null
 }
 
 export type ISendAFriendRequestResponse = IApiResponse<ISendAFriendRequestData>

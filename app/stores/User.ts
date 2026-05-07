@@ -1,18 +1,20 @@
 import { defineStore } from 'pinia'
-import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
+import { genderEnum } from '~/models/enums/User.enum'
+import type { IFindOneUserDetailData } from '~/models/response/UserRes.model'
 
 interface IUser {
   id: number
   username: string
   nickname?: string | null
   profileImg?: string | null
-  gender?: string
+  bannerImg?: string | null
+  gender?: genderEnum
   dateOfBirth?: string
   isOnline?: boolean
 }
 
 export const useUserStore = defineStore('User', {
-  state: (): { users: IUser[], userDetails: Record<number, IFindOneCurrentUserData> } => ({
+  state: (): { users: IUser[], userDetails: Record<number, IFindOneUserDetailData> } => ({
     users: [] as IUser[],
     userDetails: {}
   }),
@@ -25,7 +27,7 @@ export const useUserStore = defineStore('User', {
     setUserDetail (detail: unknown): void {
       if (!detail || typeof detail !== 'object') return
 
-      const data = detail as Partial<IFindOneCurrentUserData>
+      const data = detail as Partial<IFindOneUserDetailData>
 
       if (typeof data.id !== 'number') return
 
@@ -36,16 +38,20 @@ export const useUserStore = defineStore('User', {
         username: data.username ?? '',
         nickname: data.nickname ?? '',
         description: data.description ?? '',
-        email: data.email ?? '',
         createdAt: data.createdAt ?? '',
-        isVerified: data.isVerified ?? false,
         age: data.age ?? 0,
-        gender: data.gender ?? '',
-        dateOfBirth: data.dateOfBirth ?? ''
+        gender: data.gender ?? genderEnum.OTHER,
+        dateOfBirth: data.dateOfBirth ?? '',
+        isOnline: data.isOnline ?? false,
+        lastOnlineAt: data.lastOnlineAt ?? null,
+        roles: data.roles ?? [],
+        isFriend: data.isFriend ?? false,
+        isRequester: data.isRequester ?? false,
+        requestStatus: data.requestStatus ?? null
       }
     },
 
-    getUserDetail (userId: number): IFindOneCurrentUserData | undefined {
+    getUserDetail (userId: number): IFindOneUserDetailData | undefined {
       return this.userDetails[userId]
     }
   }

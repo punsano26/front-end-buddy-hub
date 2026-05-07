@@ -24,7 +24,7 @@
             option-value="value"
             placeholder="เลือกเพศของคุณ" />
         </InputLabelField>
-        <InputLabelField
+        <!-- <InputLabelField
           v-model="form.email"
           :rules="[validate.required, validate.email]"
           :show-error="submitted"
@@ -36,7 +36,7 @@
           label="บันทึก"
           pt:label:class="font-bold"
           pt:root:class="bg-gradient-primary border-none rounded-xl py-3"
-          type="submit" />
+          type="submit" /> -->
       </div>
     </form>
   </Dialog>
@@ -96,7 +96,7 @@ const form = ref<IUpdateUserPayload>({
   description: '',
   gender: undefined,
   dateOfBirth: '',
-  email: ''
+  // email: ''
 })
 
 
@@ -107,25 +107,25 @@ watch((): boolean => props.visible, (isOpen: boolean): void => {
     description: props.value?.description ?? '',
     gender: toGenderEnum(props.value?.gender) ?? undefined,
     dateOfBirth: props.value?.dateOfBirth ?? '',
-    email: props.value?.email ?? ''
+    // email: props.value?.email ?? ''
   }
 })
 
 async function useUpdate (): Promise<void> {
-  if (props.value?.email !== form.value.email) {
-    await authProvider.changeEmail({
-      newEmail: form.value.email ?? ''
-    })
-  }
+  // if (props.value?.email !== form.value.email) {
+  //   await authProvider.changeEmail({
+  //     newEmail: form.value.email ?? ''
+  //   })
+  // }
   await userService.updateUser(form.value)
   emit('updated')
   visible.value = false
 }
 function update (): void {
   submitted.value = true
-  if (!(form.value.email ?? '').trim()) {
-    return
-  }
+  // if (!(form.value.email ?? '').trim()) {
+  //   return
+  // }
   $handleLoading(useUpdate, {
     toast: {
       instance: toast

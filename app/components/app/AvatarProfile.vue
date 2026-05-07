@@ -7,7 +7,7 @@
     @click="toggle">
     <ClientOnly>
       <Avatar
-        :image="authStore.user?.profileImg || '/png/upload-profile.png'"
+        :image="authStore.user?.profileImg ? imageBaseUrl + authStore.user.profileImg : '/png/upload-profile.png'"
         pt:image:class="object-cover"
         size="large" />
     </ClientOnly>
@@ -28,6 +28,7 @@ import Menu from '~/volt/Menu.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
 
 
 const menu = ref()

@@ -275,9 +275,9 @@ const { removeSocketListener, startSocketSync, stopSocketSync } =
         cancelEditMessage();
       }
     },
-    onMessageEdited: (
-      updatedMessage: Pick<ICreateMessageData, "id" | "messageText">,
-    ): void => {
+    onMessageEdited: (updatedMessage: ICreateMessageData): void => {
+      if (!isCurrentConversationMessage(updatedMessage)) return;
+
       chatData.value = chatData.value.map(
         (message: ICreateMessageData): ICreateMessageData => {
           if (message.id === updatedMessage.id) {
@@ -291,12 +291,14 @@ const { removeSocketListener, startSocketSync, stopSocketSync } =
 
 async function useFetch(): Promise<void> {
   const response = await chatService.findOneMessagePaginate({
-    friendId: id.value,
+    partnerId: id.value,
     page: pagination.value.page,
     limit: pagination.value.limit,
   });
-  chatRoomStore.setMessages(response.data || []);
-  pagination.value = extractPagination(response);
+
+  const messages = Array.isArray(response?.data) ? response.data : [];
+  chatRoomStore.setMessages(messages);
+  pagination.value = extractPagination(response?.pagination);
   await markMessagesAsRead();
   await scrollToBottom();
 }

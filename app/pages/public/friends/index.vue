@@ -42,14 +42,15 @@ const { search, pagination, extractPagination } = usePagination()
 const { $handleLoading } = useNuxtApp()
 const friendService: IFriendProvider = new FriendProvider()
 
-async function useFetch  (): Promise<void> {
+async function useFetch (): Promise<void> {
   const response = await friendService.findAllFriendPaginate({
     page: pagination.value.page,
     limit: pagination.value.limit,
     search: search.value,
   })
-  itemsUserFriends.value = response.data || []
-  extractPagination(response)
+
+  itemsUserFriends.value = Array.isArray(response?.data) ? response.data : []
+  pagination.value = extractPagination(response?.pagination)
 }
 
 function fetch (): void {

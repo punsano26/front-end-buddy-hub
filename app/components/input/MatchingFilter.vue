@@ -51,7 +51,7 @@
 </template>
 
 <script lang="ts" setup>
-import { genderEnum } from '~/models/request/AuthReq.model'
+import { genderEnum } from '~/models/enums/User.enum';
 
 const minAge = ref(16)
 const maxAge = ref<number | null>(20)

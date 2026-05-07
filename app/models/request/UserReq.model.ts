@@ -1,16 +1,17 @@
-import type { genderEnum } from '../enums/User.enum'
+import type { genderEnum, genderQueryEnum } from '../enums/User.enum'
 import type { IBasePaginationRequest } from './Request.model'
 
 export interface IUpdateUserPayload {
   nickname?: string
   description?: string
-  email?: string
   gender?: genderEnum
   dateOfBirth?: string
 }
 
 export interface IFindUserFilters {
-  gender?: genderEnum
+  sortByGender?: genderQueryEnum
+  minAge?: number
+  maxAge?: number
 }
 
 export interface IFindAllUsersPaginateQuery extends IBasePaginationRequest, IFindUserFilters {}

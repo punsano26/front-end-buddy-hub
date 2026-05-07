@@ -4,7 +4,7 @@
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
           <img
-            :src="props.value.profileImg || '/png/upload-profile.png'"
+            :src="props.value.profileImg ? imageBaseUrl + props.value.profileImg : '/png/upload-profile.png'"
             alt="Avatar-friends"
             class="h-12 w-12 rounded-md object-cover">
           <div class="flex flex-col">
@@ -36,17 +36,12 @@
 
 <script setup lang="ts">
 import dayjs from 'dayjs'
+import type { IFindAllFriendList } from '~/models/response/FriendRes.model'
 
+const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
 const router = useRouter()
 const props = defineProps<{
-  value: {
-    id: number
-    profileImg: string
-    isOnline: boolean
-    username: string
-    nickname: string
-    lastOnlineAt: string
-  }
+  value: IFindAllFriendList
 }>()
 
 function onClickGoChatRoom (): void {

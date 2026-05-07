@@ -78,7 +78,7 @@ async function useFetch (): Promise<void> {
     })
 
     conversations.value = response.data || []
-    extractPagination(response)
+    pagination.value = extractPagination(response?.pagination)
   } finally {
     isFetchingConversations.value = false
   }

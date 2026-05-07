@@ -1,13 +1,21 @@
 import HttpRequest from '../HttpRequest'
 import type { TBaseParamsId } from '~/models/request/Request.model'
 import type { IFindAllUsersPaginateQuery, IUpdateUserPayload } from '~/models/request/UserReq.model'
-import type { IFindAllUsersPaginateResponse, IFindOneCurrentUserResponse } from '~/models/response/UserRes.model'
+import type {
+  IFindAllUsersPaginateResponse,
+  IFindOneCurrentUserResponse,
+  IFindOneUserDetailResponse
+} from '~/models/response/UserRes.model'
+import type { IMessageResponse } from '~/models/response/Response.model'
 
 export interface IUserProvider {
   findOneCurrentUser (): Promise<IFindOneCurrentUserResponse>
   findAllUsersPaginate (query: IFindAllUsersPaginateQuery): Promise<IFindAllUsersPaginateResponse>
-  findOneUserById (id: TBaseParamsId): Promise<IFindOneCurrentUserResponse>
+  findOneUserById (id: TBaseParamsId): Promise<IFindOneUserDetailResponse>
   updateUser (payload: IUpdateUserPayload): Promise<IFindOneCurrentUserResponse>
+  removeProfileImage (): Promise<IMessageResponse>
+  removeBannerImage (): Promise<IMessageResponse>
+  toggleAdminRole (id: TBaseParamsId): Promise<IFindOneCurrentUserResponse>
 }
 
 class UserProvider extends HttpRequest implements IUserProvider {
@@ -15,7 +23,7 @@ class UserProvider extends HttpRequest implements IUserProvider {
 
   public async findOneCurrentUser (): Promise<IFindOneCurrentUserResponse> {
     this.setUserAuthHeader()
-    const response = await this.get(`${this.urlPrefix}/myInfo`)
+    const response = await this.get(`${this.urlPrefix}/me`)
     return response
   }
 
@@ -25,7 +33,7 @@ class UserProvider extends HttpRequest implements IUserProvider {
     return response
   }
 
-  public async findOneUserById (id: TBaseParamsId): Promise<IFindOneCurrentUserResponse> {
+  public async findOneUserById (id: TBaseParamsId): Promise<IFindOneUserDetailResponse> {
     this.setUserAuthHeader()
     const response = await this.get(`${this.urlPrefix}/${id}`)
     return response
@@ -33,7 +41,25 @@ class UserProvider extends HttpRequest implements IUserProvider {
 
   public async updateUser (payload: IUpdateUserPayload): Promise<IFindOneCurrentUserResponse> {
     this.setUserAuthHeader()
-    const response = await this.patch(`${this.urlPrefix}/update`, payload)
+    const response = await this.patch(`${this.urlPrefix}/me`, payload)
+    return response
+  }
+
+  public async removeProfileImage (): Promise<IMessageResponse> {
+    this.setUserAuthHeader()
+    const response = await this.delete(`${this.urlPrefix}/me/profile-image`)
+    return response
+  }
+
+  public async removeBannerImage (): Promise<IMessageResponse> {
+    this.setUserAuthHeader()
+    const response = await this.delete(`${this.urlPrefix}/me/banner-image`)
+    return response
+  }
+
+  public async toggleAdminRole (id: TBaseParamsId): Promise<IFindOneCurrentUserResponse> {
+    this.setUserAuthHeader()
+    const response = await this.patch(`${this.urlPrefix}/${id}/role`, {})
     return response
   }
 }

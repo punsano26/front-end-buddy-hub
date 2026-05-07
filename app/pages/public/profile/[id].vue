@@ -313,8 +313,13 @@ const shouldShowAddFriendButton = computed((): boolean => {
 });
 
 async function useFetchDetails(): Promise<void> {
+  if (!Number.isFinite(id.value) || id.value <= 0) return;
+
   const response = await userService.findOneUserById(id.value);
-  items.value = response?.data;
+  const data = response?.data;
+  if (!data) return;
+
+  items.value = data;
 }
 
 function fetch(): void {
@@ -417,8 +422,9 @@ async function onClickRemoveFriend(): Promise<void> {
   isSubmitting.value = true;
   try {
     const response = await friendService.removeFriend(targetUserId.value);
+    const removedFriendId = response?.data?.friendId;
 
-    if (response.data?.count) {
+    if (Number.isFinite(removedFriendId) && removedFriendId === targetUserId.value) {
       friendStore.markFriendRemoved(targetUserId.value);
       dialogOpenConfirmRemoveFriends.value = false;
     }

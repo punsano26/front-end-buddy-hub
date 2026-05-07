@@ -1,11 +1,65 @@
 import { watch } from 'vue'
 import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
-import type { ICreateMessageData, IFindAllConversationsList } from '~/models/response/ChatRes.model'
+import type { ICreateMessageData, IFindAllConversationsList, IMessageReadStatus } from '~/models/response/ChatRes.model'
 import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provider'
 import { useAuthStore } from '~/stores/Auth'
 import { useChatStore } from '~/stores/Chat'
 import { useFriendStore } from '~/stores/Friend'
 import { useUserStore } from '~/stores/User'
+
+type TWebSocketEvent =
+  | 'users:list'
+  | 'new_message'
+  | 'message_read'
+  | 'message_updated'
+  | 'message_deleted'
+  | 'new_request'
+  | 'request_accepted'
+  | 'request_rejected'
+  | 'request_cancelled'
+  | 'friend_removed'
+  | 'new_notification'
+  | 'notification_read'
+  | 'notification_deleted'
+
+interface IWebSocketPayload {
+  event?: TWebSocketEvent | string
+  data?: unknown
+}
+
+function isRecord (value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object'
+}
+
+function toNumber (value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  return null
+}
+
+function isMessageLike (value: unknown): value is ICreateMessageData {
+  if (!isRecord(value)) return false
+
+  return typeof value.id === 'number'
+    && typeof value.senderId === 'number'
+    && typeof value.receiverId === 'number'
+    && typeof value.messageType === 'string'
+    && typeof value.messageText === 'string'
+    && typeof value.createdAt === 'string'
+}
+
+function extractMessageReadIds (value: unknown): number[] {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .filter((item: unknown): item is IMessageReadStatus => {
+      return isRecord(item) && typeof item.id === 'number'
+    })
+    .map((item: IMessageReadStatus): number => item.id)
+}
 
 export default defineNuxtPlugin((): any => {
   const authStore = useAuthStore()
@@ -101,8 +155,9 @@ export default defineNuxtPlugin((): any => {
           unreadCounts[targetConversation.id] = Math.floor(unreadCount)
         })
 
-        totalPage = Number.isFinite(response.totalPage) && response.totalPage > 0
-          ? Math.floor(response.totalPage)
+        const lastPage = response.pagination?.lastPage
+        totalPage = Number.isFinite(lastPage) && lastPage > 0
+          ? Math.floor(lastPage)
           : 1
 
         page += 1
@@ -120,10 +175,10 @@ export default defineNuxtPlugin((): any => {
   const connect = (): void => {
     const userId = authStore.user.id
 
-    if (!userId) return
+    if (!Number.isFinite(userId) || userId <= 0) return
 
     ws = new WebSocket(
-      `${import.meta.env.VITE_ENV_BASE_WS_API}?userId=${userId}`
+      `${import.meta.env.VITE_ENV_BASE_WS_API}?id=${userId}`
     ) as WebSocket & { __manualClose?: boolean }
 
     ws.onopen = (): void => {
@@ -131,161 +186,146 @@ export default defineNuxtPlugin((): any => {
     }
 
     ws.onmessage = (event: MessageEvent): void => {
-      const data = JSON.parse(event.data)
+      let payload: IWebSocketPayload
+      try {
+        payload = JSON.parse(event.data) as IWebSocketPayload
+      } catch {
+        return
+      }
+
+      if (!payload || typeof payload.event !== 'string') return
+
       const userStore = useUserStore()
       const currentUserId = authStore.user.id
 
-      const toNumber = (value: unknown): number | null => {
-        if (typeof value === 'number' && Number.isFinite(value)) return value
-        if (typeof value === 'string') {
-          const parsed = Number(value)
-          return Number.isFinite(parsed) ? parsed : null
-        }
-        return null
-      }
-
-      const isChatMessageLike = (value: unknown): value is { id: number, senderId: number, receiverId: number, isRead?: boolean } => {
-        if (!value || typeof value !== 'object') return false
-
-        const record = value as Record<string, unknown>
-        return typeof record.id === 'number'
-          && typeof record.senderId === 'number'
-          && typeof record.receiverId === 'number'
-      }
-
-      const isConversationActivityMessageLike = (
-        value: unknown
-      ): value is Pick<ICreateMessageData, 'senderId' | 'receiverId' | 'messageText' | 'createdAt' | 'messageType'> => {
-        if (!value || typeof value !== 'object') return false
-
-        const record = value as Record<string, unknown>
-        return typeof record.senderId === 'number'
-          && typeof record.receiverId === 'number'
-          && typeof record.messageText === 'string'
-          && typeof record.createdAt === 'string'
-          && typeof record.messageType === 'string'
-      }
-
-      if (data.event === 'users:update' || data.event === 'users:list' || data.event === 'users:paginate:response') {
-        const incoming = Array.isArray(data.data)
-          ? data.data
-          : Array.isArray(data.data?.users)
-            ? data.data.users
-            : Array.isArray(data.users)
-              ? data.users
-              : data.data && typeof data.data === 'object'
-                ? Object.values(data.data)
-                : []
-
-        userStore.setUsers(incoming)
-      }
-
-      if (data.event === 'user:detail' || data.event === 'user:detail:response' || data.event === 'users:detail:update') {
-        const detail = data.data?.user ?? data.user ?? data.data
-        userStore.setUserDetail(detail)
-      }
-
-      if (data.event === 'chat:receive' || data.event === 'chat:sent') {
-        const message = data.data
-
-        if (isConversationActivityMessageLike(message) && currentUserId > 0) {
-          chatStore.pushConversationActivityFromMessage(message, currentUserId)
-        }
-      }
-
-      if (data.event === 'chat:receive') {
-        const message = data.data
-
-        if (isChatMessageLike(message) && message.receiverId === currentUserId && !message.isRead) {
-          chatStore.addUnreadMessageId(message.id, currentUserId, message.senderId)
+      switch (payload.event) {
+        case 'users:list': {
+          const data = isRecord(payload.data) ? payload.data : null
+          const incoming = Array.isArray(data?.data) ? data.data : []
+          userStore.setUsers(incoming)
+          break
         }
 
-        if (isChatMessageLike(message) && message.receiverId === currentUserId) {
-          // Play notification sound for every incoming message.
-          void playNotificationSound(message.senderId)
+        case 'new_message': {
+          if (!isMessageLike(payload.data)) break
+
+          const message = payload.data
+
+          if (currentUserId > 0) {
+            chatStore.pushConversationActivityFromMessage(message, currentUserId)
+          }
+
+          const isIncoming = message.receiverId === currentUserId
+
+          if (isIncoming && !message.isRead) {
+            chatStore.addUnreadMessageId(message.id, currentUserId, message.senderId)
+          }
+
+          if (isIncoming) {
+            void playNotificationSound(message.senderId)
+          }
+          break
         }
-      }
 
-      if (data.event === 'chat:messages_read_receiver') {
-        const messageIds = Array.isArray(data?.data?.messageIds)
-          ? data.data.messageIds as number[]
-          : []
+        case 'message_read': {
+          const messageIds = extractMessageReadIds(payload.data)
+          if (messageIds.length === 0) break
 
-        const friendId = toNumber(data?.data?.friendId)
-          ?? toNumber(data?.data?.senderId)
-          ?? toNumber(data?.data?.receiverId)
-
-        chatStore.removeUnreadMessageIds(messageIds, currentUserId, friendId ?? undefined)
-      }
-
-      if (data.event === 'chat:message_deleted_sender' || data.event === 'chat:message_deleted_receiver') {
-        const messageId = typeof data?.data?.messageId === 'number'
-          ? data.data.messageId
-          : null
-
-        const friendId = toNumber(data?.data?.friendId)
-          ?? toNumber(data?.data?.senderId)
-          ?? toNumber(data?.data?.receiverId)
-
-        if (messageId !== null) {
-          chatStore.removeUnreadMessageId(messageId, currentUserId, friendId ?? undefined)
+          chatStore.removeUnreadMessageIds(messageIds, currentUserId)
+          break
         }
-      }
 
-      if (data.event === 'friend:request_sender') {
-        const payload = data?.data ?? data
-        const requesterId = toNumber(payload?.requesterId)
-        const receiverId = toNumber(payload?.receiverId)
+        case 'message_deleted': {
+          if (!isMessageLike(payload.data)) break
 
-        if (requesterId === currentUserId && receiverId) {
-          friendStore.markOutgoingPending(receiverId)
+          const message = payload.data
+          const friendId = message.senderId === currentUserId
+            ? message.receiverId
+            : message.senderId
+
+          chatStore.removeUnreadMessageId(message.id, currentUserId, friendId)
+          break
         }
-      }
 
-      if (data.event === 'friend:request_receiver') {
-        const payload = data?.data ?? data
-        const requesterId = toNumber(payload?.requesterId)
-        const receiverId = toNumber(payload?.receiverId)
+        case 'message_updated': {
+          // Updates are applied in-room via useChatSocketListener.
+          break
+        }
 
-        // Receiver event is listened with exact backend name for realtime extension points.
-        if (receiverId === currentUserId && requesterId) {
+        case 'new_request': {
+          if (!isRecord(payload.data)) break
+
+          const requesterId = toNumber(payload.data.requesterId)
+          if (!requesterId || requesterId === currentUserId) break
+
+          // Server emits new_request only to receiver, so currentUser is the receiver.
           friendStore.markIncomingPending(requesterId)
-        }
-      }
-
-      if (data.event === 'friend:request_accepted' || data.event === 'friend:request_rejected') {
-        const payload = data?.data ?? data
-        const requesterId = toNumber(payload?.requesterId)
-        const receiverId = toNumber(payload?.receiverId)
-        const status = payload?.status as FriendRequestStatusEnum | undefined
-
-        if (!currentUserId || !requesterId || !receiverId) return
-
-        const relatedFriendId = requesterId === currentUserId
-          ? receiverId
-          : receiverId === currentUserId
-            ? requesterId
-            : null
-
-        if (!relatedFriendId) return
-
-        if (status === FriendRequestStatusEnum.ACCEPTED || data.event === 'friend:request_accepted') {
-          friendStore.markRequestAccepted(relatedFriendId)
+          break
         }
 
-        if (status === FriendRequestStatusEnum.REJECTED || data.event === 'friend:request_rejected') {
-          friendStore.markRequestRejected(relatedFriendId)
+        case 'request_accepted':
+        case 'request_rejected': {
+          if (!isRecord(payload.data) || currentUserId <= 0) break
+
+          const requesterId = toNumber(payload.data.requesterId)
+          const receiverId = toNumber(payload.data.receiverId)
+          const status = payload.data.status as FriendRequestStatusEnum | undefined
+
+          if (!requesterId || !receiverId) break
+
+          const relatedFriendId = requesterId === currentUserId
+            ? receiverId
+            : receiverId === currentUserId
+              ? requesterId
+              : null
+
+          if (!relatedFriendId) break
+
+          if (payload.event === 'request_accepted' || status === FriendRequestStatusEnum.ACCEPTED) {
+            friendStore.markRequestAccepted(relatedFriendId)
+          }
+
+          if (payload.event === 'request_rejected' || status === FriendRequestStatusEnum.REJECTED) {
+            friendStore.markRequestRejected(relatedFriendId)
+          }
+          break
         }
-      }
 
-      if (data.event === 'friend:removed') {
-        const payload = data?.data ?? data
-        const removedFriendId = toNumber(payload?.friendId)
-          ?? toNumber(payload?.userId)
+        case 'request_cancelled': {
+          if (!isRecord(payload.data) || currentUserId <= 0) break
 
-        if (!currentUserId || !removedFriendId || removedFriendId === currentUserId) return
+          const requesterId = toNumber(payload.data.requesterId)
+          if (!requesterId || requesterId === currentUserId) break
 
-        friendStore.markFriendRemoved(removedFriendId)
+          friendStore.clearIncomingPending(requesterId)
+          break
+        }
+
+        case 'friend_removed': {
+          if (!isRecord(payload.data) || currentUserId <= 0) break
+
+          const userId = toNumber(payload.data.userId)
+          const friendId = toNumber(payload.data.friendId)
+          const removedFriendId = userId === currentUserId
+            ? friendId
+            : userId
+
+          if (!removedFriendId || removedFriendId === currentUserId) break
+
+          friendStore.markFriendRemoved(removedFriendId)
+          break
+        }
+
+        case 'new_notification':
+        case 'notification_read':
+        case 'notification_deleted': {
+          // Notifications are consumed by the notification components/pages directly.
+          break
+        }
+
+        default: {
+          break
+        }
       }
     }
 
@@ -322,7 +362,7 @@ export default defineNuxtPlugin((): any => {
   }, { immediate: true })
 
   watch((): number => authStore.user.id, (userId: number): void => {
-    if (userId <= 0) {
+    if (!Number.isFinite(userId) || userId <= 0) {
       unreadSyncedUserId = null
       return
     }

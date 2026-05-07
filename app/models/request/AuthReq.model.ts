@@ -1,9 +1,17 @@
+import type { genderEnum } from '../enums/User.enum'
+
 export interface ICheckAuthPayload {
   account: string
 }
 
 export interface IChangeEmail {
-  newEmail: string
+  email: string
+}
+
+export interface IChangePasswordPayload {
+  currentPassword: string
+  newPassword: string
+  confirmNewPassword: string
 }
 
 export interface IAuthLoginPayload {
@@ -18,12 +26,6 @@ export interface IAuthRegisterPayload {
   confirmPassword: string
   gender: genderEnum
   dateOfBirth: string
-}
-
-export enum genderEnum {
-  MALE = 'male',
-  FEMALE = 'female',
-  OTHER = 'other'
 }
 
 export interface IForgotPasswordPayload {

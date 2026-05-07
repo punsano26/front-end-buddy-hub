@@ -1,4 +1,4 @@
 export enum chatEnum {
-  TEXT = 'text',
-  MEDIA = 'media'
+  TEXT = 'TEXT',
+  MEDIA = 'MEDIA'
 }

@@ -7,7 +7,7 @@ interface IUser extends IAuthLoginData {}
 interface IToken {
   accessToken: string
   refreshToken: string
-  tokenExpireIn: number | null
+  tokenExpiresIn: number | null
 }
 
 interface IResetToken {
@@ -18,7 +18,7 @@ interface IAuthStore {
   user: Ref<IUser>
   userToken: Ref<IToken>
   resetToken: Ref<IResetToken>
-  userLogin(user: IUser, accessToken: string, refreshToken: string, tokenExpireIn: number): void
+  userLogin(user: IUser, accessToken: string, refreshToken: string, tokenExpiresIn: number): void
   resetPassword(token: IResetToken): void
   updateUser (userValue: IUser): void
   logout (): void
@@ -28,26 +28,28 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
   const user = ref<IUser>({
     id: 0,
     username: '',
+    email: '',
     profileImg: null,
+    isVerified: false,
     roles: []
   })
 
   const userToken = ref<IToken>({
     accessToken: '',
     refreshToken: '',
-    tokenExpireIn: null
+    tokenExpiresIn: null
   })
 
   const resetPasswordToken = ref<IResetToken>({
     resetPasswordToken: ''
   })
 
-  function userLogin (userValue: IUser, accessToken: string, refreshToken: string, tokenExpireIn: number): void {
+  function userLogin (userValue: IUser, accessToken: string, refreshToken: string, tokenExpiresIn: number): void {
     user.value = userValue
     userToken.value = {
       accessToken,
       refreshToken,
-      tokenExpireIn
+      tokenExpiresIn
     }
 
     if (import.meta.client) {
@@ -97,14 +99,16 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
     user.value = {
       id: 0,
       username: '',
+      email: '',
       profileImg: null,
+      isVerified: false,
       roles: []
     }
 
     userToken.value = {
       accessToken: '',
       refreshToken: '',
-      tokenExpireIn: null
+      tokenExpiresIn: null
     }
 
     resetPasswordToken.value = {

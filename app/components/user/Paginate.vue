@@ -1,7 +1,7 @@
 <template>
   <Paginator
     :rows="pagination.limit"
-    :total-records="pagination.totalRecords"
+    :total-records="pagination.total"
     pt:root:class="justify-end px-4 py-1 bg-transparent dark:bg-transparent"
     @page="onPageChange($event)" />
 </template>

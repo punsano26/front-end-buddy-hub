@@ -1,12 +1,10 @@
-import type { ICreateMessageData } from '~/models/response/ChatRes.model'
-
-type TEditedMessagePayload = Pick<ICreateMessageData, 'id' | 'messageText'>
+import type { ICreateMessageData, IMessageReadStatus } from '~/models/response/ChatRes.model'
 
 interface IUseChatSocketListenerOptions {
   onReceiveMessage: (message: ICreateMessageData) => void
   onMessagesRead: (messageIds: number[]) => void
   onMessageDeleted: (messageId: number) => void
-  onMessageEdited: (message: TEditedMessagePayload) => void
+  onMessageEdited: (message: ICreateMessageData) => void
 }
 
 interface IWebSocketEventPayload {
@@ -28,25 +26,14 @@ function isChatMessageLike (value: unknown): value is ICreateMessageData {
     && typeof value.messageText === 'string'
 }
 
-function extractMessageIds (value: unknown): number[] {
-  if (!isRecord(value) || !Array.isArray(value.messageIds)) return []
+function extractMessageReadIds (value: unknown): number[] {
+  if (!Array.isArray(value)) return []
 
-  return value.messageIds.filter((id: unknown): id is number => typeof id === 'number')
-}
-
-function extractMessageId (value: unknown): number | null {
-  if (!isRecord(value) || typeof value.messageId !== 'number') return null
-  return value.messageId
-}
-
-function extractEditedMessage (value: unknown): TEditedMessagePayload | null {
-  if (!isRecord(value)) return null
-  if (typeof value.id !== 'number' || typeof value.messageText !== 'string') return null
-
-  return {
-    id: value.id,
-    messageText: value.messageText
-  }
+  return value
+    .filter((item: unknown): item is IMessageReadStatus => {
+      return isRecord(item) && typeof item.id === 'number'
+    })
+    .map((item: IMessageReadStatus): number => item.id)
 }
 
 export const useChatSocketListener = (options: IUseChatSocketListenerOptions): {
@@ -83,54 +70,48 @@ export const useChatSocketListener = (options: IUseChatSocketListenerOptions): {
     removeSocketListener()
 
     const onMessage = (event: MessageEvent): void => {
+      let payload: IWebSocketEventPayload
       try {
-        const payload = JSON.parse(event.data) as IWebSocketEventPayload
-
-        switch (payload.event) {
-          case 'chat:receive': {
-            if (isChatMessageLike(payload.data)) {
-              options.onReceiveMessage(payload.data)
-            }
-            break
-          }
-
-          case 'chat:sent': {
-            // Optional acknowledgement.
-            break
-          }
-
-          case 'chat:messages_read_receiver': {
-            const messageIds = extractMessageIds(payload.data)
-            if (messageIds.length > 0) {
-              options.onMessagesRead(messageIds)
-            }
-            break
-          }
-
-          case 'chat:message_deleted_sender':
-          case 'chat:message_deleted_receiver': {
-            const messageId = extractMessageId(payload.data)
-            if (messageId !== null) {
-              options.onMessageDeleted(messageId)
-            }
-            break
-          }
-
-          case 'chat:message_edited_sender':
-          case 'chat:message_edited_receiver': {
-            const editedMessage = extractEditedMessage(payload.data)
-            if (editedMessage) {
-              options.onMessageEdited(editedMessage)
-            }
-            break
-          }
-
-          default: {
-            break
-          }
-        }
+        payload = JSON.parse(event.data) as IWebSocketEventPayload
       } catch {
-        // Ignore non-JSON websocket payload
+        return
+      }
+
+      if (!payload || typeof payload.event !== 'string') return
+
+      switch (payload.event) {
+        case 'new_message': {
+          if (isChatMessageLike(payload.data)) {
+            options.onReceiveMessage(payload.data)
+          }
+          break
+        }
+
+        case 'message_read': {
+          const messageIds = extractMessageReadIds(payload.data)
+          if (messageIds.length > 0) {
+            options.onMessagesRead(messageIds)
+          }
+          break
+        }
+
+        case 'message_deleted': {
+          if (isChatMessageLike(payload.data)) {
+            options.onMessageDeleted(payload.data.id)
+          }
+          break
+        }
+
+        case 'message_updated': {
+          if (isChatMessageLike(payload.data)) {
+            options.onMessageEdited(payload.data)
+          }
+          break
+        }
+
+        default: {
+          break
+        }
       }
     }
 

@@ -133,7 +133,10 @@ const chageIconGender = computed(() => {
 
 async function getMyProfileData(): Promise<void> {
   const response = await userService.findOneCurrentUser();
-  items.value = response?.data;
+  const data = response?.data;
+  if (!data) return;
+
+  items.value = data;
 }
 
 function fetch(): void {

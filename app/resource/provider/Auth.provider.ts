@@ -3,6 +3,7 @@ import type {
   IAuthLoginPayload,
   IAuthRegisterPayload,
   IChangeEmail,
+  IChangePasswordPayload,
   ICheckAuthPayload,
   IForgotPasswordPayload,
   IReFreshTokenPayload,
@@ -14,11 +15,14 @@ import type { IMessageResponse } from '~/models/response/Response.model'
 export interface IAuthProvider {
   checkAuth (payload: ICheckAuthPayload): Promise<ICheckAuthResponse>
   changeEmail (payload: IChangeEmail): Promise<IMessageResponse>
+  changePassword (payload: IChangePasswordPayload): Promise<IMessageResponse>
   login (payload: IAuthLoginPayload): Promise<IAuthLoginResponse>
   register (payload: IAuthRegisterPayload): Promise<IAuthLoginResponse>
   forgotPassword (payload: IForgotPasswordPayload): Promise<IForgotPasswordResponse>
   resetForgotPassword (payload: IResetPasswordPayload): Promise<IMessageResponse>
   refreshToken (payload: IReFreshTokenPayload): Promise<IAuthLoginResponse>
+  sendEmailVerification (): Promise<IMessageResponse>
+  verifyEmail (): Promise<IMessageResponse>
   logout (): Promise<IMessageResponse>
 }
 
@@ -26,45 +30,63 @@ class AuthProvider extends HttpRequest implements IAuthProvider {
   private urlPrefix: string = '/auth'
 
   public async checkAuth (payload: ICheckAuthPayload): Promise<ICheckAuthResponse> {
-    const response = await this.post(`${this.urlPrefix}/check`, payload)
+    const response = await this.post(`${this.urlPrefix}/account-lookups`, payload)
     return response
   }
 
   public async login (payload: IAuthLoginPayload): Promise<IAuthLoginResponse> {
-    const response = await this.post(`${this.urlPrefix}/login`, payload)
+    const response = await this.post(`${this.urlPrefix}/sessions`, payload)
     return response
   }
 
   public async register (payload: IAuthRegisterPayload): Promise<IAuthLoginResponse> {
-    const response = await this.post(`${this.urlPrefix}/register`, payload)
+    const response = await this.post(`${this.urlPrefix}/registrations`, payload)
     return response
   }
 
   public async forgotPassword (payload: IForgotPasswordPayload): Promise<IForgotPasswordResponse> {
-    const response = await this.post(`${this.urlPrefix}/forgotPassword`, payload)
+    const response = await this.post(`${this.urlPrefix}/password-reset-requests`, payload)
     return response
   }
 
   public async resetForgotPassword (payload: IResetPasswordPayload): Promise<IMessageResponse> {
     this.setAuthResetHeader()
-    const response = await this.patch(`${this.urlPrefix}/resetForgotPassword`, payload)
+    const response = await this.patch(`${this.urlPrefix}/password/reset`, payload)
     return response
   }
 
   public async logout (): Promise<IMessageResponse> {
     this.setUserAuthHeader()
-    const response = await this.post(`${this.urlPrefix}/logout`, {})
+    const response = await this.delete(`${this.urlPrefix}/sessions/current`)
     return response
   }
 
   public async refreshToken (payload: IReFreshTokenPayload): Promise<IAuthLoginResponse> {
-    const response = await this.post(`${this.urlPrefix}/refresh`, payload)
+    const response = await this.post(`${this.urlPrefix}/sessions/refresh`, payload)
     return response
   }
 
   public async changeEmail (payload: IChangeEmail): Promise<IMessageResponse> {
     this.setUserAuthHeader()
-    const response = await this.patch(`${this.urlPrefix}/changeEmail`, payload)
+    const response = await this.patch(`${this.urlPrefix}/email`, payload)
+    return response
+  }
+
+  public async changePassword (payload: IChangePasswordPayload): Promise<IMessageResponse> {
+    this.setUserAuthHeader()
+    const response = await this.patch(`${this.urlPrefix}/password`, payload)
+    return response
+  }
+
+  public async sendEmailVerification (): Promise<IMessageResponse> {
+    this.setUserAuthHeader()
+    const response = await this.post(`${this.urlPrefix}/email-verifications`, {})
+    return response
+  }
+
+  public async verifyEmail (): Promise<IMessageResponse> {
+    this.setUserAuthHeader()
+    const response = await this.patch(`${this.urlPrefix}/email/verification`, {})
     return response
   }
 }

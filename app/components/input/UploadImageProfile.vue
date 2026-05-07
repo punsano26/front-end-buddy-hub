@@ -6,7 +6,7 @@
   <!-- Banner -->
   <div class="relative w-full">
     <img
-      :src="bannerPreview || props.value?.bannerImg || '/png/upload-banner.png'"
+      :src="bannerPreview || (props.value?.bannerImg ? imageBaseUrl + props.value.bannerImg : '/png/upload-banner.png')"
       class="w-full h-32 object-cover rounded-tl-xl rounded-tr-xl">
 
     <div
@@ -31,7 +31,7 @@
   <div class="flex -mt-14 px-4">
     <div class="relative w-24 h-24">
       <img
-        :src="avatarPreview || props.value?.profileImg || '/png/upload-profile.png'"
+        :src="avatarPreview || (props.value?.profileImg ? imageBaseUrl + props.value.profileImg : '/png/upload-profile.png')"
         class="w-24 h-24 rounded-full border-4 border-surface-0 object-cover">
       <div
         class="absolute bottom-0 right-0 w-7 h-7 rounded-full border-2 border-white bg-white flex items-center justify-center cursor-pointer"
@@ -70,6 +70,7 @@ import type { ICreateUploadData } from '~/models/response/๊UploadRes.model'
 import type { IUploadProvider } from '~/resource/provider/Upload.provider'
 import UploadProvider from '~/resource/provider/Upload.provider'
 
+const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
 const bannerInput = ref<HTMLInputElement | null>(null)
 const avatarInput = ref<HTMLInputElement | null>(null)
 const { $handleLoading } = useNuxtApp()
