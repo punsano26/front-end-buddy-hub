@@ -16,10 +16,6 @@
                 <p class="text-xl font-bold">
                   {{ items?.username }} - {{ items?.nickname }}
                 </p>
-                <i
-                  v-if="items?.isVerified === true"
-                  class="pi pi-verified text-green-400"
-                ></i>
               </div>
               <p class="text-sm text-surface-500">
                 {{ items?.description }}
@@ -47,9 +43,9 @@
                     :class="changeIconGender"
                     :style="{
                       color:
-                        items?.gender === 'male'
+                        items?.gender === genderEnum.MALE
                           ? '#3b82f6'
-                          : items?.gender === 'female'
+                          : items?.gender === genderEnum.FEMALE
                             ? '#ec4899'
                             : '#6b7280',
                     }"
@@ -185,7 +181,8 @@ import ImageProfileDetail from '~/components/skeleton/profile/ImageProfileDetail
 import MyProfilePageSkeleton from '~/components/skeleton/profile/MyProfilePageSkeleton.vue'
 import UserEditDetailDialog from '~/components/user/UserEditDetailDialog.vue'
 import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
-import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
+import { genderEnum } from '~/models/enums/User.enum'
+import type { IFindOneUserDetailData } from '~/models/response/UserRes.model'
 import type { IFriendProvider } from '~/resource/provider/Friend.provider'
 import FriendProvider from '~/resource/provider/Friend.provider'
 import UserProvider, { type IUserProvider } from '~/resource/provider/User.provider'
@@ -201,7 +198,7 @@ const authStore = useAuthStore();
 const friendStore = useFriendStore();
 const { $handleLoading } = useNuxtApp();
 const dayjs = useDayjs();
-const items = ref<IFindOneCurrentUserData>();
+const items = ref<IFindOneUserDetailData>();
 const isReportDialogVisible = ref(false)
 const isLoading = ref<boolean>(true);
 const toast = useToast();
@@ -219,11 +216,11 @@ const isOwnProfile = computed((): boolean => {
 });
 
 const changeIconGender = computed((): string => {
-  if (items.value?.gender === "male") {
+  if (items.value?.gender === genderEnum.MALE) {
     return "pi pi-mars";
   }
 
-  if (items.value?.gender === "female") {
+  if (items.value?.gender === genderEnum.FEMALE) {
     return "pi pi-venus";
   }
 
@@ -244,7 +241,7 @@ const isFriend = computed((): boolean => {
 
   return (
     items.value?.isFriend === true ||
-    items.value?.friendRequestStatus === FriendRequestStatusEnum.ACCEPTED
+    items.value?.requestStatus === FriendRequestStatusEnum.ACCEPTED
   );
 });
 
@@ -269,7 +266,7 @@ const hasIncomingPendingRequest = computed((): boolean => {
   }
 
   return (
-    items.value?.friendRequestStatus === FriendRequestStatusEnum.PENDING &&
+    items.value?.requestStatus === FriendRequestStatusEnum.PENDING &&
     items.value?.isRequester === true
   );
 });
@@ -295,7 +292,7 @@ const isFriendRequestSent = computed((): boolean => {
   }
 
   return (
-    items.value?.friendRequestStatus === FriendRequestStatusEnum.PENDING &&
+    items.value?.requestStatus === FriendRequestStatusEnum.PENDING &&
     items.value?.isRequester === false
   );
 });
