@@ -1,20 +1,30 @@
 <template>
-  <Dialog v-model:visible="visible" class="sm:w-100 w-9/10" pt:content:class="p-0"
+  <Dialog
+    v-model:visible="visible"
+    class="sm:w-100 w-9/10"
+    pt:content:class="p-0"
     pt:header-actions:class="!m-0 !p-0 !flex"
     pt:header:class="!absolute !top-2 !right-2 !z-30 !p-0 !m-0 !bg-transparent !border-0 !shadow-none"
-    pt:root:class="!relative bg-surface-900! border-none rounded-xl shadow-lg" pt:title:class="hidden" dismissable-mask
+    pt:root:class="!relative bg-surface-900! border-none rounded-xl shadow-lg"
+    pt:title:class="hidden"
+    dismissable-mask
     modal>
-    <img :src="value.bannerImg ? imageBaseUrl + value.bannerImg : '/png/upload-banner.png'" alt="user banner"
+    <img
+      :src="value.bannerImg ? imageBaseUrl + value.bannerImg : '/png/upload-banner.png'"
+      alt="user banner"
       class="w-full h-32 object-cover rounded-tl-xl rounded-tr-xl">
     <div class="flex justify-center items-center gap-4 -mt-12 px-4">
-      <img :src="value.profileImg ? imageBaseUrl + value.profileImg : '/png/upload-profile.png'" alt="user avatar"
+      <img
+        :src="value.profileImg ? imageBaseUrl + value.profileImg : '/png/upload-profile.png'"
+        alt="user avatar"
         class="w-24 h-24 rounded-full border-4 border-surface-0 object-cover">
     </div>
     <div class="flex flex-col items-center gap-2">
       <p class="text-xl text-white font-semibold">
         {{ value.nickname || value.username }}
       </p>
-      <p class="text-xs text-surface-400 dark:text-surface-500 hover:text-surface-300 dark:hover:text-surface-400 cursor-pointer"
+      <p
+        class="text-xs text-surface-400 dark:text-surface-500 hover:text-surface-300 dark:hover:text-surface-400 cursor-pointer"
         @click="onClickUserDetail(value.id)">
         @{{ value.username }}
       </p>
@@ -24,30 +34,38 @@
     </div>
     <div class="flex justify-center items-center gap-2 mt-2 p-4">
       <template v-if="shouldShowFriendRequestActions">
-        <Button :disabled="isSubmitting"
+        <Button
+          :disabled="isSubmitting"
           class="w-full bg-linear-to-r from-emerald-500 to-green-600 border-none text-white enabled:hover:from-emerald-600 enabled:hover:to-green-700 active:from-emerald-400 active:to-green-500"
           @click="onClickAcceptRequest">
           ยอมรับ
         </Button>
-        <Button :disabled="isSubmitting"
+        <Button
+          :disabled="isSubmitting"
           class="w-full bg-linear-to-r from-red-500 to-rose-600 border-none text-white enabled:hover:from-red-600 enabled:hover:to-rose-700 active:from-red-400 active:to-rose-500"
           @click="onClickRejectRequest">
           ปฏิเสธ
         </Button>
       </template>
-      <Button v-else-if="shouldShowAddFriendButton && authStore.user.id" :disabled="isFriendRequestSent || isSubmitting"
-        class="w-full bg-linear-to-r from-sky-500 to-pink-600 border-none text-black!" @click="clickAddFriend">
+      <Button
+        v-else-if="shouldShowAddFriendButton && authStore.user.id"
+        :disabled="isFriendRequestSent || isSubmitting"
+        class="w-full bg-linear-to-r from-sky-500 to-pink-600 border-none text-black!"
+        @click="clickAddFriend">
         {{
           isFriendRequestSent
             ? 'ส่งคำขอแล้ว'
             : 'เพิ่มเพื่อน'
         }}
       </Button>
-      <Button v-if="authStore.user.id" class="w-full bg-gray-800! text-white border-none enabled:hover:bg-gray-900"
+      <Button
+        v-if="authStore.user.id"
+        class="w-full bg-gray-800! text-white border-none enabled:hover:bg-gray-900"
         @click="onClickToOpenChat(value.id)">
         แชท
       </Button>
-      <Button v-if="authStore.user.id"
+      <Button
+        v-if="authStore.user.id"
         pt:root:class="w-full bg-transparent border-none text-red-500 enabled:hover:bg-red-500/10 enabled:hover:text-red-700 enabled:active:bg-red-500/20 active:text-red-700"
         @click="() => { isReportDialogVisible = true }">
         รายงาน
@@ -141,16 +159,16 @@ const isFriendRequestSent = computed((): boolean => {
   return props.value.requestStatus === FriendRequestStatusEnum.PENDING && !props.value.isRequester
 })
 
-function onClickUserDetail(userId: number): void {
+function onClickUserDetail (userId: number): void {
   router.push({ name: 'public-profile-id', params: { id: userId } })
 }
 
-function onClickToOpenChat(userId: number): void {
+function onClickToOpenChat (userId: number): void {
   router.push({ name: 'public-chat-id', params: { id: userId } })
 }
 
 
-async function onClickAddFriend(friendId: number): Promise<void> {
+async function onClickAddFriend (friendId: number): Promise<void> {
   if (isSubmitting.value || isFriendRequestSent.value || isFriendAccepted.value) return
 
   isSubmitting.value = true
@@ -170,15 +188,15 @@ async function onClickAddFriend(friendId: number): Promise<void> {
   }
 }
 
-function clickAddFriend(): void {
+function clickAddFriend (): void {
   $handleLoading((): Promise<void> => onClickAddFriend(props.value.id))
 }
 
-async function acceptFriendRequest(): Promise<ISendAFriendRequestResponse> {
+async function acceptFriendRequest (): Promise<ISendAFriendRequestResponse> {
   return await friendService.acceptFriendRequest(props.value.id)
 }
 
-async function onClickAcceptRequest(): Promise<void> {
+async function onClickAcceptRequest (): Promise<void> {
   if (!hasIncomingPendingRequest.value || isSubmitting.value) return
 
   const response = await $handleLoading(acceptFriendRequest, { loadingUnit: isSubmitting })
@@ -188,11 +206,11 @@ async function onClickAcceptRequest(): Promise<void> {
   }
 }
 
-async function rejectFriendRequest(): Promise<ISendAFriendRequestResponse> {
+async function rejectFriendRequest (): Promise<ISendAFriendRequestResponse> {
   return await friendService.rejectFriendRequest(props.value.id)
 }
 
-async function onClickRejectRequest(): Promise<void> {
+async function onClickRejectRequest (): Promise<void> {
   if (!hasIncomingPendingRequest.value || isSubmitting.value) return
 
   const response = await $handleLoading(rejectFriendRequest, { loadingUnit: isSubmitting })
