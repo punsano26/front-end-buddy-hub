@@ -65,8 +65,8 @@
 import { computed, ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { UploadCategoryEnum } from '~/models/enums/Upload.enum'
+import type { IUploadResultData, IUploadUrlResultData } from '~/models/response/UploadRes.model'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
-import type { ICreateUploadData } from '~/models/response/๊UploadRes.model'
 import type { IUploadProvider } from '~/resource/provider/Upload.provider'
 import UploadProvider from '~/resource/provider/Upload.provider'
 
@@ -118,12 +118,20 @@ function resetPreviews (): void {
   avatarPreview.value = ''
 }
 
-async function handleUpload (file: File, category: UploadCategoryEnum): Promise<ICreateUploadData> {
+function isUploadUrlResultData (data: IUploadResultData): data is IUploadUrlResultData {
+  return typeof (data as IUploadUrlResultData).url === 'string'
+}
+
+async function handleUpload (file: File, category: UploadCategoryEnum): Promise<IUploadUrlResultData> {
   const response = await UploadService.onUpload({
-    file,
+    files: file,
     category
   })
-  return response.data
+  const result = response.data
+  if (!isUploadUrlResultData(result)) {
+    throw new Error('Upload response missing url')
+  }
+  return result
 }
 
 async function useSubmit (): Promise<void> {
