@@ -1,40 +1,60 @@
 <template>
-  <div>
+  <div class="relative">
+    <div
+      aria-hidden="true"
+      class="pointer-events-none absolute inset-x-0 -top-12 h-24 bg-[radial-gradient(closest-side,rgba(59,130,246,0.25),transparent)] dark:bg-[radial-gradient(closest-side,rgba(96,165,250,0.2),transparent)]" />
+
     <Toolbar
-      pt:root="px-2 md:px-2 py-2 border-none bg-white/70 dark:bg-surface-900/70 backdrop-blur-xl shadow-sm">
+      class="isolate"
+      pt:root="sticky top-0 z-50 w-full px-3 md:px-6 py-2.5 md:py-3 border-b border-surface-200/70 dark:border-surface-800/70 bg-white/80 dark:bg-surface-900/75 backdrop-blur-xl shadow-[0_12px_40px_-28px_rgba(15,23,42,0.6)]">
       <template #start>
-        <div class="flex items-center justify-start w-20 md:w-auto gap-2">
-          <!-- Mobile menu -->
+        <div class="flex items-center gap-2 md:gap-3">
           <Button
-            class="inline-flex md:hidden"
+            :aria-expanded="menuOpen"
+            aria-controls="mobile-menu"
+            aria-label="Open menu"
+            class="md:hidden"
+            pt:root:class="h-10 w-10 rounded-full !bg-surface-100/80 dark:!bg-surface-800/80 !border-transparent hover:!bg-surface-200/80 dark:hover:!bg-surface-700/80"
             text
             @click="menuOpen = !menuOpen">
-            <i class="pi pi-bars text-lg text-black dark:text-white" />
+            <i class="pi pi-bars text-lg text-surface-700 dark:text-surface-100" />
           </Button>
 
-          <NuxtLink :to="{ name: 'public-home' }">
+          <NuxtLink
+            :to="{ name: 'public-home' }"
+            class="flex items-center gap-2">
             <img
-              class="w-16 md:w-14 transition-transform duration-200 hover:scale-105"
+              alt="Buddy Hub"
+              class="h-10 w-10 md:h-11 md:w-11 rounded-2xl ring-1 ring-white/60 dark:ring-black/30 shadow-sm transition-transform duration-200 hover:scale-105"
               src="/png/logo-buddy-hub.png">
+            <div class="hidden sm:block leading-tight">
+              <span class="block text-sm font-semibold tracking-wide text-surface-900 dark:text-surface-0">Buddy Hub</span>
+              <span class="block text-[0.65rem] uppercase tracking-[0.2em] text-surface-500 dark:text-surface-400">Find your vibe</span>
+            </div>
           </NuxtLink>
         </div>
       </template>
 
-
       <template #center>
-        <div class="flex items-center justify-center gap-4 md:gap-4 md:bg-white/40 md:dark:bg-surface-800/40 md:backdrop-blur-lg px-1.5 md:px-2 py-1 rounded-2xl shadow-inner">
-          <NuxtLink :to="{ name: 'public-home' }">
+        <nav
+          aria-label="Primary"
+          class="hidden sm:flex items-center gap-1 rounded-full px-1.5 py-1 bg-white/70 dark:bg-surface-900/60 border border-surface-200/70 dark:border-surface-800/70 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.3)] dark:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.2)] backdrop-blur-lg">
+          <NuxtLink
+            :aria-current="isActive('public-home') ? 'page' : undefined"
+            :to="{ name: 'public-home' }">
             <SecondaryButton
               :class="navClass('public-home')"
               icon="pi pi-home"
               label="Home"
-              pt:icon:class="text-black! dark:text-white!"
-              pt:label:class="hidden md:inline text-black! dark:text-white!"
-              pt:root:class="h-8 w-8 p-0 gap-0 rounded-xl md:h-auto md:w-auto md:px-3 md:py-1.5 md:gap-2 md:text-sm transition-all duration-200 hover:bg-white/60 dark:hover:bg-surface-700/60"
+              pt:icon:class="text-current"
+              pt:label:class="hidden md:inline text-current"
+              pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
               text />
           </NuxtLink>
 
-          <NuxtLink :to="{ name: 'public-chat' }">
+          <NuxtLink
+            :aria-current="isActive('public-chat', 'public-chat-id') ? 'page' : undefined"
+            :to="{ name: 'public-chat' }">
             <OverlayBadge
               :show="unreadCount > 0"
               :value="unreadCount">
@@ -42,83 +62,89 @@
                 :class="navClass('public-chat', 'public-chat-id')"
                 icon="pi pi-comment"
                 label="Chats"
-                pt:icon:class="text-black! dark:text-white!"
-                pt:label:class="hidden md:inline text-black! dark:text-white!"
-                pt:root:class="h-8 w-8 p-0 gap-0 rounded-xl md:h-auto md:w-auto md:px-3 md:py-1.5 md:gap-2 md:text-sm transition-all duration-200 hover:bg-white/60 dark:hover:bg-surface-700/60"
+                pt:icon:class="text-current"
+                pt:label:class="hidden md:inline text-current"
+                pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
                 text />
             </OverlayBadge>
           </NuxtLink>
 
-          <NuxtLink :to="{ name: 'public-find-match' }">
+          <NuxtLink
+            :aria-current="isActive('public-find-match') ? 'page' : undefined"
+            :to="{ name: 'public-find-match' }">
             <SecondaryButton
               :class="navClass('public-find-match')"
               icon="pi pi-link"
               label="Find Match"
-              pt:icon:class="text-black! dark:text-white!"
-              pt:label:class="hidden md:inline text-black! dark:text-white!"
-              pt:root:class="h-8 w-8 p-0 gap-0 rounded-xl md:h-auto md:w-auto md:px-3 md:py-1.5 md:gap-2 md:text-sm transition-all duration-200 hover:bg-white/60 dark:hover:bg-surface-700/60"
+              pt:icon:class="text-current"
+              pt:label:class="hidden md:inline text-current"
+              pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
               text />
           </NuxtLink>
 
           <NuxtLink
+            :aria-current="isActive('public-rent') ? 'page' : undefined"
             :to="{ name: 'public-rent' }"
             class="hidden md:inline-flex">
             <SecondaryButton
               :class="navClass('public-rent')"
               icon="pi pi-wallet"
               label="Rent"
-              pt:icon:class="text-black! dark:text-white!"
-              pt:label:class="hidden md:inline text-black! dark:text-white!"
-              pt:root:class="h-8 w-8 p-0 gap-0 rounded-xl md:h-auto md:w-auto md:px-3 md:py-1.5 md:gap-2 md:text-sm transition-all duration-200 hover:bg-white/60 dark:hover:bg-surface-700/60"
-              text />
-          </NuxtLink>
-
-          <NuxtLink :to="{ name: 'public-friends' }">
-            <SecondaryButton
-              :class="navClass('public-friends')"
-              icon="pi pi-users"
-              label="Friends"
-              pt:icon:class="text-black! dark:text-white!"
-              pt:label:class="hidden md:inline text-black! dark:text-white!"
-              pt:root:class="h-8 w-8 p-0 gap-0 rounded-xl md:h-auto md:w-auto md:px-3 md:py-1.5 md:gap-2 md:text-sm transition-all duration-200 hover:bg-white/60 dark:hover:bg-surface-700/60"
+              pt:icon:class="text-current"
+              pt:label:class="hidden md:inline text-current"
+              pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
               text />
           </NuxtLink>
 
           <NuxtLink
+            :aria-current="isActive('public-friends') ? 'page' : undefined"
+            :to="{ name: 'public-friends' }">
+            <SecondaryButton
+              :class="navClass('public-friends')"
+              icon="pi pi-users"
+              label="Friends"
+              pt:icon:class="text-current"
+              pt:label:class="hidden md:inline text-current"
+              pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
+              text />
+          </NuxtLink>
+
+          <NuxtLink
+            :aria-current="isActive('public-profile') ? 'page' : undefined"
             :to="{ name: 'public-profile' }"
             class="hidden md:inline-flex">
             <SecondaryButton
               :class="navClass('public-profile')"
               icon="pi pi-user"
               label="Profile"
-              pt:icon:class="text-black! dark:text-white!"
-              pt:label:class="hidden md:inline text-black! dark:text-white!"
-              pt:root:class="h-8 w-8 p-0 gap-0 rounded-xl md:h-auto md:w-auto md:px-3 md:py-1.5 md:gap-2 md:text-sm transition-all duration-200 hover:bg-white/60 dark:hover:bg-surface-700/60"
+              pt:icon:class="text-current"
+              pt:label:class="hidden md:inline text-current"
+              pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
               text />
           </NuxtLink>
-        </div>
+        </nav>
       </template>
 
-
       <template #end>
-        <div class="flex items-center justify-end w-20 h-12 md:w-auto gap-2 md:gap-3">
-          <div class="hidden md:flex md:items-center">
-            <ToggleSwitchMode class="pt-2" />
+        <div class="flex items-center gap-2 md:gap-3">
+          <div class="hidden md:flex items-center">
+            <ToggleSwitchMode class="pt-1" />
           </div>
-          <Notification v-if="authStore.user.id" />
 
+          <Notification v-if="authStore.user.id" />
           <AvatarProfile v-if="authStore.user.id" />
 
           <NuxtLink
             v-else
             :to="{ name: 'auth-verify' }">
             <Button
-              class="hidden md:inline-flex text-sm"
+              class="hidden sm:inline-flex bg-gradient-primary text-white"
               icon="pi pi-sign-in"
               icon-pos="right"
               label="Login"
-              text />
-
+              pt:icon:class="text-current"
+              pt:label:class="text-current"
+              pt:root:class="rounded-full px-4 py-2 text-sm !border-transparent shadow-[0_10px_30px_-20px_rgba(59,130,246,0.8)]" />
           </NuxtLink>
         </div>
       </template>
@@ -133,8 +159,8 @@
       leave-to-class="opacity-0">
       <button
         v-if="menuOpen"
-        aria-label="Close sidebar"
-        class="fixed inset-0 z-40 bg-black/40 md:hidden"
+        aria-label="Close menu"
+        class="fixed inset-0 z-40 bg-surface-950/40 backdrop-blur-sm md:hidden"
         @click="menuOpen = false" />
     </Transition>
 
@@ -147,18 +173,38 @@
       leave-to-class="-translate-x-full opacity-0">
       <aside
         v-if="menuOpen"
-        class="fixed top-0 left-0 z-50 h-full w-72 md:hidden bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-700 shadow-2xl">
-        <div class="flex items-center justify-between px-4 py-3 border-b border-surface-200 dark:border-surface-700">
-          <span class="text-sm font-semibold text-surface-700 dark:text-surface-200">Menu</span>
-          <Button
-            aria-label="Close menu"
-            icon="pi pi-times"
-            text
-            @click="menuOpen = false" />
+        id="mobile-menu"
+        aria-label="Mobile navigation"
+        aria-modal="true"
+        class="fixed top-0 left-0 z-50 h-full w-80 md:hidden bg-white dark:bg-surface-900 border-r border-surface-200/80 dark:border-surface-800/80 shadow-2xl"
+        role="dialog">
+        <div class="relative overflow-hidden border-b border-surface-200/70 dark:border-surface-800/70 px-4 py-4">
+          <div
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-x-0 top-0 h-16 bg-[linear-gradient(120deg,rgba(59,130,246,0.18),transparent)] dark:bg-[linear-gradient(120deg,rgba(59,130,246,0.12),transparent)]" />
+          <div class="relative flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <img
+                alt="Buddy Hub"
+                class="h-10 w-10 rounded-2xl ring-1 ring-white/60 dark:ring-black/30"
+                src="/png/logo-buddy-hub.png">
+              <div>
+                <span class="block text-sm font-semibold text-surface-900 dark:text-surface-0">Buddy Hub</span>
+                <span class="block text-[0.65rem] uppercase tracking-[0.2em] text-surface-500 dark:text-surface-400">Menu</span>
+              </div>
+            </div>
+            <Button
+              aria-label="Close menu"
+              icon="pi pi-times"
+              pt:root:class="h-9 w-9 rounded-full !bg-surface-100/80 dark:!bg-surface-800/80 !border-transparent"
+              text
+              @click="menuOpen = false" />
+          </div>
         </div>
 
-        <nav class="px-3 py-3 space-y-1">
+        <nav class="px-4 py-4 space-y-2">
           <NuxtLink
+            :aria-current="isActive('public-home') ? 'page' : undefined"
             :to="{ name: 'public-home' }"
             @click="menuOpen = false">
             <SecondaryButton
@@ -166,11 +212,14 @@
               class="justify-start w-full"
               icon="pi pi-home"
               label="Home"
-              pt:root:class="w-full justify-start"
+              pt:icon:class="text-current"
+              pt:label:class="text-current"
+              pt:root:class="w-full justify-start rounded-2xl"
               text />
           </NuxtLink>
 
           <NuxtLink
+            :aria-current="isActive('public-chat', 'public-chat-id') ? 'page' : undefined"
             :to="{ name: 'public-chat' }"
             @click="menuOpen = false">
             <SecondaryButton
@@ -178,11 +227,14 @@
               class="justify-start w-full"
               icon="pi pi-comment"
               label="Chats"
-              pt:root:class="w-full justify-start"
+              pt:icon:class="text-current"
+              pt:label:class="text-current"
+              pt:root:class="w-full justify-start rounded-2xl"
               text />
           </NuxtLink>
 
           <NuxtLink
+            :aria-current="isActive('public-find-match') ? 'page' : undefined"
             :to="{ name: 'public-find-match' }"
             @click="menuOpen = false">
             <SecondaryButton
@@ -190,11 +242,14 @@
               class="justify-start w-full"
               icon="pi pi-link"
               label="Find Match"
-              pt:root:class="w-full justify-start"
+              pt:icon:class="text-current"
+              pt:label:class="text-current"
+              pt:root:class="w-full justify-start rounded-2xl"
               text />
           </NuxtLink>
 
           <NuxtLink
+            :aria-current="isActive('public-rent') ? 'page' : undefined"
             :to="{ name: 'public-rent' }"
             @click="menuOpen = false">
             <SecondaryButton
@@ -202,11 +257,14 @@
               class="justify-start w-full"
               icon="pi pi-wallet"
               label="Rent"
-              pt:root:class="w-full justify-start"
+              pt:icon:class="text-current"
+              pt:label:class="text-current"
+              pt:root:class="w-full justify-start rounded-2xl"
               text />
           </NuxtLink>
 
           <NuxtLink
+            :aria-current="isActive('public-friends') ? 'page' : undefined"
             :to="{ name: 'public-friends' }"
             @click="menuOpen = false">
             <SecondaryButton
@@ -214,11 +272,14 @@
               class="justify-start w-full"
               icon="pi pi-users"
               label="Friends"
-              pt:root:class="w-full justify-start"
+              pt:icon:class="text-current"
+              pt:label:class="text-current"
+              pt:root:class="w-full justify-start rounded-2xl"
               text />
           </NuxtLink>
 
           <NuxtLink
+            :aria-current="isActive('public-profile') ? 'page' : undefined"
             :to="{ name: 'public-profile' }"
             @click="menuOpen = false">
             <SecondaryButton
@@ -226,15 +287,122 @@
               class="justify-start w-full"
               icon="pi pi-user"
               label="Profile"
-              pt:root:class="w-full justify-start"
+              pt:icon:class="text-current"
+              pt:label:class="text-current"
+              pt:root:class="w-full justify-start rounded-2xl"
               text />
           </NuxtLink>
-          <div class="pl-3 pt-1">
-            <ToggleSwitchMode />
-          </div>
         </nav>
+
+        <div class="px-4 pb-5 pt-1 space-y-3">
+          <div class="rounded-2xl border border-surface-200/70 dark:border-surface-800/70 p-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium uppercase tracking-[0.2em] text-surface-500 dark:text-surface-400">Theme</span>
+              <ToggleSwitchMode />
+            </div>
+          </div>
+
+          <NuxtLink
+            v-if="!authStore.user.id"
+            :to="{ name: 'auth-verify' }"
+            @click="menuOpen = false">
+            <Button
+              class="w-full bg-gradient-primary text-white"
+              icon="pi pi-sign-in"
+              icon-pos="right"
+              label="Login"
+              pt:icon:class="text-current"
+              pt:label:class="text-current"
+              pt:root:class="w-full justify-center rounded-2xl !border-transparent" />
+          </NuxtLink>
+        </div>
       </aside>
     </Transition>
+
+    <nav
+      aria-label="Quick navigation"
+      class="sm:hidden fixed bottom-3 left-0 right-0 z-30 px-3">
+      <div class="mx-auto max-w-md rounded-[1.6rem] border border-surface-200/60 dark:border-surface-800/70 bg-white/90 dark:bg-surface-950/85 backdrop-blur-xl shadow-[0_24px_60px_-36px_rgba(15,23,42,0.75)]">
+        <div class="grid grid-cols-5 gap-2 p-2">
+          <NuxtLink
+            :aria-current="isActive('public-home') ? 'page' : undefined"
+            :to="{ name: 'public-home' }">
+            <SecondaryButton
+              :class="mobileNavClass('public-home')"
+              class="w-full"
+              icon="pi pi-home"
+              label="Home"
+              pt:icon:class="text-current"
+              pt:label:class="text-[0.6rem] tracking-wide text-current"
+              pt:root:class="h-12 w-full flex-col gap-0.5 rounded-2xl border border-transparent bg-transparent"
+              text />
+          </NuxtLink>
+
+          <NuxtLink
+            :aria-current="isActive('public-chat', 'public-chat-id') ? 'page' : undefined"
+            :to="{ name: 'public-chat' }">
+            <div class="relative w-full">
+              <SecondaryButton
+                :class="mobileNavClass('public-chat', 'public-chat-id')"
+                class="w-full"
+                icon="pi pi-comment"
+                label="Chats"
+                pt:icon:class="text-current"
+                pt:label:class="text-[0.6rem] tracking-wide text-current"
+                pt:root:class="h-12 w-full flex-col gap-0.5 rounded-2xl border border-transparent bg-transparent"
+                text />
+              <span
+                v-if="unreadCount > 0"
+                class="absolute right-2 top-1.5 min-w-4 rounded-full bg-surface-900 text-white text-[0.55rem] leading-4 px-1 text-center dark:bg-surface-0 dark:text-surface-900">
+                {{ unreadCount }}
+              </span>
+            </div>
+          </NuxtLink>
+
+          <NuxtLink
+            :aria-current="isActive('public-find-match') ? 'page' : undefined"
+            :to="{ name: 'public-find-match' }">
+            <SecondaryButton
+              :class="mobileNavClass('public-find-match')"
+              class="w-full"
+              icon="pi pi-link"
+              label="Match"
+              pt:icon:class="text-current"
+              pt:label:class="text-[0.6rem] tracking-wide text-current"
+              pt:root:class="h-12 w-full flex-col gap-0.5 rounded-2xl border border-transparent bg-transparent"
+              text />
+          </NuxtLink>
+
+          <NuxtLink
+            :aria-current="isActive('public-friends') ? 'page' : undefined"
+            :to="{ name: 'public-friends' }">
+            <SecondaryButton
+              :class="mobileNavClass('public-friends')"
+              class="w-full"
+              icon="pi pi-users"
+              label="Friends"
+              pt:icon:class="text-current"
+              pt:label:class="text-[0.6rem] tracking-wide text-current"
+              pt:root:class="h-12 w-full flex-col gap-0.5 rounded-2xl border border-transparent bg-transparent"
+              text />
+          </NuxtLink>
+
+          <NuxtLink
+            :aria-current="isActive('public-profile') ? 'page' : undefined"
+            :to="{ name: 'public-profile' }">
+            <SecondaryButton
+              :class="mobileNavClass('public-profile')"
+              class="w-full"
+              icon="pi pi-user"
+              label="Profile"
+              pt:icon:class="text-current"
+              pt:label:class="text-[0.6rem] tracking-wide text-current"
+              pt:root:class="h-12 w-full flex-col gap-0.5 rounded-2xl border border-transparent bg-transparent"
+              text />
+          </NuxtLink>
+        </div>
+      </div>
+    </nav>
   </div>
 </template>
 
@@ -257,15 +425,25 @@ const menuOpen = ref(false)
 
 const route = useRoute()
 
-const navClass = (...pages: string[]): string => {
+const isActive = (...pages: string[]): boolean => {
   return pages.includes(String(route.name))
-    ? 'bg-gradient-primary dark:text-black! text-back! shadow-md'
+}
+
+const navClass = (...pages: string[]): string => {
+  return isActive(...pages)
+    ? 'bg-gradient-primary text-white shadow-[0_10px_25px_-18px_rgba(59,130,246,0.9)] ring-1 ring-white/50 dark:ring-black/25'
     : 'text-surface-600 dark:text-surface-300'
 }
 
 const drawerNavClass = (page: string): string => {
-  return route.name === page
-    ? 'bg-gradient-primary  dark:text-black! text-back!  shadow-sm'
+  return isActive(page)
+    ? 'bg-gradient-primary text-white shadow-[0_12px_24px_-18px_rgba(59,130,246,0.9)]'
     : 'text-surface-600 dark:text-surface-300'
+}
+
+const mobileNavClass = (...pages: string[]): string => {
+  return isActive(...pages)
+    ? 'bg-gradient-primary text-white shadow-[0_12px_26px_-18px_rgba(59,130,246,0.85)] ring-1 ring-white/40 dark:ring-white/10'
+    : 'text-surface-500 dark:text-surface-300 hover:text-surface-700 dark:hover:text-surface-100 hover:bg-surface-100/80 dark:hover:bg-surface-800/70'
 }
 </script>
