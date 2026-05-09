@@ -60,9 +60,9 @@ function applyRealtimeConversationActivity (activity: ILatestConversationActivit
 
   moveConversationToTop({
     ...targetConversation,
-    lastMessage: activity.lastMessage,
-    createdAt: activity.createdAt,
-    messageType: activity.messageType
+    lastMessageText: activity.lastMessage,
+    lastMessageCreatedAt: activity.createdAt,
+    lastMessageType: activity.messageType
   })
 }
 
