@@ -27,12 +27,12 @@
             </p>
 
             <p class="text-sm text-gray-500 line-clamp-1">
-              {{ props.conversation.lastMessage }}
+              {{ props.conversation.lastMessageText }}
             </p>
           </div>
 
           <span class="text-xs text-gray-400 whitespace-nowrap shrink-0 ml-2">
-            {{ dayjs(props.conversation.createdAt).format('hh:mm A') }}
+            {{ dayjs(props.conversation.lastMessageCreatedAt).format('hh:mm A') }}
           </span>
 
         </div>
