@@ -11,11 +11,13 @@
           <UploadImageProfile :value="items" @update="fetch" />
         </template>
         <template #content>
-          <div class="flex flex-col md:flex-row gap-4">
-            <div class="flex flex-col gap-2">
-              <p class="text-xl font-bold">
-                {{ items?.username }} - {{ items?.nickname }}
-              </p>
+          <div class="flex flex-col md:flex-row md:items-start gap-4 md:gap-2">
+            <div class="flex flex-col gap-2 flex-1 min-w-0">
+              <div class="flex gap-2 items-center">
+                <p class="text-xl font-bold">
+                  {{ items?.username }} - {{ items?.nickname }}
+                </p>
+              </div>
               <p class="text-sm text-surface-500">
                 {{ items?.description }}
               </p>
@@ -39,12 +41,12 @@
 
                 <div class="flex gap-1 items-center min-w-0">
                   <i
-                    :class="chageIconGender"
+                    :class="changeIconGender"
                     :style="{
                       color:
-                        items?.gender === 'male'
+                        items?.gender === genderEnum.MALE
                           ? '#3b82f6'
-                          : items?.gender === 'female'
+                          : items?.gender === genderEnum.FEMALE
                             ? '#ec4899'
                             : '#6b7280',
                     }"
@@ -70,14 +72,16 @@
                 </div>
               </div>
             </div>
-            <div>
-              <Button
-                @click="visible = true"
-                class="min-w-[110px] text-sm font-bold w-full"
-                pt:root:class="border-none justify-center px-2 rounded-xl"
-              >
-                แก้ไขโปรไฟล์
-              </Button>
+            <div class="w-full md:w-28 md:shrink-0 md:pt-1">
+              <div class="grid grid-cols-1 gap-2">
+                <Button
+                  size="small"
+                  class="w-full bg-linear-to-r from-sky-500 to-indigo-600 border-none text-white enabled:hover:from-sky-600 enabled:hover:to-indigo-700 active:from-sky-400 active:to-indigo-500"
+                  @click="visible = true"
+                >
+                  แก้ไขโปรไฟล์
+                </Button>
+              </div>
             </div>
           </div>
         </template>
@@ -110,6 +114,7 @@ import UploadImageProfile from '~/components/input/UploadImageProfile.vue'
 import DataLoadingState from '~/components/skeleton/DataLoadingState.vue'
 import MyProfilePageSkeleton from '~/components/skeleton/profile/MyProfilePageSkeleton.vue'
 import UserEditDetailDialog from '~/components/user/UserEditDetailDialog.vue'
+import { genderEnum } from '~/models/enums/User.enum'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
 import UserProvider, { type IUserProvider } from '~/resource/provider/User.provider'
 
@@ -121,14 +126,16 @@ const dayjs = useDayjs();
 const items = ref<IFindOneCurrentUserData>();
 const isLoading = ref<boolean>(true);
 
-const chageIconGender = computed(() => {
-  if (items.value?.gender === "male") {
+const changeIconGender = computed((): string => {
+  if (items.value?.gender === genderEnum.MALE) {
     return "pi pi-mars";
-  } else if (items.value?.gender === "female") {
-    return "pi pi-venus";
-  } else {
-    return "pi pi-genderless";
   }
+
+  if (items.value?.gender === genderEnum.FEMALE) {
+    return "pi pi-venus";
+  }
+
+  return "pi pi-genderless";
 });
 
 async function getMyProfileData(): Promise<void> {
