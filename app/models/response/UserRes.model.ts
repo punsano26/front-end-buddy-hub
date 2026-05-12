@@ -7,6 +7,7 @@ export interface IFindOneCurrentUserData {
   username: string
   nickname: string | null
   profileImg: string | null
+  email: string
   bannerImg: string | null
   isOnline: boolean
   description: string | null
