@@ -117,20 +117,8 @@ async function useFetchApi(): Promise<void> {
 }
 
 async function useFetchDetails(userId: number): Promise<void> {
-  if (!Number.isFinite(userId) || userId <= 0) return;
-
-  const cached = userStore.getUserDetail(userId);
-  if (cached) {
-    details.value = cached;
-    return;
-  }
-
   const response = await userService.findOneUserById(userId);
-  const data = response?.data;
-  if (!data) return;
-
-  details.value = data;
-  userStore.setUserDetail(data);
+  details.value = response?.data;
 }
 
 function onClickUser(userId: number): void {
