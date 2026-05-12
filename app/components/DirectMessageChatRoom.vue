@@ -1,7 +1,7 @@
 <template>
   <Card
     pt:body:class="px-3 md:px-4 lg:px-8 xl:px-10 py-2 md:py-3"
-    pt:root:class="w-full rounded-none border-t border-surface-200 dark:border-surface-700 pb-[env(safe-area-inset-bottom)]">
+    pt:root:class="w-full rounded-none border-t border-surface-200 dark:border-surface-700 safe-area-pad">
     <template #content>
       <div
         v-if="isEditing"

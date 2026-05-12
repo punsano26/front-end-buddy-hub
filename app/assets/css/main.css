@@ -13,3 +13,11 @@
   }
 }
 
+.safe-area-pad {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.keyboard-open .safe-area-pad {
+  padding-bottom: 0px;
+}
+

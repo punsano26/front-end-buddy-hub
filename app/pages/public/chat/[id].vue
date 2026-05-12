@@ -21,11 +21,17 @@
                   v-if="isOwnMessage(chat) && !isMessagePending(chat)"
                   :items="getMessageMenuItems(chat)"
                   :message-id="chat.id"
-                  class="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150 shrink-0"
+                  :class="[
+                    isMessageMenuVisible(chat.id)
+                      ? 'opacity-100 pointer-events-auto'
+                      : 'opacity-0 pointer-events-none',
+                    'transition-opacity duration-150 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 sm:pointer-events-auto'
+                  ]"
                 />
 
                 <div
                   class="flex flex-col gap-1 p-3 rounded-2xl shadow-sm max-w-full min-w-0"
+                  @click="onMessageTap(chat)"
                   :class="
                     isOwnMessage(chat)
                       ? 'bg-gradient-primary text-black rounded-br-md'
@@ -110,6 +116,9 @@ const isEditingMessage = computed(
 );
 const isMarkingRead = ref(false);
 const chatScrollContainer = ref<HTMLElement | null>(null);
+const isCompactScreen = ref(false);
+const activeMenuMessageId = ref<number | null>(null);
+let screenQuery: MediaQueryList | null = null;
 const orderedChatData = computed((): IChatMessageItem[] => {
   return [...chatData.value].sort(
     (a: IChatMessageItem, b: IChatMessageItem): number => {
@@ -216,6 +225,17 @@ function isOwnMessage(message: ICreateMessageData): boolean {
 
 function isMessagePending(message: IChatMessageItem): boolean {
   return !!message.isSending || !!message.isEditing;
+}
+
+function onMessageTap(message: ICreateMessageData): void {
+  if (!isCompactScreen.value || !isOwnMessage(message)) return;
+
+  activeMenuMessageId.value =
+    activeMenuMessageId.value === message.id ? null : message.id;
+}
+
+function isMessageMenuVisible(messageId: number): boolean {
+  return isCompactScreen.value && activeMenuMessageId.value === messageId;
 }
 
 function isCurrentConversationMessage(message: ICreateMessageData): boolean {
@@ -333,6 +353,23 @@ async function sendMessage(messageText: string): Promise<void> {
 onMounted((): void => {
   fetch();
   startSocketSync(200);
+
+  screenQuery = window.matchMedia('(max-width: 639px)');
+  isCompactScreen.value = screenQuery.matches;
+
+  const handleScreenChange = (event: MediaQueryListEvent): void => {
+    isCompactScreen.value = event.matches;
+    if (!event.matches) {
+      activeMenuMessageId.value = null;
+    }
+  };
+
+  screenQuery.addEventListener('change', handleScreenChange);
+
+  onUnmounted((): void => {
+    screenQuery?.removeEventListener('change', handleScreenChange);
+    screenQuery = null;
+  });
 });
 
 onUnmounted((): void => {
@@ -344,6 +381,7 @@ watch(
   (): number => id.value,
   (nextId: number, previousId?: number): void => {
     cancelEditMessage();
+    activeMenuMessageId.value = null;
     if (typeof previousId === 'number') {
       chatRoomStore.clearSendError(previousId);
     }
