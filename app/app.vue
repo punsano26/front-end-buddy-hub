@@ -49,8 +49,14 @@ useSeoMeta({
 
 const updateAppHeight = (): void => {
   if (typeof window === 'undefined') return
-  const height = window.visualViewport?.height ?? window.innerHeight
+  const viewport = window.visualViewport
+  const height = viewport?.height ?? window.innerHeight
   document.documentElement.style.setProperty('--app-height', `${height}px`)
+
+  const keyboardOpen = viewport
+    ? window.innerHeight - viewport.height > 120
+    : false
+  document.documentElement.classList.toggle('keyboard-open', keyboardOpen)
 }
 
 onMounted((): void => {
@@ -62,5 +68,6 @@ onMounted((): void => {
 onUnmounted((): void => {
   window.removeEventListener('resize', updateAppHeight)
   window.visualViewport?.removeEventListener('resize', updateAppHeight)
+  document.documentElement.classList.remove('keyboard-open')
 })
 </script>
