@@ -18,8 +18,13 @@
       <Textarea
         v-bind="$attrs"
         v-model="model"
+        :class="[
+          'bg-slate-200 dark:bg-slate-900 dark:text-white rounded-xl',
+          props.compact
+            ? 'compact-textarea'
+            : 'default-textarea'
+        ]"
         :invalid="!!errorMessage"
-        class="bg-slate-200 dark:bg-slate-900 dark:text-white rounded-xl"
         fluid />
     </slot>
 
@@ -51,6 +56,8 @@ interface IProps {
   bold?: boolean
   rules?: ((v: any) => boolean | string)[]
   showError?: boolean
+
+  compact?: boolean
 }
 
 const model = defineModel<string>({ default: '' })
@@ -58,7 +65,8 @@ const props = withDefaults(defineProps<IProps>(), {
   tag: 'label',
   label: undefined,
   required: false,
-  bold: false
+  bold: false,
+  compact: false
 })
 
 const errorMessage = computed((): string => {
@@ -79,8 +87,42 @@ const errorMessage = computed((): string => {
   color: red;
   content: '*';
 }
+
 .bold::after {
   color: var(--p-primary-color);
   margin-left: 4px;
+}
+
+/* DEFAULT */
+:deep(.default-textarea textarea) {
+  min-height: 110px;
+  padding: 12px 14px;
+}
+
+/* COMPACT CHAT MODE */
+:deep(.compact-textarea textarea) {
+  min-height: 20px !important;
+  max-height: 120px !important;
+
+  height: 20px;
+
+  padding: 8px 0 !important;
+
+  line-height: 20px;
+
+  resize: none !important;
+
+  background: transparent !important;
+
+  box-shadow: none !important;
+
+  overflow-y: auto !important;
+}
+
+:deep(.compact-textarea.p-textarea),
+:deep(.compact-textarea .p-inputtextarea) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 </style>
