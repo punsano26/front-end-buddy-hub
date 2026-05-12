@@ -20,7 +20,8 @@
         <Button
           pt:root:class="w-auto whitespace-nowrap"
           size="small"
-          text>
+          text
+          @click="handleMarkAllRead">
           Mark all read
         </Button>
       </div>
@@ -53,8 +54,12 @@
         v-for="(item, index) in items"
         :key="index">
         <Card
+          :pt:root:class="item.isRead
+            ? 'mt-2 border-t border-surface-200 dark:border-surface-700 bg-surface-50/60 dark:bg-surface-800/30 hover:bg-surface-100 dark:hover:bg-surface-700'
+            : 'mt-2 border-t border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900/60 hover:bg-surface-100 dark:hover:bg-surface-700'"
+          class="cursor-pointer"
           pt:body:class="p-2"
-          pt:root:class="mt-2 border-t border-surface-200 dark:border-surface-700 hover:bg-surface-100 dark:hover:bg-surface-700">
+          @click="handleMarkNotification(item)">
           <template #content>
             <div class="flex items-center gap-2 rounded-md">
               <Avatar
@@ -63,7 +68,10 @@
                 pt:image:class="object-cover"
                 size="medium" />
               <div class="min-w-0">
-                <p class="text-sm text-surface-900 dark:text-surface-100 break-words">
+                <p
+                  :class="item.isRead
+                    ? 'text-sm text-surface-700 dark:text-surface-300 break-words'
+                    : 'text-sm text-surface-900 dark:text-surface-100 font-semibold break-words'">
                   {{ item.content }}
                 </p>
                 <p class="text-xs text-surface-500 dark:text-surface-400">
@@ -71,19 +79,19 @@
                 </p>
               </div>
               <div class="flex gap-1 ">
-                <template v-if="item.friendRequestStatus === FriendRequestStatusEnum.PENDING">
+                <template v-if="item.requestStatus === FriendRequestStatusEnum.PENDING">
                   <Button
                     pt:root:class="w-auto whitespace-nowrap"
                     size="small"
                     text
-                    @click="handleAccept(item.userId)">
+                    @click.stop="handleAccept(item.requesterId)">
                     <i class="pi pi-check" />
                   </Button>
                   <Button
                     pt:root:class="w-auto whitespace-nowrap"
                     size="small"
                     text
-                    @click="handleReject(item.userId)">
+                    @click.stop="handleReject(item.requesterId)">
                     <i class="pi pi-times" />
                   </Button>
                 </template>
@@ -135,14 +143,61 @@ onMounted((): void => {
   fetch()
 })
 
-async function handleAccept (userId: number): Promise<void> {
-  await friendService.acceptFriendRequest(userId)
+async function handleAccept (requesterId: number | null): Promise<void> {
+  if (requesterId === null) return
+  await friendService.acceptFriendRequest(requesterId)
   fetch()
 }
 
-async function handleReject (userId: number): Promise<void> {
-  await friendService.rejectFriendRequest(userId)
+async function handleReject (requesterId: number | null): Promise<void> {
+  if (requesterId === null) return
+  await friendService.rejectFriendRequest(requesterId)
   fetch()
+}
+
+async function useMarkAllRead (): Promise<void> {
+  if (!items.value.length) return
+  const response = await notificationService.markAllNotificationsAsRead()
+
+  if (response?.data?.length) {
+    items.value = response.data
+  } else {
+    items.value = items.value.map((item: INotificationList): INotificationList => ({
+      ...item,
+      isRead: true
+    }))
+  }
+
+  if (response?.pagination) {
+    pagination.value = extractPagination(response.pagination)
+  }
+}
+
+function handleMarkAllRead (): void {
+  $handleLoading(useMarkAllRead)
+}
+
+async function useMarkNotificationAsRead (item: INotificationList): Promise<void> {
+  if (item.isRead) return
+  const response = await notificationService.markNotificationAsRead(item.id)
+
+  if (response?.data) {
+    const index = items.value.findIndex((current: INotificationList): boolean => current.id === response.data.id)
+
+    if (index !== -1) {
+      items.value[index] = {
+        ...items.value[index],
+        ...response.data
+      }
+    }
+  } else {
+    item.isRead = true
+  }
+}
+
+function handleMarkNotification (item: INotificationList): void {
+  if (item.isRead) return
+  $handleLoading((): Promise<void> => useMarkNotificationAsRead(item))
 }
 </script>
 

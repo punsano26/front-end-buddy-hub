@@ -1,6 +1,8 @@
 <template>
   <div>
-    <ToolsBar />
+    <div class="sticky top-0 z-10">
+      <ToolsBar />
+    </div>
     <slot />
   </div>
 </template>

@@ -128,7 +128,7 @@ const hasIncomingPendingRequest = computed((): boolean => {
     return false
   }
 
-  return props.value.requestStatus === FriendRequestStatusEnum.PENDING && props.value.isRequester
+  return props.value.requestStatus === FriendRequestStatusEnum.PENDING && !props.value.isRequester
 })
 
 const shouldShowFriendRequestActions = computed((): boolean => {
@@ -156,7 +156,7 @@ const isFriendRequestSent = computed((): boolean => {
     return false
   }
 
-  return props.value.requestStatus === FriendRequestStatusEnum.PENDING && !props.value.isRequester
+  return props.value.requestStatus === FriendRequestStatusEnum.PENDING && props.value.isRequester
 })
 
 function onClickUserDetail (userId: number): void {
