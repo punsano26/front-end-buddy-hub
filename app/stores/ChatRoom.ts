@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useChatStore } from './Chat'
 import type { ICreateMessagePayload } from '~/models/request/ChatReq.model'
-import type { ICreateMessageData, ICreateMessageResponse } from '~/models/response/ChatRes.model'
+import type { ICreateMessageData, ICreateMessageResponse, IGetMessageLimitResponse } from '~/models/response/ChatRes.model'
 import type { IMessageResponse, TErrorResponse } from '~/models/response/Response.model'
 import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provider'
 
@@ -26,7 +26,7 @@ interface ISubmitMessageOptions {
 interface IChatRoomState {
   messages: IChatMessageItem[]
   isSubmittingMessage: boolean
-  sendError: string
+  sendErrors: Record<number, string>
 }
 
 function toReadableMessage (value: unknown): string {
@@ -52,7 +52,7 @@ export const useChatRoomStore = defineStore('ChatRoom', {
   state: (): IChatRoomState => ({
     messages: [],
     isSubmittingMessage: false,
-    sendError: ''
+    sendErrors: {}
   }),
 
   actions: {
@@ -64,12 +64,26 @@ export const useChatRoomStore = defineStore('ChatRoom', {
       this.messages = []
     },
 
-    setSendError (message: string): void {
-      this.sendError = message
+    getSendError (receiverId: number): string {
+      if (receiverId <= 0) return ''
+
+      return this.sendErrors[receiverId] || ''
     },
 
-    clearSendError (): void {
-      this.sendError = ''
+    setSendError (receiverId: number, message: string): void {
+      if (receiverId <= 0) return
+
+      this.sendErrors = {
+        ...this.sendErrors,
+        [receiverId]: message
+      }
+    },
+
+    clearSendError (receiverId: number): void {
+      if (receiverId <= 0 || !this.sendErrors[receiverId]) return
+
+      const { [receiverId]: _removed, ...nextErrors } = this.sendErrors
+      this.sendErrors = nextErrors
     },
 
     upsertMessage (message: ICreateMessageData | IChatMessageItem): void {
@@ -115,7 +129,7 @@ export const useChatRoomStore = defineStore('ChatRoom', {
       })
     },
 
-    async editMessage (messageId: number, messageText: string): Promise<boolean> {
+    async editMessage (messageId: number, messageText: string, receiverId: number): Promise<boolean> {
       const chatService: IChatProvider = new ChatProvider()
       const { $handleLoading } = useNuxtApp()
       const silentLoadingUnit = ref(false)
@@ -138,7 +152,7 @@ export const useChatRoomStore = defineStore('ChatRoom', {
         })
 
         if (!response) {
-          this.setSendError(normalizeErrorMessage(requestError))
+          this.setSendError(receiverId, normalizeErrorMessage(requestError))
           return false
         }
 
@@ -158,12 +172,34 @@ export const useChatRoomStore = defineStore('ChatRoom', {
       }
     },
 
+    async checkMessageLimit (receiverId: number): Promise<boolean> {
+      const chatService: IChatProvider = new ChatProvider()
+      const { $handleLoading } = useNuxtApp()
+      const silentLoadingUnit = ref(false)
+
+      if (receiverId <= 0) return true
+
+      const limitRequest = (): Promise<IGetMessageLimitResponse> => chatService.getMessageLimit(receiverId)
+      const response = await $handleLoading<IGetMessageLimitResponse>(limitRequest, {
+        loadingUnit: silentLoadingUnit
+      })
+
+      if (!response?.data) return true
+
+      if (response.data.limitReached) {
+        this.setSendError(receiverId, response.message || '')
+        return false
+      }
+
+      this.clearSendError(receiverId)
+      return true
+    },
+
     async sendOptimisticMessage (options: ISubmitMessageOptions): Promise<boolean> {
       const chatService: IChatProvider = new ChatProvider()
       const chatStore = useChatStore()
       const { $handleLoading } = useNuxtApp()
       const silentLoadingUnit = ref(false)
-      let requestError: TErrorResponse | undefined
       const nextMessageText = options.messageText.trim()
 
       if (!nextMessageText) return false
@@ -185,6 +221,7 @@ export const useChatRoomStore = defineStore('ChatRoom', {
         createdAt: now,
         updatedAt: now,
         deletedAt: '',
+        attachments: [],
         isRead: false,
         isSending: true
       }
@@ -195,15 +232,11 @@ export const useChatRoomStore = defineStore('ChatRoom', {
       try {
         const createRequest = (): Promise<ICreateMessageResponse> => chatService.createMessage(payload)
         const response = await $handleLoading<ICreateMessageResponse>(createRequest, {
-          loadingUnit: silentLoadingUnit,
-          errorCallBack: (error?: TErrorResponse): void => {
-            requestError = error
-          }
+          loadingUnit: silentLoadingUnit
         })
 
         if (!response?.data) {
           this.removeMessageById(tempMessageId)
-          this.setSendError(normalizeErrorMessage(requestError))
           return false
         }
 
@@ -230,7 +263,7 @@ export const useChatRoomStore = defineStore('ChatRoom', {
       if (this.isSubmittingMessage) return false
 
       this.isSubmittingMessage = true
-      this.clearSendError()
+      this.clearSendError(options.receiverId)
 
       try {
         const nextMessageText = options.messageText.trim()
@@ -240,15 +273,18 @@ export const useChatRoomStore = defineStore('ChatRoom', {
         if (options.isEditingMessage) {
           const messageId = options.editingMessageId || 0
 
-          return await this.editMessage(messageId, nextMessageText)
+          return await this.editMessage(messageId, nextMessageText, options.receiverId)
         }
+
+        const canSend = await this.checkMessageLimit(options.receiverId)
+
+        if (!canSend) return false
 
         return await this.sendOptimisticMessage({
           ...options,
           messageText: nextMessageText
         })
-      } catch (error: TErrorResponse) {
-        this.setSendError(normalizeErrorMessage(error))
+      } catch {
         return false
       } finally {
         this.isSubmittingMessage = false

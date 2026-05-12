@@ -57,7 +57,7 @@
               </div>
             </div>
           </div>
-          <div class="text-center text-xs text-red-500">
+          <div v-if="sendError" class="text-center text-xs text-red-500">
             <span>{{ sendError }}</span>
           </div>
         </div>
@@ -93,7 +93,8 @@ const chatService: IChatProvider = new ChatProvider();
 const dayjs = useDayjs();
 const { $handleLoading } = useNuxtApp();
 const { pagination, extractPagination } = usePagination();
-const { messages: chatData, sendError } = storeToRefs(chatRoomStore);
+const { messages: chatData } = storeToRefs(chatRoomStore);
+const sendError = computed((): string => chatRoomStore.getSendError(id.value));
 const id = computed(() => Number(useRoute().params.id));
 definePageMeta({ layout: "chat" });
 
@@ -161,7 +162,7 @@ async function confirmDeleteMessage(
     }
   } catch (error: TErrorResponse) {
     const errorMessage = error?.message;
-    chatRoomStore.setSendError(errorMessage || '');
+    chatRoomStore.setSendError(id.value, errorMessage || '');
   }
 }
 
@@ -341,8 +342,11 @@ onUnmounted((): void => {
 
 watch(
   (): number => id.value,
-  (nextId: number): void => {
+  (nextId: number, previousId?: number): void => {
     cancelEditMessage();
+    if (typeof previousId === 'number') {
+      chatRoomStore.clearSendError(previousId);
+    }
     form.value.receiverId = nextId;
     fetch();
   },
