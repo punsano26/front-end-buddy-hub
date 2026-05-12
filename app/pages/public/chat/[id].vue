@@ -38,7 +38,20 @@
                       : 'bg-white text-gray-800 rounded-bl-md border border-gray-200'
                   "
                 >
-                  <p class="text-sm break-words whitespace-pre-wrap">
+                  <template v-if="isMediaMessage(chat)">
+                    <img
+                      v-if="getMediaUrl(chat)"
+                      :src="getMediaUrl(chat)"
+                      alt="Image message"
+                      class="max-w-[220px] rounded-lg border border-white/40 object-cover"
+                      loading="lazy">
+                    <p v-else class="text-xs text-gray-700">
+                      Image unavailable
+                    </p>
+                  </template>
+                  <p
+                    v-else
+                    class="text-sm break-words whitespace-pre-wrap">
                     {{ chat.messageText }}
                   </p>
 
@@ -72,9 +85,11 @@
       <DirectMessageChatRoom
         v-model="form.messageText"
         :is-editing="isEditingMessage"
+        :partner-id="id"
         class="shrink-0"
         @cancelEdit="cancelEditMessage"
         @createMessage="sendMessage"
+        @createMediaMessage="sendMediaMessage"
       />
     </div>
   </div>
@@ -82,6 +97,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
+import { AttachmentTypeEnum } from '~/models/enums/Attachment.enum'
 import { chatEnum } from '~/models/enums/Chat.enum'
 import type { IItems } from '~/models/Global.model'
 import type { ICreateMessagePayload } from '~/models/request/ChatReq.model'
@@ -97,6 +113,7 @@ const chatStore = useChatStore();
 const chatRoomStore = useChatRoomStore();
 const chatService: IChatProvider = new ChatProvider();
 const dayjs = useDayjs();
+const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/';
 const { $handleLoading } = useNuxtApp();
 const { pagination, extractPagination } = usePagination();
 const { messages: chatData } = storeToRefs(chatRoomStore);
@@ -238,6 +255,34 @@ function isMessageMenuVisible(messageId: number): boolean {
   return isCompactScreen.value && activeMenuMessageId.value === messageId;
 }
 
+function isMediaMessage(message: ICreateMessageData): boolean {
+  return message.messageType === chatEnum.MEDIA;
+}
+
+function resolveMediaUrl(value: string): string {
+  if (!value) return '';
+  if (value.startsWith('http://') || value.startsWith('https://')) {
+    return value;
+  }
+  return imageBaseUrl + value;
+}
+
+function getMediaUrl(message: ICreateMessageData): string {
+  const attachment = message.attachments?.find(
+    (item): boolean => item.attachmentType === AttachmentTypeEnum.IMAGE,
+  ) || message.attachments?.[0];
+
+  if (attachment?.url) {
+    return resolveMediaUrl(attachment.url);
+  }
+
+  if (message.messageText) {
+    return resolveMediaUrl(message.messageText);
+  }
+
+  return '';
+}
+
 function isCurrentConversationMessage(message: ICreateMessageData): boolean {
   const currentUserId = authStore.user.id;
   const targetUserId = id.value;
@@ -326,14 +371,14 @@ async function useFetch(): Promise<void> {
 function fetch(): void {
   $handleLoading(useFetch);
 }
-async function sendMessage(messageText: string): Promise<void> {
+async function sendMessage(messageText: string, messageType: chatEnum = form.value.messageType): Promise<void> {
   form.value.messageText = messageText;
   const wasEditing = isEditingMessage.value;
 
   const isSuccess = await chatRoomStore.submitMessage({
     messageText,
     receiverId: form.value.receiverId,
-    messageType: form.value.messageType,
+    messageType,
     currentUserId: authStore.user.id,
     isEditingMessage: isEditingMessage.value,
     editingMessageId: editingMessageId.value,
@@ -348,6 +393,23 @@ async function sendMessage(messageText: string): Promise<void> {
   }
 
   form.value.messageText = "";
+}
+
+async function sendMediaMessage(message: string | ICreateMessageData): Promise<void> {
+  if (typeof message !== 'string') {
+    upsertMessage(message);
+    chatStore.pushConversationActivityFromMessage(message, authStore.user.id);
+    await scrollToBottom();
+    return;
+  }
+
+  await chatRoomStore.submitMessage({
+    messageText: message,
+    receiverId: form.value.receiverId,
+    messageType: chatEnum.MEDIA,
+    currentUserId: authStore.user.id,
+    onMessagesUpdated: scrollToBottom,
+  });
 }
 
 onMounted((): void => {
