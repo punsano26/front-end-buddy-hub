@@ -102,7 +102,7 @@ const isActive = (...pages: string[]): boolean => {
 
 const mobileNavClass = (...pages: string[]): string => {
   return isActive(...pages)
-    ? 'bg-gradient-primary text-white shadow-[0_12px_26px_-18px_rgba(59,130,246,0.85)] ring-1 ring-white/40 dark:ring-white/10'
+    ? 'bg-gradient-primary border-none text-white shadow-[0_12px_26px_-18px_rgba(59,130,246,0.85)] ring-1 ring-white/40 dark:ring-white/10'
     : 'text-surface-800 dark:text-surface-200 hover:text-surface-900 dark:hover:text-white hover:bg-surface-100/80 dark:hover:bg-surface-800/70'
 }
 </script>

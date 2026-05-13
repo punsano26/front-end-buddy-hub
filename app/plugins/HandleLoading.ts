@@ -66,13 +66,15 @@ function defaultErrorCallback (error?: TErrorResponse): void {
 }
 
 function isUnauthorizedError (error?: TErrorResponse): boolean {
-  const statusCode = error?.code ?? error?.statusCode ?? error?.status
-  const message = String(error?.message || '').toLowerCase()
+  const code = error?.code ?? error?.statusCode ?? error?.status ?? error?.response?.status
+  const msg = String(error?.message ?? error?.response?.data?.message ?? error ?? '').toLowerCase()
 
-  return statusCode === 401
-    || message.includes('unauthorized')
-    || message.includes('invalid refresh token')
-    || message.includes('token expired')
+  const unauthorizedMsgs = [
+    'unauthorized', 'invalid refresh token', 'token expired',
+    'refresh token not found', 'authentication required'
+  ]
+
+  return code === 401 || unauthorizedMsgs.some((m: string): boolean => msg.includes(m))
 }
 
 async function refreshAccessToken (): Promise<boolean> {
