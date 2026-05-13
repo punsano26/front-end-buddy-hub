@@ -46,8 +46,8 @@
               :class="navClass('public-home')"
               icon="pi pi-home"
               label="Home"
-              pt:icon:class="text-current"
-              pt:label:class="hidden md:inline text-current"
+              pt:icon:class="text-black dark:text-white"
+              pt:label:class="hidden md:inline text-black dark:text-white"
               pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
               text />
           </NuxtLink>
@@ -62,8 +62,8 @@
                 :class="navClass('public-chat', 'public-chat-id')"
                 icon="pi pi-comment"
                 label="Chats"
-                pt:icon:class="text-current"
-                pt:label:class="hidden md:inline text-current"
+                pt:icon:class="text-black dark:text-white"
+                pt:label:class="hidden md:inline text-black dark:text-white "
                 pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
                 text />
             </OverlayBadge>
@@ -76,8 +76,8 @@
               :class="navClass('public-find-match')"
               icon="pi pi-link"
               label="Find Match"
-              pt:icon:class="text-current"
-              pt:label:class="hidden md:inline text-current"
+              pt:icon:class="text-black dark:text-white"
+              pt:label:class="hidden md:inline text-black dark:text-white"
               pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
               text />
           </NuxtLink>
@@ -90,8 +90,8 @@
               :class="navClass('public-rent')"
               icon="pi pi-wallet"
               label="Rent"
-              pt:icon:class="text-current"
-              pt:label:class="hidden md:inline text-current"
+              pt:icon:class="text-black dark:text-white"
+              pt:label:class="hidden md:inline text-black dark:text-white"
               pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
               text />
           </NuxtLink>
@@ -103,8 +103,8 @@
               :class="navClass('public-friends')"
               icon="pi pi-users"
               label="Friends"
-              pt:icon:class="text-current"
-              pt:label:class="hidden md:inline text-current"
+              pt:icon:class="text-black dark:text-white"
+              pt:label:class="hidden md:inline text-black dark:text-white"
               pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
               text />
           </NuxtLink>
@@ -117,8 +117,8 @@
               :class="navClass('public-profile')"
               icon="pi pi-user"
               label="Profile"
-              pt:icon:class="text-current"
-              pt:label:class="hidden md:inline text-current"
+              pt:icon:class="text-black dark:text-white"
+              pt:label:class="hidden md:inline text-black dark:text-white"
               pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
               text />
           </NuxtLink>
@@ -142,8 +142,8 @@
               icon="pi pi-sign-in"
               icon-pos="right"
               label="Login"
-              pt:icon:class="text-current"
-              pt:label:class="text-current"
+              pt:icon:class="text-black dark:text-white"
+              pt:label:class="text-black dark:text-white"
               pt:root:class="rounded-full px-4 py-2 text-sm !border-transparent shadow-[0_10px_30px_-20px_rgba(59,130,246,0.8)]" />
           </NuxtLink>
         </div>
@@ -212,8 +212,8 @@
               class="justify-start w-full"
               icon="pi pi-home"
               label="Home"
-              pt:icon:class="text-current"
-              pt:label:class="text-current"
+              pt:icon:class="text-black dark:text-white"
+              pt:label:class="text-black dark:text-white"
               pt:root:class="w-full justify-start rounded-2xl"
               text />
           </NuxtLink>
@@ -227,8 +227,8 @@
               class="justify-start w-full"
               icon="pi pi-comment"
               label="Chats"
-              pt:icon:class="text-current"
-              pt:label:class="text-current"
+              pt:icon:class="text-black dark:text-white"
+              pt:label:class="text-black dark:text-white"
               pt:root:class="w-full justify-start rounded-2xl"
               text />
           </NuxtLink>
@@ -242,8 +242,8 @@
               class="justify-start w-full"
               icon="pi pi-link"
               label="Find Match"
-              pt:icon:class="text-current"
-              pt:label:class="text-current"
+              pt:icon:class="text-black dark:text-white"
+              pt:label:class="text-black dark:text-white"
               pt:root:class="w-full justify-start rounded-2xl"
               text />
           </NuxtLink>
@@ -257,8 +257,8 @@
               class="justify-start w-full"
               icon="pi pi-wallet"
               label="Rent"
-              pt:icon:class="text-current"
-              pt:label:class="text-current"
+              pt:icon:class="text-black dark:text-white"
+              pt:label:class="text-black dark:text-white"
               pt:root:class="w-full justify-start rounded-2xl"
               text />
           </NuxtLink>
@@ -272,8 +272,8 @@
               class="justify-start w-full"
               icon="pi pi-users"
               label="Friends"
-              pt:icon:class="text-current"
-              pt:label:class="text-current"
+              pt:icon:class="text-black dark:text-white"
+              pt:label:class="text-black dark:text-white"
               pt:root:class="w-full justify-start rounded-2xl"
               text />
           </NuxtLink>
@@ -287,8 +287,8 @@
               class="justify-start w-full"
               icon="pi pi-user"
               label="Profile"
-              pt:icon:class="text-current"
-              pt:label:class="text-current"
+              pt:icon:class="text-black dark:text-white"
+              pt:label:class="text-black dark:text-white"
               pt:root:class="w-full justify-start rounded-2xl"
               text />
           </NuxtLink>
@@ -311,8 +311,8 @@
               icon="pi pi-sign-in"
               icon-pos="right"
               label="Login"
-              pt:icon:class="text-current"
-              pt:label:class="text-current"
+              pt:icon:class="text-black dark:text-white"
+              pt:label:class="text-black dark:text-white"
               pt:root:class="w-full justify-center rounded-2xl !border-transparent" />
           </NuxtLink>
         </div>
@@ -349,13 +349,13 @@ const isActive = (...pages: string[]): boolean => {
 
 const navClass = (...pages: string[]): string => {
   return isActive(...pages)
-    ? 'bg-gradient-primary text-white shadow-[0_10px_25px_-18px_rgba(59,130,246,0.9)] ring-1 ring-white/50 dark:ring-black/25'
+    ? 'bg-gradient-primary border-none text-white shadow-[0_10px_25px_-18px_rgba(59,130,246,0.9)] ring-1 ring-white/50 dark:ring-black/25'
     : 'text-surface-600 dark:text-surface-300'
 }
 
 const drawerNavClass = (page: string): string => {
   return isActive(page)
-    ? 'bg-gradient-primary text-white shadow-[0_12px_24px_-18px_rgba(59,130,246,0.9)]'
+    ? 'bg-gradient-primary border-none text-white shadow-[0_12px_24px_-18px_rgba(59,130,246,0.9)]'
     : 'text-surface-600 dark:text-surface-300'
 }
 </script>
