@@ -27,7 +27,7 @@
               alt="Buddy Hub"
               class="h-10 w-10 md:h-11 md:w-11 rounded-2xl ring-1 ring-white/60 dark:ring-black/30 shadow-sm transition-transform duration-200 hover:scale-105"
               src="/png/logo-buddy-hub.png">
-            <div class="hidden sm:block leading-tight">
+            <div class="hidden lg:block leading-tight">
               <span class="block text-sm font-semibold tracking-wide text-surface-900 dark:text-surface-0">Buddy Hub</span>
               <span class="block text-[0.65rem] uppercase tracking-[0.2em] text-surface-500 dark:text-surface-400">Find your vibe</span>
             </div>
@@ -47,8 +47,8 @@
               icon="pi pi-home"
               label="Home"
               pt:icon:class="text-black dark:text-white"
-              pt:label:class="hidden md:inline text-black dark:text-white"
-              pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
+              pt:label:class="hidden lg:inline text-black dark:text-white"
+              pt:root:class="h-10 w-10 lg:w-auto lg:h-10 px-0 lg:px-4 gap-0 lg:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
               text />
           </NuxtLink>
 
@@ -63,8 +63,8 @@
                 icon="pi pi-comment"
                 label="Chats"
                 pt:icon:class="text-black dark:text-white"
-                pt:label:class="hidden md:inline text-black dark:text-white "
-                pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
+                pt:label:class="hidden lg:inline text-black dark:text-white"
+                pt:root:class="h-10 w-10 lg:w-auto lg:h-10 px-0 lg:px-4 gap-0 lg:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
                 text />
             </OverlayBadge>
           </NuxtLink>
@@ -77,8 +77,8 @@
               icon="pi pi-link"
               label="Find Match"
               pt:icon:class="text-black dark:text-white"
-              pt:label:class="hidden md:inline text-black dark:text-white"
-              pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
+              pt:label:class="hidden lg:inline text-black dark:text-white"
+              pt:root:class="h-10 w-10 lg:w-auto lg:h-10 px-0 lg:px-4 gap-0 lg:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
               text />
           </NuxtLink>
 
@@ -91,8 +91,8 @@
               icon="pi pi-wallet"
               label="Rent"
               pt:icon:class="text-black dark:text-white"
-              pt:label:class="hidden md:inline text-black dark:text-white"
-              pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
+              pt:label:class="hidden lg:inline text-black dark:text-white"
+              pt:root:class="h-10 w-10 lg:w-auto lg:h-10 px-0 lg:px-4 gap-0 lg:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
               text />
           </NuxtLink>
 
@@ -104,8 +104,8 @@
               icon="pi pi-users"
               label="Friends"
               pt:icon:class="text-black dark:text-white"
-              pt:label:class="hidden md:inline text-black dark:text-white"
-              pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
+              pt:label:class="hidden lg:inline text-black dark:text-white"
+              pt:root:class="h-10 w-10 lg:w-auto lg:h-10 px-0 lg:px-4 gap-0 lg:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
               text />
           </NuxtLink>
 
@@ -118,8 +118,8 @@
               icon="pi pi-user"
               label="Profile"
               pt:icon:class="text-black dark:text-white"
-              pt:label:class="hidden md:inline text-black dark:text-white"
-              pt:root:class="h-10 w-10 md:w-auto md:h-10 px-0 md:px-4 gap-0 md:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
+              pt:label:class="hidden lg:inline text-black dark:text-white"
+              pt:root:class="h-10 w-10 lg:w-auto lg:h-10 px-0 lg:px-4 gap-0 lg:gap-2 rounded-full text-sm !bg-transparent !border-transparent transition-all duration-200 hover:!bg-surface-100/80 dark:hover:!bg-surface-800/70"
               text />
           </NuxtLink>
         </nav>
