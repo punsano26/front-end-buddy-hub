@@ -25,10 +25,6 @@ definePageMeta({
 })
 
 async function onLogout (): Promise<void> {
-  const payload = {
-    refreshToken: authStore.userToken.refreshToken
-  }
-  await authService.refreshToken(payload)
   await authService.logout()
   authStore.logout()
   router.push({ name: 'public-home' })
