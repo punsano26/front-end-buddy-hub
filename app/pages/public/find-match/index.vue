@@ -68,8 +68,9 @@ import MatchingFilter from '~/components/input/MatchingFilter.vue'
 definePageMeta({ layout: "navbar" })
 
 const toast = useToast()
-
+const router = useRouter()
 function handleMatch (): void {
+  router.push({ name: 'public-find-match-loading' })
   toast.add({
     severity: 'info',
     summary: 'กำลังพัฒนา',
