@@ -24,7 +24,7 @@
             option-value="value"
             placeholder="เลือกเพศของคุณ" />
         </InputLabelField>
-        <!-- <InputLabelField
+        <InputLabelField
           v-model="form.email"
           :rules="[validate.required, validate.email]"
           :show-error="submitted"
@@ -36,7 +36,7 @@
           label="บันทึก"
           pt:label:class="font-bold"
           pt:root:class="bg-gradient-primary border-none rounded-xl py-3"
-          type="submit" /> -->
+          type="submit" />
       </div>
     </form>
   </Dialog>
@@ -45,7 +45,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import { toGenderEnum } from '~/models/enums/User.enum'
+import type { genderEnum } from '~/models/enums/User.enum'
+import { toGenderEnum, UserGenderOptions } from '~/models/enums/User.enum'
 import type { IBaseOptions } from '~/models/Global.model'
 import type { IUpdateUserPayload } from '~/models/request/UserReq.model'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
@@ -61,20 +62,7 @@ const authProvider: IAuthProvider = new AuthProvider()
 const { $handleLoading } = useNuxtApp()
 const submitted = ref(false)
 
-const gender = ref<IBaseOptions[]>([
-  {
-    label: 'ผู้ชาย',
-    value: 'male'
-  },
-  {
-    label: 'ผู้หญิง',
-    value: 'female'
-  },
-  {
-    label: 'อื่นๆ',
-    value: 'other'
-  }
-])
+const gender = ref<IBaseOptions<genderEnum>[]>(UserGenderOptions)
 
 const props = defineProps<{
   value?: IFindOneCurrentUserData
@@ -91,12 +79,14 @@ const visible = computed({
   set: (val: boolean): void => emit('update:visible', val)
 })
 
-const form = ref<IUpdateUserPayload>({
+type IEditUserForm = IUpdateUserPayload & { email?: string }
+
+const form = ref<IEditUserForm>({
   nickname: '',
   description: '',
   gender: undefined,
   dateOfBirth: '',
-  // email: ''
+  email: ''
 })
 
 
@@ -107,25 +97,26 @@ watch((): boolean => props.visible, (isOpen: boolean): void => {
     description: props.value?.description ?? '',
     gender: toGenderEnum(props.value?.gender) ?? undefined,
     dateOfBirth: props.value?.dateOfBirth ?? '',
-    // email: props.value?.email ?? ''
+    email: props.value?.email ?? ''
   }
 })
 
 async function useUpdate (): Promise<void> {
-  // if (props.value?.email !== form.value.email) {
-  //   await authProvider.changeEmail({
-  //     newEmail: form.value.email ?? ''
-  //   })
-  // }
-  await userService.updateUser(form.value)
+  const { email, ...payload } = form.value
+  if (props.value?.email !== email) {
+    await authProvider.changeEmail({
+      email: email ?? ''
+    })
+  }
+  await userService.updateUser(payload)
   emit('updated')
   visible.value = false
 }
 function update (): void {
   submitted.value = true
-  // if (!(form.value.email ?? '').trim()) {
-  //   return
-  // }
+  if (!(form.value.email ?? '').trim()) {
+    return
+  }
   $handleLoading(useUpdate, {
     toast: {
       instance: toast
