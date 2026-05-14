@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'default' })
+definePageMeta({ layout: 'auth' })
 
 const route = useRoute()
 </script>

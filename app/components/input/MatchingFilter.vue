@@ -15,6 +15,7 @@
 
         <InputLabelField label="เพศ">
           <Select
+            v-model="genderValue"
             :options="genderOptions"
             class="w-full rounded-xl"
             option-label="label"
@@ -51,16 +52,50 @@
 </template>
 
 <script lang="ts" setup>
-import { genderEnum } from '~/models/enums/User.enum';
+import { genderEnum } from '~/models/enums/User.enum'
+import type { IJoinTheRandomMatchQueuePayload } from '~/models/request/MatchReq.model'
 
-const minAge = ref(16)
-const maxAge = ref<number | null>(20)
+const props = defineProps<{
+  payload: IJoinTheRandomMatchQueuePayload
+}>()
+
+const emit = defineEmits<{
+  (event: 'update:payload', value: IJoinTheRandomMatchQueuePayload): void
+}>()
+
 const genderOptions = [
   { label: 'ทั้งหมด', value: null },
   { label: 'ผู้ชาย', value: genderEnum.MALE },
   { label: 'ผู้หญิง', value: genderEnum.FEMALE },
   { label: 'อื่นๆ', value: genderEnum.OTHER }
 ]
+
+const updatePayload = (patch: Partial<IJoinTheRandomMatchQueuePayload>): void => {
+  emit('update:payload', { ...props.payload, ...patch })
+}
+
+const genderValue = computed<genderEnum | null>({
+  get: (): genderEnum | null => props.payload.gender,
+  set: (value: genderEnum | null): void => updatePayload({ gender: value })
+})
+
+const minAge = computed<number | null>({
+  get: (): number => props.payload.minAge,
+  set: (value: number | null): void => {
+    if (typeof value === 'number') {
+      updatePayload({ minAge: value })
+    }
+  }
+})
+
+const maxAge = computed<number | null>({
+  get: (): number => props.payload.maxAge,
+  set: (value: number | null): void => {
+    if (typeof value === 'number') {
+      updatePayload({ maxAge: value })
+    }
+  }
+})
 </script>
 
 <style>
