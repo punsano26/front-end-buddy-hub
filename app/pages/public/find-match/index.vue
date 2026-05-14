@@ -7,14 +7,16 @@
       <h1 class="text-3xl font-extrabold tracking-tight text-surface-900 dark:text-white">
         จับคู่เพื่อนใหม่
       </h1>
-      <p class="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+      <!-- <p class="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
         ฟีเจอร์นี้กำลังพัฒนา
-      </p>
+      </p> -->
       <p class="text-sm text-surface-500 dark:text-surface-400 max-w-md">
         กดสุ่มเพื่อค้าหาคนแปลกหน้าทันทีเพื่อแชท, สร้างมิตรภาพใหม่ หรือกดข้ามเพื่อหาเพื่อนใหม่ที่น่าสนใจอื่นๆ
       </p>
     </div>
-    <MatchingFilter class="w-full max-w-md" />
+    <MatchingFilter
+      v-model:payload="payload"
+      class="w-full max-w-md" />
     <Button
       @click="handleMatch"
       size="large"
@@ -25,9 +27,9 @@
         shadow-lg shadow-indigo-500/30
         hover:scale-105 active:scale-95 transition-all duration-200"
     />
-    <p class="text-xs text-surface-500 dark:text-surface-400 text-center">
+    <!-- <p class="text-xs text-surface-500 dark:text-surface-400 text-center">
       ยังไม่เปิดใช้งานในเวอร์ชันนี้ เมื่อพร้อมใช้งานจะเปิดให้ทันที
-    </p>
+    </p> -->
     <div class="grid grid-cols-3 gap-4 w-full max-w-md">
       <Card pt:root:class="rounded-xl bg-white/60 dark:bg-surface-800/60 backdrop-blur shadow-sm">
         <template #content>
@@ -64,19 +66,38 @@
 <script lang="ts" setup>
 import { useToast } from 'primevue/usetoast'
 import MatchingFilter from '~/components/input/MatchingFilter.vue'
+import type { IJoinTheRandomMatchQueuePayload } from '~/models/request/MatchReq.model'
+import type { IMatchProvider } from '~/resource/provider/Match.provider'
+import MatchProvider from '~/resource/provider/Match.provider'
 
 definePageMeta({ layout: "navbar" })
 
+const matchService: IMatchProvider = new MatchProvider()
 const toast = useToast()
 const router = useRouter()
-function handleMatch (): void {
+const payload = ref<IJoinTheRandomMatchQueuePayload>({
+  gender: null,
+  minAge: 16,
+  maxAge: 20
+})
+const { $handleLoading } = useNuxtApp()
+async function onMatch (): Promise<void> {
+  await matchService.JoinTheRandomMatchQueue(payload.value)
   router.push({ name: 'public-find-match-loading' })
-  toast.add({
-    severity: 'info',
-    summary: 'กำลังพัฒนา',
-    detail: 'ฟีเจอร์จับคู่ยังไม่พร้อมใช้งาน และจะเปิดให้ใช้งานเร็วๆ นี้',
-    life: 3500
+}
+
+function handleMatch (): void {
+  $handleLoading(onMatch, {
+    toast: {
+      instance: toast
+    }
   })
+  // toast.add({
+  //   severity: 'info',
+  //   summary: 'กำลังพัฒนา',
+  //   detail: 'ฟีเจอร์จับคู่ยังไม่พร้อมใช้งาน และจะเปิดให้ใช้งานเร็วๆ นี้',
+  //   life: 3500
+  // })
 }
 </script>
 
