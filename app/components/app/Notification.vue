@@ -111,6 +111,8 @@ import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
 import type { INotificationList } from '~/models/response/NotificationRes.model'
 import type { IFriendProvider } from '~/resource/provider/Friend.provider'
 import FriendProvider from '~/resource/provider/Friend.provider'
+// import type { INotificationProvider } from '~/resource/provider/Notification.provider'
+// import NotificationProvider from '~/resource/provider/Notification.provider'
 import { useNotificationStore } from '~/stores/Notification'
 
 const op = ref()
@@ -118,6 +120,7 @@ const toggle = (event: Event): void => {
   op.value.toggle(event)
 }
 
+// const notificationService: INotificationProvider = new NotificationProvider()
 const friendService: IFriendProvider = new FriendProvider()
 const notificationStore = useNotificationStore()
 const { $handleLoading } = useNuxtApp()
@@ -150,6 +153,14 @@ function handleMarkNotification (item: INotificationList): void {
   if (item.isRead) return
   $handleLoading((): Promise<void> => notificationStore.markAsRead(item.id))
 }
+
+// async function onFindUnreadNotificationCount (): Promise<void> {
+//   await notificationService.findUnreadNotificationCount()
+// }
+
+// function findUnreadNotificationCount (): void {
+//   $handleLoading((): Promise<void> => onFindUnreadNotificationCount())
+// }
 </script>
 
 <style scoped>
