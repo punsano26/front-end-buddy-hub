@@ -46,6 +46,7 @@
 <script lang="ts" setup>
 import { nextTick, ref, watch } from 'vue'
 import DirectMessageChatRoom from '~/components/DirectMessageChatRoom.vue'
+import type { ISendASessionMessagePayload } from '~/models/request/MatchReq.model'
 
 interface IMatchMessage {
   id: number
@@ -58,6 +59,9 @@ const dayjs = useDayjs()
 const messageText = ref('')
 const messages = ref<IMatchMessage[]>([])
 const chatScrollContainer = ref<HTMLElement | null>(null)
+const emit = defineEmits<{
+  (event: 'sendMessage', payload: ISendASessionMessagePayload): void
+}>()
 
 function formatTime (value: string): string {
   return dayjs(value).format('hh:mm A')
@@ -66,6 +70,8 @@ function formatTime (value: string): string {
 function sendMessage (message: string): void {
   const trimmed = message.trim()
   if (!trimmed) return
+
+  emit('sendMessage', { text: trimmed })
 
   messages.value = [
     ...messages.value,
