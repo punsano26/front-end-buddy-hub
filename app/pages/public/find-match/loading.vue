@@ -129,6 +129,7 @@
               :to="{ name: 'public-find-match' }"
               class="w-full">
               <Button
+                @click="cancelMatch"
                 label="Cancel Matching"
                 icon="pi pi-times"
                 severity="secondary"
@@ -144,28 +145,63 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useToast } from 'primevue/usetoast'
+import { MatchEvent } from '~/models/enums/Match.enum'
+import MatchProvider, { type IMatchProvider } from '~/resource/provider/Match.provider'
+import { type IMatchSocketEvent, useMatchStore } from '~/stores/Match'
 import Button from '~/volt/Button.vue'
 import Card from '~/volt/Card.vue'
 
 definePageMeta({
   layout: 'default'
 })
-
+const router = useRouter()
 const maxTime = 15
 const timeElapsed = ref(0)
-
+const { $handleLoading } = useNuxtApp()
+const toast = useToast()
+const matchStore = useMatchStore()
+const hasNavigated = ref(false)
 const progress = computed(() =>
   Math.round((timeElapsed.value / maxTime) * 100)
 )
-
+const matchService: IMatchProvider = new MatchProvider()
 let timer: ReturnType<typeof setInterval> | null = null
+
+async function onCancelMatch (): Promise<void> {
+  await matchService.LeaveTheRandomMatchQueue()
+}
+
+function onMatchFound (): void {
+  if (hasNavigated.value) return
+
+  hasNavigated.value = true
+  router.push({ name: 'public-find-match-match' })
+}
+
+function cancelMatch (): void {
+ $handleLoading(onCancelMatch, {
+    toast: {
+      instance: toast
+    }
+  })
+}
 
 onMounted(() => {
   timer = setInterval(() => {
     timeElapsed.value++
   }, 1000)
 })
+
+watch((): IMatchSocketEvent | null => matchStore.getLastEventByType(MatchEvent.FOUND),
+  (event: IMatchSocketEvent | null): void => {
+    if (!event) return
+
+    onMatchFound()
+  },
+  { immediate: true }
+)
 
 onUnmounted(() => {
   if (timer) {
