@@ -39,8 +39,20 @@ export const useNotificationStore = defineStore('Notification', {
         }
       }
 
-      // Calculate unread count from items or if API provides it
-      this.unreadCount = this.items.filter((item: INotificationList): boolean => !item.isRead).length
+      await this.fetchUnreadCount()
+    },
+
+    async fetchUnreadCount (): Promise<void> {
+      const { $handleLoading } = useNuxtApp()
+      const notificationService = new NotificationProvider()
+      const response = await $handleLoading(
+        (): Promise<
+          Awaited<
+            ReturnType<NotificationProvider['findUnreadNotificationCount']>
+          >
+        > => notificationService.findUnreadNotificationCount()
+      )
+      this.unreadCount = response?.data?.count || 0
     },
 
     async markAllAsRead (): Promise<void> {
@@ -50,7 +62,12 @@ export const useNotificationStore = defineStore('Notification', {
       if (response?.data?.length) {
         this.items = response.data
       } else {
-        this.items = this.items.map((item: INotificationList): INotificationList => ({ ...item, isRead: true }))
+        this.items = this.items.map(
+          (item: INotificationList): INotificationList => ({
+            ...item,
+            isRead: true
+          })
+        )
       }
       this.unreadCount = 0
     },
@@ -60,15 +77,33 @@ export const useNotificationStore = defineStore('Notification', {
       const response = await notificationService.markNotificationAsRead(id)
 
       if (response?.data) {
-        const index = this.items.findIndex((item: INotificationList): boolean => item.id === response.data.id)
+        const index = this.items.findIndex(
+          (item: INotificationList): boolean => item.id === response.data.id
+        )
         if (index !== -1) {
           this.items[index] = { ...this.items[index], ...response.data }
         }
       } else {
-        const item = this.items.find((i: INotificationList): boolean => i.id === id)
+        const item = this.items.find(
+          (i: INotificationList): boolean => i.id === id
+        )
         if (item) item.isRead = true
       }
-      this.unreadCount = this.items.filter((item: INotificationList): boolean => !item.isRead).length
+      await this.fetchUnreadCount()
+    },
+
+    async deleteNotification (id: number): Promise<void> {
+      const { $handleLoading } = useNuxtApp()
+      const notificationService = new NotificationProvider()
+      await $handleLoading(
+        (): Promise<
+          Awaited<ReturnType<NotificationProvider['deleteNotification']>>
+        > => notificationService.deleteNotification(id)
+      )
+      this.items = this.items.filter(
+        (item: INotificationList): boolean => item.id !== id
+      )
+      await this.fetchUnreadCount()
     }
   }
 })
