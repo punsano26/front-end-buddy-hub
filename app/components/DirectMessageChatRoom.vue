@@ -37,7 +37,7 @@
     <!-- Image Preview -->
     <Transition name="fade">
       <div
-        v-if="imagePreview"
+        v-if="allowMedia && imagePreview"
         class="mb-2 flex items-center gap-3 rounded-2xl bg-[#F0F2F5] p-2 dark:bg-surface-800">
         <div class="relative">
           <img
@@ -71,19 +71,21 @@
     <div
       class="flex min-h-[36px] items-center gap-2 rounded-full bg-[#F0F2F5] px-2 py-0.5 dark:bg-surface-800">
       <!-- Upload -->
-      <button
-        class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#1877F2] transition hover:bg-black/5 active:scale-95 dark:hover:bg-white/10"
-        type="button"
-        @click="onSelectImage">
-        <i class="pi pi-image text-base" />
-      </button>
+      <template v-if="allowMedia">
+        <button
+          class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#1877F2] transition hover:bg-black/5 active:scale-95 dark:hover:bg-white/10"
+          type="button"
+          @click="onSelectImage">
+          <i class="pi pi-image text-base" />
+        </button>
 
-      <input
-        ref="imageInput"
-        accept="image/*"
-        class="hidden"
-        type="file"
-        @change="onImageChange">
+        <input
+          ref="imageInput"
+          accept="image/*"
+          class="hidden"
+          type="file"
+          @change="onImageChange">
+      </template>
 
       <!-- Input -->
       <div class="flex-1">
@@ -128,6 +130,7 @@ interface IProps {
   modelValue?: string
   isEditing?: boolean
   partnerId?: number
+  allowMedia?: boolean
 }
 const { $handleLoading } = useNuxtApp()
 const emit = defineEmits<{
@@ -140,7 +143,8 @@ const UploadService: IUploadProvider = new UploadProvider()
 const props = withDefaults(defineProps<IProps>(), {
   modelValue: '',
   isEditing: false,
-  partnerId: undefined
+  partnerId: undefined,
+  allowMedia: true
 })
 
 const messageModel = computed({
@@ -153,15 +157,18 @@ const messageModel = computed({
 })
 
 const isEditing = computed((): boolean => props.isEditing)
+const allowMedia = computed((): boolean => props.allowMedia)
 const imageInput = ref<HTMLInputElement | null>(null)
 const imagePreview = ref<string>('')
 const selectedFile = ref<File | null>(null)
 const selectedImageName = computed((): string => selectedFile.value?.name || '')
-const canSend = computed((): boolean => Boolean(messageModel.value.trim()) || Boolean(selectedFile.value))
+const canSend = computed((): boolean => {
+  return Boolean(messageModel.value.trim()) || (allowMedia.value && Boolean(selectedFile.value))
+})
 
 function handleSend (): void {
   const trimmedMessage = messageModel.value.trim()
-  const file = selectedFile.value
+  const file = allowMedia.value ? selectedFile.value : null
 
   if (!trimmedMessage && !file) return
 
@@ -187,10 +194,12 @@ function handleSend (): void {
 }
 
 function onSelectImage (): void {
+  if (!allowMedia.value) return
   imageInput.value?.click()
 }
 
 function onImageChange (event: Event): void {
+  if (!allowMedia.value) return
   const file = (event.target as HTMLInputElement).files?.[0]
   if (!file) return
   selectedFile.value = file
