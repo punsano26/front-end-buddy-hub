@@ -1,10 +1,12 @@
 import { watch } from 'vue'
 import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
+import { MatchEvent } from '~/models/enums/Match.enum'
 import type { ICreateMessageData, IFindAllConversationsList, IMessageReadStatus } from '~/models/response/ChatRes.model'
 import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provider'
 import { useAuthStore } from '~/stores/Auth'
 import { useChatStore } from '~/stores/Chat'
 import { useFriendStore } from '~/stores/Friend'
+import { useMatchStore } from '~/stores/Match'
 import { useNotificationStore } from '~/stores/Notification'
 import { useUserStore } from '~/stores/User'
 
@@ -22,6 +24,7 @@ type TWebSocketEvent
     | 'new_notification'
     | 'notification_read'
     | 'notification_deleted'
+    | MatchEvent
 
 interface IWebSocketPayload {
   event?: TWebSocketEvent | string
@@ -66,6 +69,7 @@ export default defineNuxtPlugin((): any => {
   const authStore = useAuthStore()
   const chatStore = useChatStore()
   const friendStore = useFriendStore()
+  const matchStore = useMatchStore()
   const chatService: IChatProvider = new ChatProvider()
 
   let ws: (WebSocket & { __manualClose?: boolean }) | null = null
@@ -335,6 +339,16 @@ export default defineNuxtPlugin((): any => {
           break
         }
 
+        case MatchEvent.FOUND:
+        case MatchEvent.MESSAGE:
+        case MatchEvent.EXPIRED:
+        case MatchEvent.PARTNER_LEFT:
+        case MatchEvent.FRIEND_REQUEST:
+        case MatchEvent.PERSISTED: {
+          matchStore.pushSocketEvent(payload.event as MatchEvent, payload.data)
+          break
+        }
+
         case 'notification_read':
         case 'notification_deleted': {
           // Notifications are consumed by the notification components/pages directly.
@@ -376,6 +390,7 @@ export default defineNuxtPlugin((): any => {
       isSyncingUnreadOnLogin = false
       chatStore.setActiveUserId(null)
       friendStore.resetRealtime()
+      matchStore.resetRealtime()
     }
   }, { immediate: true })
 
