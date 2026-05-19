@@ -5,22 +5,23 @@ import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provi
 import { useAuthStore } from '~/stores/Auth'
 import { useChatStore } from '~/stores/Chat'
 import { useFriendStore } from '~/stores/Friend'
+import { useNotificationStore } from '~/stores/Notification'
 import { useUserStore } from '~/stores/User'
 
-type TWebSocketEvent =
-  | 'users:list'
-  | 'new_message'
-  | 'message_read'
-  | 'message_updated'
-  | 'message_deleted'
-  | 'new_request'
-  | 'request_accepted'
-  | 'request_rejected'
-  | 'request_cancelled'
-  | 'friend_removed'
-  | 'new_notification'
-  | 'notification_read'
-  | 'notification_deleted'
+type TWebSocketEvent
+  = 'users:list'
+    | 'new_message'
+    | 'message_read'
+    | 'message_updated'
+    | 'message_deleted'
+    | 'new_request'
+    | 'request_accepted'
+    | 'request_rejected'
+    | 'request_cancelled'
+    | 'friend_removed'
+    | 'new_notification'
+    | 'notification_read'
+    | 'notification_deleted'
 
 interface IWebSocketPayload {
   event?: TWebSocketEvent | string
@@ -260,6 +261,10 @@ export default defineNuxtPlugin((): any => {
 
           // Server emits new_request only to receiver, so currentUser is the receiver.
           friendStore.markIncomingPending(requesterId)
+          void playNotificationSound(requesterId)
+
+          const notificationStore = useNotificationStore()
+          void notificationStore.fetchNotifications()
           break
         }
 
@@ -283,11 +288,15 @@ export default defineNuxtPlugin((): any => {
 
           if (payload.event === 'request_accepted' || status === FriendRequestStatusEnum.ACCEPTED) {
             friendStore.markRequestAccepted(relatedFriendId)
+            void playNotificationSound(relatedFriendId)
           }
 
           if (payload.event === 'request_rejected' || status === FriendRequestStatusEnum.REJECTED) {
             friendStore.markRequestRejected(relatedFriendId)
           }
+
+          const notificationStore = useNotificationStore()
+          void notificationStore.fetchNotifications()
           break
         }
 
@@ -298,6 +307,9 @@ export default defineNuxtPlugin((): any => {
           if (!requesterId || requesterId === currentUserId) break
 
           friendStore.clearIncomingPending(requesterId)
+
+          const notificationStore = useNotificationStore()
+          void notificationStore.fetchNotifications()
           break
         }
 
@@ -316,7 +328,13 @@ export default defineNuxtPlugin((): any => {
           break
         }
 
-        case 'new_notification':
+        case 'new_notification': {
+          void playNotificationSound()
+          const notificationStore = useNotificationStore()
+          void notificationStore.fetchNotifications()
+          break
+        }
+
         case 'notification_read':
         case 'notification_deleted': {
           // Notifications are consumed by the notification components/pages directly.
