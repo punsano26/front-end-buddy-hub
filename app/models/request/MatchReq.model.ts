@@ -5,3 +5,7 @@ export interface IJoinTheRandomMatchQueuePayload {
   minAge: number
   maxAge: number
 }
+
+export interface ISendASessionMessagePayload {
+  text: string
+}

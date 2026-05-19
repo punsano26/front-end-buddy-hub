@@ -1,10 +1,12 @@
 import HttpRequest from '../HttpRequest'
-import type { IJoinTheRandomMatchQueuePayload } from '~/models/request/MatchReq.model'
-import type { IJoinTheRandomMatchQueueResponse, ILeaveTheRandomMatchQueueResponse } from '~/models/response/MatchRes.model'
+import type { IJoinTheRandomMatchQueuePayload, ISendASessionMessagePayload } from '~/models/request/MatchReq.model'
+import type { TBaseParamsId } from '~/models/request/Request.model'
+import type { IJoinTheRandomMatchQueueResponse, ILeaveTheRandomMatchQueueResponse, ISendASessionMessageResponse } from '~/models/response/MatchRes.model'
 
 export interface IMatchProvider {
   JoinTheRandomMatchQueue (payload: IJoinTheRandomMatchQueuePayload): Promise<IJoinTheRandomMatchQueueResponse>
   LeaveTheRandomMatchQueue (): Promise<ILeaveTheRandomMatchQueueResponse>
+  SendASessionMessage (id: TBaseParamsId, payload: ISendASessionMessagePayload): Promise<ISendASessionMessageResponse>
 }
 
 class MatchProvider extends HttpRequest implements IMatchProvider {
@@ -19,6 +21,12 @@ class MatchProvider extends HttpRequest implements IMatchProvider {
   public async LeaveTheRandomMatchQueue (): Promise<ILeaveTheRandomMatchQueueResponse> {
     this.setUserAuthHeader()
     const response = await this.delete(`${this.urlPrefix}/queue`)
+    return response
+  }
+
+  public async SendASessionMessage (id: TBaseParamsId, payload: ISendASessionMessagePayload): Promise<ISendASessionMessageResponse> {
+    this.setUserAuthHeader()
+    const response = await this.post(`${this.urlPrefix}/session/${id}/messages`, payload)
     return response
   }
 }

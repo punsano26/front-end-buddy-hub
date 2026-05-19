@@ -8,5 +8,10 @@ export interface ILeaveTheRandomMatchQueueData {
   removed: boolean
 }
 
+export interface ISendASessionMessageData {
+
+}
+
+export type ISendASessionMessageResponse = IApiResponse<ISendASessionMessageData>
 export type ILeaveTheRandomMatchQueueResponse = IApiResponse<ILeaveTheRandomMatchQueueData>
 export type IJoinTheRandomMatchQueueResponse = IApiResponse<IJoinTheRandomMatchQueueData>
