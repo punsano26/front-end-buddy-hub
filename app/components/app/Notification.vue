@@ -13,7 +13,7 @@
           Notifications
         </p>
         <p class="text-xs text-surface-500 dark:text-surface-400">
-          {{ items.length }}
+          {{ notificationStore.items.length }}
         </p>
       </div>
       <div class="flex items-center gap-2 shrink-0">
@@ -51,7 +51,7 @@
       </Card>
 
       <div
-        v-for="(item, index) in items"
+        v-for="(item, index) in notificationStore.items"
         :key="index">
         <Card
           :pt:root:class="item.isRead
@@ -111,32 +111,19 @@ import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
 import type { INotificationList } from '~/models/response/NotificationRes.model'
 import type { IFriendProvider } from '~/resource/provider/Friend.provider'
 import FriendProvider from '~/resource/provider/Friend.provider'
-import type { INotificationProvider } from '~/resource/provider/Notification.provider'
-import NotificationProvider from '~/resource/provider/Notification.provider'
+import { useNotificationStore } from '~/stores/Notification'
 
 const op = ref()
 const toggle = (event: Event): void => {
   op.value.toggle(event)
 }
-const notificationService: INotificationProvider = new NotificationProvider()
+
 const friendService: IFriendProvider = new FriendProvider()
-const { pagination, extractPagination } = usePagination()
-const items = ref<INotificationList[]>([])
-// const friendIds = computed((): void => items.value.map((item): number => item.friendId))
+const notificationStore = useNotificationStore()
 const { $handleLoading } = useNuxtApp()
 
-async function useFetch (): Promise<void> {
-  const response = await notificationService.findAllNotificationPaginate({
-    page: pagination.value.page,
-    limit: pagination.value.limit
-  })
-
-  items.value = response?.data || []
-  pagination.value = extractPagination(response?.pagination)
-}
-
 function fetch (): void {
-  $handleLoading(useFetch)
+  $handleLoading((): Promise<void> => notificationStore.fetchNotifications())
 }
 
 onMounted((): void => {
@@ -155,49 +142,13 @@ async function handleReject (requesterId: number | null): Promise<void> {
   fetch()
 }
 
-async function useMarkAllRead (): Promise<void> {
-  if (!items.value.length) return
-  const response = await notificationService.markAllNotificationsAsRead()
-
-  if (response?.data?.length) {
-    items.value = response.data
-  } else {
-    items.value = items.value.map((item: INotificationList): INotificationList => ({
-      ...item,
-      isRead: true
-    }))
-  }
-
-  if (response?.pagination) {
-    pagination.value = extractPagination(response.pagination)
-  }
-}
-
 function handleMarkAllRead (): void {
-  $handleLoading(useMarkAllRead)
-}
-
-async function useMarkNotificationAsRead (item: INotificationList): Promise<void> {
-  if (item.isRead) return
-  const response = await notificationService.markNotificationAsRead(item.id)
-
-  if (response?.data) {
-    const index = items.value.findIndex((current: INotificationList): boolean => current.id === response.data.id)
-
-    if (index !== -1) {
-      items.value[index] = {
-        ...items.value[index],
-        ...response.data
-      }
-    }
-  } else {
-    item.isRead = true
-  }
+  $handleLoading((): Promise<void> => notificationStore.markAllAsRead())
 }
 
 function handleMarkNotification (item: INotificationList): void {
   if (item.isRead) return
-  $handleLoading((): Promise<void> => useMarkNotificationAsRead(item))
+  $handleLoading((): Promise<void> => notificationStore.markAsRead(item.id))
 }
 </script>
 
