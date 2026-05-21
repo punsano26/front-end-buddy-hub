@@ -250,6 +250,8 @@ const hasIncomingPendingRequest = computed((): boolean => {
 
   if (isFriend.value) return false;
 
+  if (friendStore.isRequestCancelled(targetUserId.value)) return false;
+
   if (
     friendStore.getResolvedStatus(targetUserId.value) ===
     FriendRequestStatusEnum.REJECTED
@@ -275,6 +277,8 @@ const isFriendRequestSent = computed((): boolean => {
   if (isOwnProfile.value) return false;
 
   if (isFriend.value) return false;
+
+  if (friendStore.isRequestCancelled(targetUserId.value)) return false;
 
   if (
     friendStore.getResolvedStatus(targetUserId.value) ===
