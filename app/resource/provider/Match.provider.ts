@@ -1,6 +1,7 @@
 import HttpRequest from '../HttpRequest'
 import type { IJoinTheRandomMatchQueuePayload, ISendASessionMessagePayload } from '~/models/request/MatchReq.model'
 import type { TBaseParamsId } from '~/models/request/Request.model'
+import type { ISendAFriendRequestResponse } from '~/models/response/FriendRes.model'
 import type {
   IFindAllSessionMessagesResponse,
   IJoinTheRandomMatchQueueResponse,
@@ -13,6 +14,7 @@ export interface IMatchProvider {
   LeaveTheRandomMatchQueue (): Promise<ILeaveTheRandomMatchQueueResponse>
   SendASessionMessage (id: TBaseParamsId, payload: ISendASessionMessagePayload): Promise<ISendASessionMessageResponse>
   findAllSessionMessages (id: TBaseParamsId): Promise<IFindAllSessionMessagesResponse>
+  sendAFriendSessionRequest (id: TBaseParamsId): Promise<ISendAFriendRequestResponse>
 }
 
 class MatchProvider extends HttpRequest implements IMatchProvider {
@@ -39,6 +41,12 @@ class MatchProvider extends HttpRequest implements IMatchProvider {
   public async findAllSessionMessages (id: TBaseParamsId): Promise<IFindAllSessionMessagesResponse> {
     this.setUserAuthHeader()
     const response = await this.get(`${this.urlPrefix}/session/${id}/messages`)
+    return response
+  }
+
+  public async sendAFriendSessionRequest (id: TBaseParamsId): Promise<ISendAFriendRequestResponse> {
+    this.setUserAuthHeader()
+    const response = await this.post(`${this.urlPrefix}/session/${id}/friend-request`, {})
     return response
   }
 }
