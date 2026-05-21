@@ -310,7 +310,7 @@ export default defineNuxtPlugin((): any => {
           const requesterId = toNumber(payload.data.requesterId)
           if (!requesterId || requesterId === currentUserId) break
 
-          friendStore.clearIncomingPending(requesterId)
+          friendStore.markRequestCancelled(requesterId)
 
           const notificationStore = useNotificationStore()
           void notificationStore.fetchNotifications()
