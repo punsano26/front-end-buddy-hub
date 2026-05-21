@@ -1,26 +1,30 @@
 import { watch } from 'vue'
 import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
+import { MatchEvent } from '~/models/enums/Match.enum'
 import type { ICreateMessageData, IFindAllConversationsList, IMessageReadStatus } from '~/models/response/ChatRes.model'
 import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provider'
 import { useAuthStore } from '~/stores/Auth'
 import { useChatStore } from '~/stores/Chat'
 import { useFriendStore } from '~/stores/Friend'
+import { useMatchStore } from '~/stores/Match'
+import { useNotificationStore } from '~/stores/Notification'
 import { useUserStore } from '~/stores/User'
 
-type TWebSocketEvent =
-  | 'users:list'
-  | 'new_message'
-  | 'message_read'
-  | 'message_updated'
-  | 'message_deleted'
-  | 'new_request'
-  | 'request_accepted'
-  | 'request_rejected'
-  | 'request_cancelled'
-  | 'friend_removed'
-  | 'new_notification'
-  | 'notification_read'
-  | 'notification_deleted'
+type TWebSocketEvent
+  = 'users:list'
+    | 'new_message'
+    | 'message_read'
+    | 'message_updated'
+    | 'message_deleted'
+    | 'new_request'
+    | 'request_accepted'
+    | 'request_rejected'
+    | 'request_cancelled'
+    | 'friend_removed'
+    | 'new_notification'
+    | 'notification_read'
+    | 'notification_deleted'
+    | MatchEvent
 
 interface IWebSocketPayload {
   event?: TWebSocketEvent | string
@@ -65,6 +69,7 @@ export default defineNuxtPlugin((): any => {
   const authStore = useAuthStore()
   const chatStore = useChatStore()
   const friendStore = useFriendStore()
+  const matchStore = useMatchStore()
   const chatService: IChatProvider = new ChatProvider()
 
   let ws: (WebSocket & { __manualClose?: boolean }) | null = null
@@ -260,6 +265,10 @@ export default defineNuxtPlugin((): any => {
 
           // Server emits new_request only to receiver, so currentUser is the receiver.
           friendStore.markIncomingPending(requesterId)
+          void playNotificationSound(requesterId)
+
+          const notificationStore = useNotificationStore()
+          void notificationStore.fetchNotifications()
           break
         }
 
@@ -283,11 +292,15 @@ export default defineNuxtPlugin((): any => {
 
           if (payload.event === 'request_accepted' || status === FriendRequestStatusEnum.ACCEPTED) {
             friendStore.markRequestAccepted(relatedFriendId)
+            void playNotificationSound(relatedFriendId)
           }
 
           if (payload.event === 'request_rejected' || status === FriendRequestStatusEnum.REJECTED) {
             friendStore.markRequestRejected(relatedFriendId)
           }
+
+          const notificationStore = useNotificationStore()
+          void notificationStore.fetchNotifications()
           break
         }
 
@@ -297,7 +310,10 @@ export default defineNuxtPlugin((): any => {
           const requesterId = toNumber(payload.data.requesterId)
           if (!requesterId || requesterId === currentUserId) break
 
-          friendStore.clearIncomingPending(requesterId)
+          friendStore.markRequestCancelled(requesterId)
+
+          const notificationStore = useNotificationStore()
+          void notificationStore.fetchNotifications()
           break
         }
 
@@ -316,7 +332,23 @@ export default defineNuxtPlugin((): any => {
           break
         }
 
-        case 'new_notification':
+        case 'new_notification': {
+          void playNotificationSound()
+          const notificationStore = useNotificationStore()
+          void notificationStore.fetchNotifications()
+          break
+        }
+
+        case MatchEvent.FOUND:
+        case MatchEvent.MESSAGE:
+        case MatchEvent.EXPIRED:
+        case MatchEvent.PARTNER_LEFT:
+        case MatchEvent.FRIEND_REQUEST:
+        case MatchEvent.PERSISTED: {
+          matchStore.pushSocketEvent(payload.event as MatchEvent, payload.data)
+          break
+        }
+
         case 'notification_read':
         case 'notification_deleted': {
           // Notifications are consumed by the notification components/pages directly.
@@ -358,6 +390,7 @@ export default defineNuxtPlugin((): any => {
       isSyncingUnreadOnLogin = false
       chatStore.setActiveUserId(null)
       friendStore.resetRealtime()
+      matchStore.resetRealtime()
     }
   }, { immediate: true })
 

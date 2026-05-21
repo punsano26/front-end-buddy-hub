@@ -6,6 +6,7 @@ interface IFriendState {
   incomingPendingByFriendId: Record<number, true>
   resolvedStatusByFriendId: Record<number, FriendRequestStatusEnum.ACCEPTED | FriendRequestStatusEnum.REJECTED>
   removedByFriendId: Record<number, true>
+  cancelledByFriendId: Record<number, true>
 }
 
 function omitKey<T extends Record<number, any>> (source: T, key: number): T {
@@ -18,7 +19,8 @@ export const useFriendStore = defineStore('Friend', {
     outgoingPendingByFriendId: {},
     incomingPendingByFriendId: {},
     resolvedStatusByFriendId: {},
-    removedByFriendId: {}
+    removedByFriendId: {},
+    cancelledByFriendId: {}
   }),
 
   actions: {
@@ -27,6 +29,7 @@ export const useFriendStore = defineStore('Friend', {
       this.outgoingPendingByFriendId[friendId] = true
       this.resolvedStatusByFriendId = omitKey(this.resolvedStatusByFriendId, friendId)
       this.removedByFriendId = omitKey(this.removedByFriendId, friendId)
+      this.cancelledByFriendId = omitKey(this.cancelledByFriendId, friendId)
     },
 
     clearOutgoingPending (friendId: number): void {
@@ -39,6 +42,7 @@ export const useFriendStore = defineStore('Friend', {
       this.incomingPendingByFriendId[friendId] = true
       this.resolvedStatusByFriendId = omitKey(this.resolvedStatusByFriendId, friendId)
       this.removedByFriendId = omitKey(this.removedByFriendId, friendId)
+      this.cancelledByFriendId = omitKey(this.cancelledByFriendId, friendId)
     },
 
     clearIncomingPending (friendId: number): void {
@@ -62,12 +66,17 @@ export const useFriendStore = defineStore('Friend', {
       return !!this.removedByFriendId[friendId]
     },
 
+    isRequestCancelled (friendId: number): boolean {
+      return !!this.cancelledByFriendId[friendId]
+    },
+
     markRequestAccepted (friendId: number): void {
       if (!Number.isFinite(friendId) || friendId <= 0) return
       this.outgoingPendingByFriendId = omitKey(this.outgoingPendingByFriendId, friendId)
       this.incomingPendingByFriendId = omitKey(this.incomingPendingByFriendId, friendId)
       this.resolvedStatusByFriendId[friendId] = FriendRequestStatusEnum.ACCEPTED
       this.removedByFriendId = omitKey(this.removedByFriendId, friendId)
+      this.cancelledByFriendId = omitKey(this.cancelledByFriendId, friendId)
     },
 
     markRequestRejected (friendId: number): void {
@@ -76,6 +85,7 @@ export const useFriendStore = defineStore('Friend', {
       this.incomingPendingByFriendId = omitKey(this.incomingPendingByFriendId, friendId)
       this.resolvedStatusByFriendId[friendId] = FriendRequestStatusEnum.REJECTED
       this.removedByFriendId = omitKey(this.removedByFriendId, friendId)
+      this.cancelledByFriendId = omitKey(this.cancelledByFriendId, friendId)
     },
 
     markFriendRemoved (friendId: number): void {
@@ -84,6 +94,15 @@ export const useFriendStore = defineStore('Friend', {
       this.incomingPendingByFriendId = omitKey(this.incomingPendingByFriendId, friendId)
       this.resolvedStatusByFriendId = omitKey(this.resolvedStatusByFriendId, friendId)
       this.removedByFriendId[friendId] = true
+      this.cancelledByFriendId = omitKey(this.cancelledByFriendId, friendId)
+    },
+
+    markRequestCancelled (friendId: number): void {
+      if (!Number.isFinite(friendId) || friendId <= 0) return
+      this.outgoingPendingByFriendId = omitKey(this.outgoingPendingByFriendId, friendId)
+      this.incomingPendingByFriendId = omitKey(this.incomingPendingByFriendId, friendId)
+      this.resolvedStatusByFriendId = omitKey(this.resolvedStatusByFriendId, friendId)
+      this.cancelledByFriendId[friendId] = true
     },
 
     clearRemoved (friendId: number): void {
@@ -96,16 +115,22 @@ export const useFriendStore = defineStore('Friend', {
       this.resolvedStatusByFriendId = omitKey(this.resolvedStatusByFriendId, friendId)
     },
 
+    clearRequestCancelled (friendId: number): void {
+      if (!Number.isFinite(friendId) || friendId <= 0) return
+      this.cancelledByFriendId = omitKey(this.cancelledByFriendId, friendId)
+    },
+
     resetRealtime (): void {
       this.outgoingPendingByFriendId = {}
       this.incomingPendingByFriendId = {}
       this.resolvedStatusByFriendId = {}
       this.removedByFriendId = {}
+      this.cancelledByFriendId = {}
     }
   },
 
   persist: {
-    pick: ['outgoingPendingByFriendId', 'incomingPendingByFriendId', 'resolvedStatusByFriendId', 'removedByFriendId'],
+    pick: ['outgoingPendingByFriendId', 'incomingPendingByFriendId', 'resolvedStatusByFriendId', 'removedByFriendId', 'cancelledByFriendId'],
     storage: import.meta.client ? localStorage : undefined
   }
 })

@@ -29,3 +29,6 @@ components.d.ts
 # linux context windows
 *:*Zone.Identifier
 *:Zone.Identifier
+
+# AI generated files
+GEMINI.md

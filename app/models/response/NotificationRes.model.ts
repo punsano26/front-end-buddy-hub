@@ -20,6 +20,11 @@ export interface IDeleteNotificationData {
   notificationId: number
 }
 
+export interface IFindUnreadNotificationCountData {
+  count: number
+}
+
+export type IFindUnreadNotificationCountResponse = IApiResponse<IFindUnreadNotificationCountData>
 export type IMarkNotificationAsReadResponse = IApiResponse<INotificationList>
 export type IDeleteNotificationResponse = IApiResponse<IDeleteNotificationData>
 export type ICreateNotificationResponse = IApiResponse<INotificationList>

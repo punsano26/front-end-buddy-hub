@@ -116,6 +116,10 @@ const hasIncomingPendingRequest = computed((): boolean => {
     return false
   }
 
+  if (friendStore.isRequestCancelled(props.value.id)) {
+    return false
+  }
+
   if (friendStore.getResolvedStatus(props.value.id) === FriendRequestStatusEnum.REJECTED) {
     return false
   }
@@ -141,6 +145,10 @@ const shouldShowAddFriendButton = computed((): boolean => {
 
 const isFriendRequestSent = computed((): boolean => {
   if (isFriendAccepted.value) {
+    return false
+  }
+
+  if (friendStore.isRequestCancelled(props.value.id)) {
     return false
   }
 
