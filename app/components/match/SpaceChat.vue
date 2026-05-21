@@ -48,16 +48,19 @@ import { nextTick, ref, watch } from 'vue'
 import DirectMessageChatRoom from '~/components/DirectMessageChatRoom.vue'
 import type { ISendASessionMessagePayload } from '~/models/request/MatchReq.model'
 
-interface IMatchMessage {
-  id: number
+export interface IMatchMessage {
+  id: number | string
   text: string
   createdAt: string
   isOwn: boolean
 }
 
+const props = defineProps<{
+  messages: IMatchMessage[]
+}>()
+
 const dayjs = useDayjs()
 const messageText = ref('')
-const messages = ref<IMatchMessage[]>([])
 const chatScrollContainer = ref<HTMLElement | null>(null)
 const emit = defineEmits<{
   (event: 'sendMessage', payload: ISendASessionMessagePayload): void
@@ -72,17 +75,6 @@ function sendMessage (message: string): void {
   if (!trimmed) return
 
   emit('sendMessage', { text: trimmed })
-
-  messages.value = [
-    ...messages.value,
-    {
-      id: Date.now(),
-      text: trimmed,
-      createdAt: new Date().toISOString(),
-      isOwn: true
-    }
-  ]
-
   messageText.value = ''
 }
 
@@ -92,7 +84,7 @@ async function scrollToBottom (): Promise<void> {
   chatScrollContainer.value.scrollTop = chatScrollContainer.value.scrollHeight
 }
 
-watch((): number => messages.value.length, (): void => {
+watch((): number => props.messages.length, (): void => {
   void scrollToBottom()
 })
 </script>

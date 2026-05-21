@@ -28,21 +28,23 @@
           <div class="flex flex-wrap md:flex-nowrap items-center gap-3 w-full md:w-auto justify-end border-t md:border-t-0 border-surface-100 dark:border-surface-800 pt-5 md:pt-0 mt-2 md:mt-0">
             <Button size="small" label="เพิ่มเพื่อน" icon="pi pi-user-plus" class="flex-1 md:flex-none justify-center px-4 py-2 font-medium shadow-sm" />
             <Button size="small" label="รายงาน" icon="pi pi-flag" severity="secondary" outlined class="flex-1 md:flex-none justify-center px-4 py-2 font-medium shadow-sm" />
-            <Button size="small" text icon="pi pi-times" severity="secondary" class="hidden md:inline-flex !w-10 !h-10 p-0 items-center justify-center hover:bg-surface-100 dark:hover:bg-surface-800 rounded-full transition-colors" aria-label="Close" />
+            <Button @click="onNavigateBack" size="small" text icon="pi pi-times" severity="secondary" class="hidden md:inline-flex !w-10 !h-10 p-0 items-center justify-center hover:bg-surface-100 dark:hover:bg-surface-800 rounded-full transition-colors" aria-label="Close" />
           </div>
         </div>
       </template>
     </Card>
-    <SpaceChat @send-message="sendMessageSessionMatch" />
+    <SpaceChat :messages="sessionMessages" @send-message="sendMessageSessionMatch" />
   </div>
 </template>
 
 <script lang="ts" setup>
-import SpaceChat from '~/components/match/SpaceChat.vue'
+import { ref, watch } from 'vue'
+import SpaceChat, { type IMatchMessage } from '~/components/match/SpaceChat.vue'
 import { MatchEvent } from '~/models/enums/Match.enum'
 import type { ISendASessionMessagePayload } from '~/models/request/MatchReq.model'
 import type { TBaseParamsId } from '~/models/request/Request.model'
 import MatchProvider, { type IMatchProvider } from '~/resource/provider/Match.provider'
+import { useAuthStore } from '~/stores/Auth'
 import { useMatchStore } from '~/stores/Match'
 
 definePageMeta({
@@ -52,7 +54,10 @@ definePageMeta({
 const matchService: IMatchProvider = new MatchProvider()
 const { $handleLoading } = useNuxtApp()
 const matchStore = useMatchStore()
+const authStore = useAuthStore()
 const route = useRoute()
+const router = useRouter()
+const sessionMessages = ref<IMatchMessage[]>([])
 
 const sessionId = computed<TBaseParamsId>(() => {
   return getSessionIdFromEvent(matchStore.getLastEventByType(MatchEvent.PERSISTED)?.data)
@@ -92,18 +97,45 @@ function getSessionIdFromEvent (value: unknown): TBaseParamsId {
 
 async function onSendMessageSessionMatch (sessionId: TBaseParamsId, message: ISendASessionMessagePayload): Promise<void> {
   if (!sessionId) return
-  await matchService.SendASessionMessage(sessionId, message)
+  
+  // Optimistic update
+  const newMessage: IMatchMessage = {
+    id: Date.now(),
+    text: message.text,
+    createdAt: new Date().toISOString(),
+    isOwn: true
+  }
+  sessionMessages.value.push(newMessage)
+
+  try {
+    await matchService.SendASessionMessage(sessionId, message)
+    // Optionally re-fetch here if needed, but optimistic update is usually fine
+  } catch (error) {
+    console.error('Failed to send message:', error)
+    // Revert optimistic update on failure could be implemented here
+  }
 }
 
 function sendMessageSessionMatch (payload: ISendASessionMessagePayload): void {
   if (!sessionId.value) return
-  $handleLoading((): Promise<void> => onSendMessageSessionMatch(sessionId.value, payload))
+  void onSendMessageSessionMatch(sessionId.value, payload)
 }
 
 async function onGetAllSessionMessages (sessionId: TBaseParamsId): Promise<void> {
   if (!sessionId) return
-  const response = await matchService.findAllSessionMessages(sessionId)
-  console.log('All session messages:', response)
+  try {
+    const response = await matchService.findAllSessionMessages(sessionId)
+    if (response?.data) {
+      sessionMessages.value = response.data.map(msg => ({
+        id: msg.id,
+        text: msg.text,
+        createdAt: msg.createdAt,
+        isOwn: msg.isOwn !== undefined ? msg.isOwn : msg.senderId === authStore.user?.id
+      }))
+    }
+  } catch (error) {
+    console.error('Failed to fetch messages:', error)
+  }
 }
 
 function getAllSessionMessages (): void {
@@ -111,6 +143,15 @@ function getAllSessionMessages (): void {
   $handleLoading((): Promise<void> => onGetAllSessionMessages(sessionId.value))
 }
 
+watch(sessionId, (newId) => {
+  if (newId) {
+    getAllSessionMessages()
+  }
+}, { immediate: true })
+
+function onNavigateBack (): void {
+   router.push({ name: 'public-find-match' })
+}
 </script>
 
 <style scoped>
