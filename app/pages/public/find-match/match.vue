@@ -22,7 +22,14 @@
             </div>
           </div>        
           <div class="flex flex-wrap md:flex-nowrap items-center gap-3 w-full md:w-auto justify-end border-t md:border-t-0 border-surface-100 dark:border-surface-800 pt-5 md:pt-0 mt-2 md:mt-0">
-            <Button size="small" label="เพิ่มเพื่อน" icon="pi pi-user-plus" class="flex-1 md:flex-none justify-center px-4 py-2 font-medium shadow-sm" />
+            <Button
+              :disabled="isFriendRequestSent || isSubmitting"
+              @click="sendAFriendSessionRequest"
+              size="small"
+              :label="isFriendRequestSent ? 'ส่งคำขอแล้ว' : 'เพิ่มเพื่อน'"
+              :icon="isFriendRequestSent ? 'pi pi-check' : 'pi pi-user-plus'"
+              class="flex-1 md:flex-none justify-center px-4 py-2 font-medium shadow-sm"
+            />
             <Button size="small" label="รายงาน" icon="pi pi-flag" severity="secondary" outlined class="flex-1 md:flex-none justify-center px-4 py-2 font-medium shadow-sm" />
             <Button @click="onNavigateBack" size="small" text icon="pi pi-times" severity="secondary" class="hidden md:inline-flex !w-10 !h-10 p-0 items-center justify-center hover:bg-surface-100 dark:hover:bg-surface-800 rounded-full transition-colors" aria-label="Close" />
           </div>
@@ -34,7 +41,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useToast } from 'primevue/usetoast'
 import SpaceChat, { type IMatchMessage } from '~/components/match/SpaceChat.vue'
 import { MatchEvent } from '~/models/enums/Match.enum'
 import type { ISendASessionMessagePayload } from '~/models/request/MatchReq.model'
@@ -50,11 +58,14 @@ definePageMeta({
 
 const matchService: IMatchProvider = new MatchProvider()
 const { $handleLoading } = useNuxtApp()
+const toast = useToast()
 const matchStore = useMatchStore()
 const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 const sessionMessages = ref<IMatchMessage[]>([])
+const isFriendRequestSent = ref(false)
+const isSubmitting = ref(false)
 
 const sessionId = computed<TBaseParamsId>(() => {
   return getSessionIdFromEvent(matchStore.getLastEventByType(MatchEvent.PERSISTED)?.data)
@@ -238,6 +249,28 @@ function upsertRealtimeSessionMessage (message: ISendASessionMessageData): void 
   sessionMessages.value.push(incoming)
 }
 
+async function onSendAFriendSessionRequest (sessionId: TBaseParamsId): Promise<void> {
+  if (!sessionId) return
+  await matchService.sendAFriendSessionRequest(sessionId)
+  isFriendRequestSent.value = true
+}
+
+function sendAFriendSessionRequest (): void {
+  if (!sessionId.value) return
+  $handleLoading(() => onSendAFriendSessionRequest(sessionId.value), {
+    loadingUnit: isSubmitting,
+    toast: {
+      instance: toast,
+      success: {
+        detail: 'ส่งคำขอเข้าร่วมเซสชันเพื่อนสำเร็จ'
+      },
+      error: {
+        summary: 'ส่งคำขอเข้าร่วมเซสชันเพื่อนล้มเหลว'
+      }
+    }
+  })
+}
+
 watch(sessionId, (newId) => {
   if (newId) {
     getAllSessionMessages()
@@ -263,6 +296,21 @@ watch(
     // Fallback: payload shape unknown -> refresh from API (no loading overlay).
     void onGetAllSessionMessages(sessionId.value)
   }
+)
+
+watch(
+  () => matchStore.getLastEventByType(MatchEvent.FRIEND_REQUEST)?.receivedAt,
+  () => {
+    const socketEvent = matchStore.getLastEventByType(MatchEvent.FRIEND_REQUEST)
+    if (!socketEvent) return
+    if (!sessionId.value) return
+
+    const incomingSessionId = getSessionIdFromEvent(socketEvent.data)
+    if (incomingSessionId && incomingSessionId !== sessionId.value) return
+
+    isFriendRequestSent.value = true
+  },
+  { immediate: true }
 )
 
 function onNavigateBack (): void {
