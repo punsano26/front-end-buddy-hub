@@ -27,7 +27,7 @@
               <span
                 :class="message.isOwn ? 'text-right' : 'text-left'"
                 class="mt-1 block text-[10px] opacity-70">
-                {{ formatTime(message.createdAt) }}
+                {{ formatTime(message.sendAt) }}
               </span>
             </div>
           </div>
@@ -51,7 +51,7 @@ import type { ISendASessionMessagePayload } from '~/models/request/MatchReq.mode
 export interface IMatchMessage {
   id: number | string
   text: string
-  createdAt: string
+  sendAt: string
   isOwn: boolean
 }
 

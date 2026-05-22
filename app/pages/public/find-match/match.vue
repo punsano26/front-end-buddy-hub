@@ -16,10 +16,6 @@
                 <Tag value="Private" severity="secondary" rounded class="text-xs px-2.5 py-1 font-medium bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300" />
               </div>
               <div class="flex flex-wrap items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
-                <span class="flex items-center gap-1.5 bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400 px-2.5 py-1 rounded-full font-medium text-xs shadow-sm">
-                  <i class="pi pi-venus text-xs"></i>
-                  18y
-                </span>
                 <span class="hidden sm:inline text-surface-300 dark:text-surface-600">&bull;</span>
                 <span class="text-xs sm:text-sm">ข้อมูลถูกซ่อนเพื่อความเป็นส่วนตัว</span>
               </div>
@@ -43,6 +39,7 @@ import SpaceChat, { type IMatchMessage } from '~/components/match/SpaceChat.vue'
 import { MatchEvent } from '~/models/enums/Match.enum'
 import type { ISendASessionMessagePayload } from '~/models/request/MatchReq.model'
 import type { TBaseParamsId } from '~/models/request/Request.model'
+import type { ISendASessionMessageData } from '~/models/response/MatchRes.model'
 import MatchProvider, { type IMatchProvider } from '~/resource/provider/Match.provider'
 import { useAuthStore } from '~/stores/Auth'
 import { useMatchStore } from '~/stores/Match'
@@ -67,6 +64,60 @@ const sessionId = computed<TBaseParamsId>(() => {
 
 function isRecord (value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object'
+}
+
+interface ISessionMessageLike {
+  id: number | string
+  text: string
+  sendAt?: string
+  createdAt?: string
+  senderId?: number
+  isOwn?: boolean
+}
+
+function isSessionMessageLike (value: unknown): value is ISessionMessageLike {
+  if (!isRecord(value)) return false
+  const id = value.id
+  const sendAt = (value as Record<string, unknown>).sendAt
+  const createdAt = (value as Record<string, unknown>).createdAt
+
+  return (typeof id === 'number' || typeof id === 'string')
+    && typeof value.text === 'string'
+    && (typeof sendAt === 'string' || typeof createdAt === 'string')
+}
+
+function normalizeSessionMessage (message: ISessionMessageLike): ISendASessionMessageData {
+  const sendAt = typeof message.sendAt === 'string'
+    ? message.sendAt
+    : typeof message.createdAt === 'string'
+      ? message.createdAt
+      : new Date().toISOString()
+
+  return {
+    id: message.id,
+    text: message.text,
+    sendAt,
+    senderId: message.senderId,
+    isOwn: message.isOwn
+  }
+}
+
+function extractSessionMessageFromSocket (value: unknown): ISendASessionMessageData | null {
+  if (isSessionMessageLike(value)) return normalizeSessionMessage(value)
+  if (!isRecord(value)) return null
+
+  const directMessage = (value as Record<string, unknown>).message
+  if (isSessionMessageLike(directMessage)) return normalizeSessionMessage(directMessage)
+
+  const directData = (value as Record<string, unknown>).data
+  if (isSessionMessageLike(directData)) return normalizeSessionMessage(directData)
+
+  return null
+}
+
+function tryGetTimeMs (value: string): number | null {
+  const ms = new Date(value).getTime()
+  return Number.isFinite(ms) ? ms : null
 }
 
 function toSessionId (value: unknown): TBaseParamsId {
@@ -102,7 +153,7 @@ async function onSendMessageSessionMatch (sessionId: TBaseParamsId, message: ISe
   const newMessage: IMatchMessage = {
     id: Date.now(),
     text: message.text,
-    createdAt: new Date().toISOString(),
+    sendAt: new Date().toISOString(),
     isOwn: true
   }
   sessionMessages.value.push(newMessage)
@@ -129,7 +180,7 @@ async function onGetAllSessionMessages (sessionId: TBaseParamsId): Promise<void>
       sessionMessages.value = response.data.map(msg => ({
         id: msg.id,
         text: msg.text,
-        createdAt: msg.createdAt,
+        sendAt: msg.sendAt,
         isOwn: msg.isOwn !== undefined ? msg.isOwn : msg.senderId === authStore.user?.id
       }))
     }
@@ -143,11 +194,76 @@ function getAllSessionMessages (): void {
   $handleLoading((): Promise<void> => onGetAllSessionMessages(sessionId.value))
 }
 
+function upsertRealtimeSessionMessage (message: ISendASessionMessageData): void {
+  const isOwn = message.isOwn !== undefined
+    ? !!message.isOwn
+    : message.senderId === authStore.user?.id
+
+  const incoming: IMatchMessage = {
+    id: message.id,
+    text: message.text,
+    sendAt: message.sendAt,
+    isOwn
+  }
+
+  const existingIndex = sessionMessages.value.findIndex(m => m.id === incoming.id)
+  if (existingIndex >= 0) {
+    sessionMessages.value[existingIndex] = incoming
+    return
+  }
+
+  // Replace optimistic message (pre-socket) to avoid duplicates.
+  if (incoming.isOwn) {
+    const incomingMs = tryGetTimeMs(incoming.sendAt)
+    const optimisticIndex = sessionMessages.value
+      .map((m, index) => ({ m, index }))
+      .reverse()
+      .find(({ m }) => {
+        if (!m.isOwn) return false
+        if (m.text !== incoming.text) return false
+
+        const optimisticMs = tryGetTimeMs(m.sendAt)
+        if (!incomingMs || !optimisticMs) return false
+
+        return Math.abs(incomingMs - optimisticMs) <= 15000
+      })
+      ?.index
+
+    if (typeof optimisticIndex === 'number' && optimisticIndex >= 0) {
+      sessionMessages.value[optimisticIndex] = incoming
+      return
+    }
+  }
+
+  sessionMessages.value.push(incoming)
+}
+
 watch(sessionId, (newId) => {
   if (newId) {
     getAllSessionMessages()
   }
 }, { immediate: true })
+
+watch(
+  () => matchStore.getLastEventByType(MatchEvent.MESSAGE)?.receivedAt,
+  () => {
+    const socketEvent = matchStore.getLastEventByType(MatchEvent.MESSAGE)
+    if (!socketEvent) return
+    if (!sessionId.value) return
+
+    const incomingSessionId = getSessionIdFromEvent(socketEvent.data)
+    if (incomingSessionId && incomingSessionId !== sessionId.value) return
+
+    const socketMessage = extractSessionMessageFromSocket(socketEvent.data)
+    if (socketMessage) {
+      upsertRealtimeSessionMessage(socketMessage)
+      return
+    }
+
+    // Fallback: payload shape unknown -> refresh from API (no loading overlay).
+    void onGetAllSessionMessages(sessionId.value)
+  }
+)
 
 function onNavigateBack (): void {
    router.push({ name: 'public-find-match' })
