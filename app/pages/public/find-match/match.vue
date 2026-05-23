@@ -4,8 +4,8 @@
       <template #content>
         <div class="flex flex-col md:flex-row justify-between items-center gap-6 p-2 md:p-4">
           <div class="flex gap-4 items-center w-full md:w-auto">
-            <div class="relative flex-shrink-0">
-               <SecondaryButton size="large" icon="pi pi-user" aria-label="User Avatar" rounded class="!w-16 !h-16 flex items-center justify-center text-2xl shadow-sm bg-surface-100 dark:bg-surface-800" />
+            <div class="relative shrink-0">
+              <SecondaryButton size="large" icon="pi pi-user" aria-label="User Avatar" rounded class="w-16! h-16! flex items-center justify-center text-2xl shadow-sm bg-surface-100 dark:bg-surface-800" />
                <span class="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-surface-900 rounded-full"></span>
             </div>           
             <div class="flex flex-col gap-2">
@@ -22,16 +22,45 @@
             </div>
           </div>        
           <div class="flex flex-wrap md:flex-nowrap items-center gap-3 w-full md:w-auto justify-end border-t md:border-t-0 border-surface-100 dark:border-surface-800 pt-5 md:pt-0 mt-2 md:mt-0">
-            <Button
-              :disabled="isFriendRequestSent || isSubmitting"
-              @click="sendAFriendSessionRequest"
-              size="small"
-              :label="isFriendRequestSent ? 'ส่งคำขอแล้ว' : 'เพิ่มเพื่อน'"
-              :icon="isFriendRequestSent ? 'pi pi-check' : 'pi pi-user-plus'"
-              class="flex-1 md:flex-none justify-center px-4 py-2 font-medium shadow-sm"
-            />
+            <template v-if="isAccepted">
+              <Button
+                disabled
+                size="small"
+                label="เป็นเพื่อนกันแล้ว"
+                icon="pi pi-check"
+                class="flex-1 md:flex-none justify-center px-4 py-2 font-medium shadow-sm"
+              />
+            </template>
+            <template v-else-if="isIncomingRequest && !isRejected">
+              <Button
+                :disabled="isSubmitting"
+                @click="acceptFriendRequest"
+                size="small"
+                label="ยอมรับเพื่อน"
+                icon="pi pi-check"
+                class="flex-1 md:flex-none justify-center px-4 py-2 font-medium shadow-sm bg-linear-to-r from-emerald-500 to-green-600 border-none text-white enabled:hover:from-emerald-600 enabled:hover:to-green-700 active:from-emerald-400 active:to-green-500"
+              />
+              <Button
+                :disabled="isSubmitting"
+                @click="rejectFriendRequest"
+                size="small"
+                label="ปฏิเสธ"
+                icon="pi pi-times"
+                class="flex-1 md:flex-none justify-center px-4 py-2 font-medium shadow-sm bg-linear-to-r from-red-500 to-rose-600 border-none text-white enabled:hover:from-red-600 enabled:hover:to-rose-700 active:from-red-400 active:to-rose-500"
+              />
+            </template>
+            <template v-else>
+              <Button
+                :disabled="isFriendRequestSent || isSubmitting"
+                @click="sendAFriendSessionRequest"
+                size="small"
+                :label="isFriendRequestSent ? 'ส่งคำขอแล้ว' : 'เพิ่มเพื่อน'"
+                :icon="isFriendRequestSent ? 'pi pi-check' : 'pi pi-user-plus'"
+                class="flex-1 md:flex-none justify-center px-4 py-2 font-medium shadow-sm"
+              />
+            </template>
             <Button size="small" label="รายงาน" icon="pi pi-flag" severity="secondary" outlined class="flex-1 md:flex-none justify-center px-4 py-2 font-medium shadow-sm" />
-            <Button @click="onNavigateBack" size="small" text icon="pi pi-times" severity="secondary" class="hidden md:inline-flex !w-10 !h-10 p-0 items-center justify-center hover:bg-surface-100 dark:hover:bg-surface-800 rounded-full transition-colors" aria-label="Close" />
+            <Button @click="onNavigateBack" size="small" text icon="pi pi-times" severity="secondary" class="hidden md:inline-flex w-10! h-10! p-0 items-center justify-center hover:bg-surface-100 dark:hover:bg-surface-800 rounded-full transition-colors" aria-label="Close" />
           </div>
         </div>
       </template>
@@ -44,12 +73,15 @@
 import { computed, ref, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import SpaceChat, { type IMatchMessage } from '~/components/match/SpaceChat.vue'
+import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
 import { MatchEvent } from '~/models/enums/Match.enum'
 import type { ISendASessionMessagePayload } from '~/models/request/MatchReq.model'
 import type { TBaseParamsId } from '~/models/request/Request.model'
 import type { ISendASessionMessageData } from '~/models/response/MatchRes.model'
+import FriendProvider, { type IFriendProvider } from '~/resource/provider/Friend.provider'
 import MatchProvider, { type IMatchProvider } from '~/resource/provider/Match.provider'
 import { useAuthStore } from '~/stores/Auth'
+import { useFriendStore } from '~/stores/Friend'
 import { useMatchStore } from '~/stores/Match'
 
 definePageMeta({
@@ -57,20 +89,126 @@ definePageMeta({
 })
 
 const matchService: IMatchProvider = new MatchProvider()
+const friendService: IFriendProvider = new FriendProvider()
 const { $handleLoading } = useNuxtApp()
 const toast = useToast()
 const matchStore = useMatchStore()
+const friendStore = useFriendStore()
 const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
-const sessionMessages = ref<IMatchMessage[]>([])
+type IMatchMessageEntry = IMatchMessage & { senderId?: number }
+const sessionMessages = ref<IMatchMessageEntry[]>([])
 const isFriendRequestSent = ref(false)
 const isSubmitting = ref(false)
+const isAccepted = ref(false)
+const isRejected = ref(false)
 
 const sessionId = computed<TBaseParamsId>(() => {
   return getSessionIdFromEvent(matchStore.getLastEventByType(MatchEvent.PERSISTED)?.data)
     ?? getSessionIdFromEvent(matchStore.getLastEventByType(MatchEvent.FOUND)?.data)
     ?? toSessionId(route.params.sessionId ?? route.query.sessionId)
+})
+
+const isIncomingRequest = computed(() => {
+  const socketEvent = matchStore.getLastEventByType(MatchEvent.FRIEND_REQUEST)
+  if (!socketEvent) return false
+  const currentUserId = authStore.user?.id
+  if (!currentUserId) return false
+
+  const currentSessionId = sessionId.value
+  const incomingSessionId = getSessionIdFromEvent(socketEvent.data)
+  if (currentSessionId && incomingSessionId && incomingSessionId !== currentSessionId) return false
+
+  if (socketEvent.data && typeof socketEvent.data === 'object') {
+    const data = socketEvent.data as any
+    const requesterId = typeof data.requesterId === 'number' ? data.requesterId : null
+    const receiverId = typeof data.receiverId === 'number' ? data.receiverId : null
+
+    if (receiverId && receiverId === currentUserId) return true
+    if (requesterId && requesterId === currentUserId) return false
+
+    const reqId = data.requesterId || data.senderId || data.userId
+    if (reqId === currentUserId) return false
+  }
+
+  return true
+})
+
+const incomingRequesterId = computed<number | null>(() => {
+  const currentUserId = authStore.user?.id
+  const socketEvent = matchStore.getLastEventByType(MatchEvent.FRIEND_REQUEST)
+  if (!currentUserId || !socketEvent?.data || typeof socketEvent.data !== 'object') return null
+
+  const data = socketEvent.data as any
+  const requesterId = typeof data.requesterId === 'number' ? data.requesterId : null
+  const receiverId = typeof data.receiverId === 'number' ? data.receiverId : null
+
+  if (requesterId && receiverId === currentUserId) return requesterId
+  return null
+})
+
+function findPartnerIdFromAnywhere (value: unknown): number | null {
+  if (!value || typeof value !== 'object') return null
+  const data = value as any
+
+  const currentUserId = authStore.user?.id
+
+  // 1. Direct fields: partnerId, friendId, requesterId, receiverId, senderId, userId (exclude 'id' as it represents record/request/session ID, not user ID)
+  const directFields = ['partnerId', 'friendId', 'requesterId', 'receiverId', 'senderId', 'userId']
+  for (const field of directFields) {
+    const val = data[field]
+    if (typeof val === 'number' && val !== currentUserId) {
+      return val
+    }
+  }
+
+  // 2. Arrays: e.g. users array, userIds array
+  if (Array.isArray(data.users)) {
+    for (const u of data.users) {
+      if (u && typeof u === 'object') {
+        const id = u.id || u.userId
+        if (typeof id === 'number' && id !== currentUserId) {
+          return id
+        }
+      } else if (typeof u === 'number' && u !== currentUserId) {
+        return u
+      }
+    }
+  }
+
+  if (Array.isArray(data.userIds)) {
+    const id = data.userIds.find((u: any) => typeof u === 'number' && u !== currentUserId)
+    if (typeof id === 'number') return id
+  }
+
+  // 3. Nested objects: session, user, partner, requester, receiver, sender
+  const nestedObjects = ['session', 'user', 'partner', 'requester', 'receiver', 'sender']
+  for (const objName of nestedObjects) {
+    const nested = data[objName]
+    if (nested && typeof nested === 'object') {
+      const id = findPartnerIdFromAnywhere(nested)
+      if (id !== null) return id
+    }
+  }
+
+  return null
+}
+
+const partnerUserId = computed<number | null>(() => {
+  const fromFriendReq = findPartnerIdFromAnywhere(matchStore.getLastEventByType(MatchEvent.FRIEND_REQUEST)?.data)
+  if (fromFriendReq) return fromFriendReq
+
+  const fromPersisted = findPartnerIdFromAnywhere(matchStore.getLastEventByType(MatchEvent.PERSISTED)?.data)
+  if (fromPersisted) return fromPersisted
+
+  const fromFound = findPartnerIdFromAnywhere(matchStore.getLastEventByType(MatchEvent.FOUND)?.data)
+  if (fromFound) return fromFound
+
+  const partnerMsg = sessionMessages.value.find(msg => !msg.isOwn && typeof msg.senderId === 'number')
+  if (partnerMsg?.senderId) return partnerMsg.senderId
+
+  return null
 })
 
 function isRecord (value: unknown): value is Record<string, unknown> {
@@ -190,6 +328,7 @@ async function onGetAllSessionMessages (sessionId: TBaseParamsId): Promise<void>
     if (response?.data) {
       sessionMessages.value = response.data.map(msg => ({
         id: msg.id,
+        senderId: msg.senderId,
         text: msg.text,
         sendAt: msg.sendAt,
         isOwn: msg.isOwn !== undefined ? msg.isOwn : msg.senderId === authStore.user?.id
@@ -210,8 +349,9 @@ function upsertRealtimeSessionMessage (message: ISendASessionMessageData): void 
     ? !!message.isOwn
     : message.senderId === authStore.user?.id
 
-  const incoming: IMatchMessage = {
+  const incoming: IMatchMessageEntry = {
     id: message.id,
+    senderId: message.senderId,
     text: message.text,
     sendAt: message.sendAt,
     isOwn
@@ -266,6 +406,62 @@ function sendAFriendSessionRequest (): void {
       },
       error: {
         summary: 'ส่งคำขอเข้าร่วมเซสชันเพื่อนล้มเหลว'
+      }
+    }
+  })
+}
+
+async function onAcceptFriendRequest (friendId: number): Promise<void> {
+  const response = await friendService.acceptFriendRequest(friendId)
+  isAccepted.value = true
+  if (response.data?.status === FriendRequestStatusEnum.ACCEPTED) {
+    friendStore.markRequestAccepted(friendId)
+  }
+}
+
+async function onRejectFriendRequest (friendId: number): Promise<void> {
+  const response = await friendService.rejectFriendRequest(friendId)
+  isRejected.value = true
+  if (response.data?.status === FriendRequestStatusEnum.REJECTED) {
+    friendStore.markRequestRejected(friendId)
+  }
+}
+
+function acceptFriendRequest (): void {
+  const targetId = incomingRequesterId.value ?? partnerUserId.value
+
+  if (!targetId) {
+    return
+  }
+  $handleLoading(() => onAcceptFriendRequest(targetId), {
+    loadingUnit: isSubmitting,
+    toast: {
+      instance: toast,
+      success: {
+        detail: 'ยอมรับเป็นเพื่อนสำเร็จ'
+      },
+      error: {
+        summary: 'ยอมรับเป็นเพื่อนล้มเหลว'
+      }
+    }
+  })
+}
+
+function rejectFriendRequest (): void {
+  const targetId = incomingRequesterId.value ?? partnerUserId.value
+
+  if (!targetId) {
+    return
+  }
+  $handleLoading(() => onRejectFriendRequest(targetId), {
+    loadingUnit: isSubmitting,
+    toast: {
+      instance: toast,
+      success: {
+        detail: 'ปฏิเสธคำขอเป็นเพื่อนสำเร็จ'
+      },
+      error: {
+        summary: 'ปฏิเสธคำขอเป็นเพื่อนล้มเหลว'
       }
     }
   })
