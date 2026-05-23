@@ -1,7 +1,7 @@
-import type { genderEnum } from '../enums/User.enum'
+import type { genderQueryEnum } from '../enums/User.enum'
 
 export interface IJoinTheRandomMatchQueuePayload {
-  gender: genderEnum | null
+  gender: genderQueryEnum
   minAge: number
   maxAge: number
 }

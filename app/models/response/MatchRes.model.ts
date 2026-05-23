@@ -12,7 +12,7 @@ export interface ISendASessionMessageData {
   id: number | string
   senderId?: number
   text: string
-  createdAt: string
+  sendAt: string
   isOwn?: boolean
 }
 

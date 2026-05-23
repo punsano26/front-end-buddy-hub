@@ -52,7 +52,7 @@
 </template>
 
 <script lang="ts" setup>
-import { genderEnum } from '~/models/enums/User.enum'
+import { genderQueryEnum } from '~/models/enums/User.enum'
 import type { IJoinTheRandomMatchQueuePayload } from '~/models/request/MatchReq.model'
 
 const props = defineProps<{
@@ -64,19 +64,19 @@ const emit = defineEmits<{
 }>()
 
 const genderOptions = [
-  { label: 'ทั้งหมด', value: null },
-  { label: 'ผู้ชาย', value: genderEnum.MALE },
-  { label: 'ผู้หญิง', value: genderEnum.FEMALE },
-  { label: 'อื่นๆ', value: genderEnum.OTHER }
+  { label: 'ทั้งหมด', value: genderQueryEnum.ALL },
+  { label: 'ผู้ชาย', value: genderQueryEnum.MALE },
+  { label: 'ผู้หญิง', value: genderQueryEnum.FEMALE },
+  { label: 'อื่นๆ', value: genderQueryEnum.OTHER }
 ]
 
 const updatePayload = (patch: Partial<IJoinTheRandomMatchQueuePayload>): void => {
   emit('update:payload', { ...props.payload, ...patch })
 }
 
-const genderValue = computed<genderEnum | null>({
-  get: (): genderEnum | null => props.payload.gender,
-  set: (value: genderEnum | null): void => updatePayload({ gender: value })
+const genderValue = computed<genderQueryEnum>({
+  get: (): genderQueryEnum => props.payload.gender,
+  set: (value: genderQueryEnum): void => updatePayload({ gender: value })
 })
 
 const minAge = computed<number | null>({

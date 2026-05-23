@@ -34,19 +34,19 @@ class MatchProvider extends HttpRequest implements IMatchProvider {
 
   public async SendASessionMessage (id: TBaseParamsId, payload: ISendASessionMessagePayload): Promise<ISendASessionMessageResponse> {
     this.setUserAuthHeader()
-    const response = await this.post(`${this.urlPrefix}/session/${id}/messages`, payload)
+    const response = await this.post(`${this.urlPrefix}/sessions/${id}/messages`, payload)
     return response
   }
 
   public async findAllSessionMessages (id: TBaseParamsId): Promise<IFindAllSessionMessagesResponse> {
     this.setUserAuthHeader()
-    const response = await this.get(`${this.urlPrefix}/session/${id}/messages`)
+    const response = await this.get(`${this.urlPrefix}/sessions/${id}/messages`)
     return response
   }
 
   public async sendAFriendSessionRequest (id: TBaseParamsId): Promise<ISendAFriendRequestResponse> {
     this.setUserAuthHeader()
-    const response = await this.post(`${this.urlPrefix}/session/${id}/friend-request`, {})
+    const response = await this.post(`${this.urlPrefix}/sessions/${id}/friend-request`, {})
     return response
   }
 }

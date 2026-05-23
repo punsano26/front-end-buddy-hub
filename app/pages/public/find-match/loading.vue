@@ -149,7 +149,8 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { MatchEvent } from '~/models/enums/Match.enum'
 import MatchProvider, { type IMatchProvider } from '~/resource/provider/Match.provider'
-import { type IMatchSocketEvent, useMatchStore } from '~/stores/Match'
+import { type IMatchSocketEvent, useMatchStore, getSessionIdFromEvent, findPartnerIdFromAnywhere } from '~/stores/Match'
+import { useAuthStore } from '~/stores/Auth'
 import Button from '~/volt/Button.vue'
 import Card from '~/volt/Card.vue'
 
@@ -166,6 +167,7 @@ const hasNavigated = ref(false)
 const progress = computed(() =>
   Math.round((timeElapsed.value / maxTime) * 100)
 )
+const authStore = useAuthStore()
 const matchService: IMatchProvider = new MatchProvider()
 let timer: ReturnType<typeof setInterval> | null = null
 
@@ -177,7 +179,18 @@ function onMatchFound (): void {
   if (hasNavigated.value) return
 
   hasNavigated.value = true
-  router.push({ name: 'public-find-match-match' })
+
+  const foundEvent = matchStore.getLastEventByType(MatchEvent.FOUND)
+  const sessionId = foundEvent ? getSessionIdFromEvent(foundEvent.data) : undefined
+  const partnerUserId = foundEvent ? findPartnerIdFromAnywhere(foundEvent.data, authStore.user?.id) : undefined
+
+  router.push({
+    name: 'public-find-match-match',
+    query: {
+      ...(sessionId ? { sessionId } : {}),
+      ...(partnerUserId ? { partnerUserId } : {})
+    }
+  })
 }
 
 function cancelMatch (): void {
