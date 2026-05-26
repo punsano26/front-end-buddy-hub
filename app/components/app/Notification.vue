@@ -71,14 +71,20 @@
             v-if="!item.isRead"
             class="absolute top-1/2 left-1 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-primary-500 shadow-[0_0_6px_rgba(var(--color-primary-500),0.6)]" />
 
-          <Avatar
-            :alt="item?.userId || 'Notification Avatar'"
-            :class="item.isRead ? 'ring-surface-100 dark:ring-surface-800 group-hover:ring-surface-200 dark:group-hover:ring-surface-700' : 'ring-primary-100 dark:ring-primary-900/50'"
-            :image="resolveAvatar(item?.requesterProfileImg)"
-            class="shrink-0 ring-2 shadow-sm transition-all duration-200"
-            pt:image:class="object-cover"
-            shape="circle"
-            size="large" />
+          <button
+            aria-label="Open user profile"
+            class="shrink-0 rounded-full cursor-pointer focus:outline-none"
+            type="button"
+            @click.stop="onClickUserDetail(item.requesterId)">
+            <Avatar
+              :alt="item?.userId || 'Notification Avatar'"
+              :class="item.isRead ? 'ring-surface-100 dark:ring-surface-800 group-hover:ring-surface-200 dark:group-hover:ring-surface-700' : 'ring-primary-100 dark:ring-primary-900/50'"
+              :image="resolveAvatar(item?.requesterProfileImg)"
+              class="shrink-0 ring-2 shadow-sm transition-all duration-200"
+              pt:image:class="object-cover"
+              shape="circle"
+              size="large" />
+          </button>
 
           <div class="flex-1 min-w-0 flex flex-col gap-1 mt-0.5">
             <p
@@ -111,7 +117,9 @@
               <i class="pi pi-times text-sm font-bold" />
             </button>
           </div>
-          <DotMenu :items="getNotificationItems(item)" />
+          <div @click.stop>
+            <DotMenu :items="getNotificationItems(item)" />
+          </div>
         </div>
 
         <div
@@ -181,14 +189,22 @@ function handleMarkNotification (item: INotificationList): void {
 }
 
 function getNotificationItems (item: INotificationList): IItems[] {
-  return [
-    {
-      label: 'ลบการแจ้งเตือน',
+  const items: IItems[] = []
+  if (!item.isRead) {
+    items.push({
+      label: 'ทำเครื่องหมายอ่านแล้ว',
       command: (): void => {
-        void handleDeleteNotification(item.id)
+        void handleMarkNotification(item)
       }
+    })
+  }
+  items.push({
+    label: 'ลบการแจ้งเตือน',
+    command: (): void => {
+      void handleDeleteNotification(item.id)
     }
-  ]
+  })
+  return items
 }
 
 async function handleDeleteNotification (id: number): Promise<void> {
