@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-dvh w-full overflow-x-hidden">
+  <div class="min-h-[var(--app-height,100dvh)] w-full overflow-x-hidden">
     <slot />
   </div>
 </template>
