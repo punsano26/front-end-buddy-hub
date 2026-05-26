@@ -1,5 +1,5 @@
 <template>
-  <div class="keyboard-offset-pad flex flex-col w-full h-[var(--app-height,100dvh)] bg-surface-50 dark:bg-surface-950 overflow-hidden md:p-6 md:max-w-5xl md:mx-auto md:h-[calc(var(--app-height,100dvh)-64px)] md:my-8 md:rounded-2xl md:border md:border-surface-200 md:dark:border-surface-800 md:shadow-xl transition-all duration-300">
+  <div class="flex flex-col w-full h-[var(--app-height,100dvh)] bg-surface-50 dark:bg-surface-950 overflow-hidden md:p-6 md:max-w-5xl md:mx-auto md:h-[calc(var(--app-height,100dvh)-64px)] md:my-8 md:rounded-2xl md:border md:border-surface-200 md:dark:border-surface-800 md:shadow-xl transition-all duration-300">
     <!-- Sticky / Top Profile Header -->
     <div class="shrink-0 border-b border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900 px-4 py-3 md:px-6 md:py-4 shadow-sm z-10">
       <div class="flex items-center justify-between gap-4">
