@@ -21,6 +21,10 @@
   padding-bottom: 0.5rem;
 }
 
+.keyboard-offset-pad {
+  padding-bottom: var(--keyboard-offset, 0px);
+}
+
 html.keyboard-open,
 html.keyboard-open body {
   overflow: hidden !important;
