@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { NotificationTypeEnum } from '~/models/enums/Notification.enum'
 import type { IPagination } from '~/models/Global.model'
 import type { INotificationList } from '~/models/response/NotificationRes.model'
 import NotificationProvider from '~/resource/provider/Notification.provider'
@@ -7,6 +8,7 @@ interface INotificationState {
   items: INotificationList[]
   pagination: IPagination
   unreadCount: number
+  systemNotification: { userId: number | null } | null
 }
 
 export const useNotificationStore = defineStore('Notification', {
@@ -18,10 +20,18 @@ export const useNotificationStore = defineStore('Notification', {
       total: 0,
       lastPage: 1
     },
-    unreadCount: 0
+    unreadCount: 0,
+    systemNotification: null
   }),
 
   actions: {
+    syncSystemNotification (): void {
+      const systemItem = this.items.find(
+        (item: INotificationList): boolean => item.notificationType === NotificationTypeEnum.SYSTEM
+      )
+      this.systemNotification = systemItem ? { userId: systemItem.userId } : null
+    },
+
     async fetchNotifications (page?: number, limit?: number): Promise<void> {
       const notificationService = new NotificationProvider()
       const response = await notificationService.findAllNotificationPaginate({
@@ -30,6 +40,7 @@ export const useNotificationStore = defineStore('Notification', {
       })
 
       this.items = response.data || []
+      this.syncSystemNotification()
       if (response.pagination) {
         this.pagination = {
           page: response.pagination.page,
@@ -69,6 +80,7 @@ export const useNotificationStore = defineStore('Notification', {
           })
         )
       }
+      this.syncSystemNotification()
       this.unreadCount = 0
     },
 
@@ -89,6 +101,7 @@ export const useNotificationStore = defineStore('Notification', {
         )
         if (item) item.isRead = true
       }
+      this.syncSystemNotification()
       await this.fetchUnreadCount()
     },
 
@@ -103,6 +116,7 @@ export const useNotificationStore = defineStore('Notification', {
       this.items = this.items.filter(
         (item: INotificationList): boolean => item.id !== id
       )
+      this.syncSystemNotification()
       await this.fetchUnreadCount()
     }
   }

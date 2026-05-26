@@ -9,7 +9,7 @@
       placeholder="Search messages..." />
 
 
-    <div class="flex-1 min-h-0 md:h-152 overflow-y-auto overscroll-contain pr-1">
+    <div class="flex-1 min-h-0 md:flex-none md:h-[calc(var(--app-height,100dvh)-230px)] overflow-y-auto overscroll-y-contain pr-1 pb-[calc(env(safe-area-inset-bottom)+5rem)] sm:pb-0">
       <div class="grid gap-1">
         <ConversationItems
           v-for="conversation in conversations"
@@ -100,5 +100,23 @@ watch((): ILatestConversationActivity | null => chatStore.latestConversationActi
 </script>
 
 <style scoped>
-
+.overflow-y-auto::-webkit-scrollbar {
+  width: 4px;
+}
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: var(--p-surface-300);
+  border-radius: 4px;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: var(--p-surface-400);
+}
+.dark .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: var(--p-surface-700);
+}
+.dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: var(--p-surface-600);
+}
 </style>
