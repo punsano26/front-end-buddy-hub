@@ -3,7 +3,9 @@
     <div class="sticky top-0 z-10">
       <ToolsBar />
     </div>
-    <slot />
+    <div class="pb-[calc(env(safe-area-inset-bottom)+5rem)] sm:pb-0">
+      <slot />
+    </div>
   </div>
 </template>
 
