@@ -25,7 +25,5 @@ html.keyboard-open,
 html.keyboard-open body {
   overflow: hidden !important;
   height: var(--app-height, 100dvh) !important;
-  position: fixed !important;
-  width: 100% !important;
 }
 
