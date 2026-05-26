@@ -50,19 +50,23 @@ useSeoMeta({
 const updateAppHeight = (): void => {
   if (typeof window === 'undefined') return
   const viewport = window.visualViewport
-  const height = viewport?.height ?? window.innerHeight
-  document.documentElement.style.setProperty('--app-height', `${height}px`)
+  const layoutHeight = window.innerHeight
+  const visualHeight = viewport?.height ?? layoutHeight
+  const offsetTop = viewport?.offsetTop ?? 0
+  const keyboardInset = Math.max(0, layoutHeight - (visualHeight + offsetTop))
+  const keyboardOpen = keyboardInset > 120
+  const routeName = String(route.name || '')
+  const isMatchRoute = routeName.startsWith('public-find-match')
+  const appHeight = isMatchRoute && keyboardOpen ? layoutHeight : visualHeight
 
-  const keyboardOpen = viewport
-    ? window.innerHeight - viewport.height > 120
-    : false
+  document.documentElement.style.setProperty('--app-height', `${appHeight}px`)
+  document.documentElement.style.setProperty(
+    '--keyboard-offset', isMatchRoute && keyboardOpen ? `${keyboardInset}px` : '0px'
+  )
   document.documentElement.classList.toggle('keyboard-open', keyboardOpen)
 
-  if (keyboardOpen) {
-    const routeName = String(route.name || '')
-    if (!routeName.startsWith('public-find-match')) {
-      window.scrollTo(0, 0)
-    }
+  if (keyboardOpen && !isMatchRoute) {
+    window.scrollTo(0, 0)
   }
 }
 
@@ -70,6 +74,10 @@ onMounted((): void => {
   updateAppHeight()
   window.addEventListener('resize', updateAppHeight)
   window.visualViewport?.addEventListener('resize', updateAppHeight)
+})
+
+watch((): string => String(route.name || ''), (): void => {
+  updateAppHeight()
 })
 
 onUnmounted((): void => {
