@@ -1,5 +1,6 @@
 <template>
   <Paginator
+    :first="(pagination.page - 1) * pagination.limit"
     :rows="pagination.limit"
     :total-records="pagination.total"
     pt:root:class="justify-end px-4 py-1 bg-transparent dark:bg-transparent"
