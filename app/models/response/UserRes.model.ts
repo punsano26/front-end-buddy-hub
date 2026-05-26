@@ -14,6 +14,8 @@ export interface IFindOneCurrentUserData {
   gender: genderEnum
   dateOfBirth: string
   age: number
+  friendCount?: number
+  chatCount?: number
   lastOnlineAt: string | null
   createdAt: string
   roles: string[]
