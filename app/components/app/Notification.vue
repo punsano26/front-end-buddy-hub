@@ -38,12 +38,17 @@
 
       <div class="max-h-[60vh] overflow-y-auto p-2 flex flex-col gap-1">
         <div class="group relative flex items-start gap-3.5 rounded-xl p-3 transition-colors hover:bg-surface-50 dark:hover:bg-surface-800/50 border border-transparent">
-          <Avatar
-            class="shrink-0 ring-2 ring-surface-100 dark:ring-surface-800 shadow-sm"
-            image="/png/logo-buddy-hub.png"
-            pt:image:class="object-cover"
-            shape="circle"
-            size="large" />
+          <button
+            aria-label="Open user profile"
+            class="shrink-0 ring-2 ring-surface-100 dark:ring-surface-800 shadow-sm rounded-full cursor-pointer"
+            type="button"
+            @click="onClickUserDetail(notificationStore.systemNotification?.userId)">
+            <Avatar
+              image="/png/logo-buddy-hub.png"
+              pt:image:class="object-cover"
+              shape="circle"
+              size="large" />
+          </button>
           <div class="flex-1 min-w-0 flex flex-col gap-1 mt-0.5">
             <p class="text-[13px] font-medium text-surface-900 dark:text-surface-100 leading-snug wrap-break-word">
               แจ้งเตือนจากระบบ: ระบบจะมีการบำรุงรักษาในวันพรุ่งนี้ เวลา 02:00 - 04:00 น. กรุณาเตรียมตัวล่วงหน้า
@@ -141,7 +146,7 @@ const op = ref()
 const toggle = (event: Event): void => {
   op.value.toggle(event)
 }
-
+const router = useRouter()
 const friendService: IFriendProvider = new FriendProvider()
 const notificationStore = useNotificationStore()
 const { $handleLoading } = useNuxtApp()
@@ -195,6 +200,11 @@ function resolveAvatar (path?: string | null): string {
   if ((/^https?:\/\//i).test(path)) return path
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
   return imageBase ? `${imageBase}${normalizedPath}` : normalizedPath
+}
+
+function onClickUserDetail (userId?: number | null): void {
+  if (!userId || userId <= 0) return
+  router.push({ name: 'public-profile-id', params: { id: userId } })
 }
 </script>
 
