@@ -57,6 +57,10 @@ const updateAppHeight = (): void => {
     ? window.innerHeight - viewport.height > 120
     : false
   document.documentElement.classList.toggle('keyboard-open', keyboardOpen)
+
+  if (keyboardOpen) {
+    window.scrollTo(0, 0)
+  }
 }
 
 onMounted((): void => {
