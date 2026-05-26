@@ -89,11 +89,11 @@
           <Divider />
           <div class="flex justify-center gap-24">
             <div class="flex flex-col">
-              <p class="font-bold text-center">0</p>
+              <p class="font-bold text-center">{{ items?.friendCount }}</p>
               <p class="text-sm text-surface-500">เพื่อน</p>
             </div>
             <div class="flex flex-col">
-              <p class="font-bold text-center">0</p>
+              <p class="font-bold text-center">{{ items?.chatCount }}</p>
               <p class="text-sm text-surface-500">แชท</p>
             </div>
           </div>
