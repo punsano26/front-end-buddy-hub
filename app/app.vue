@@ -55,17 +55,12 @@ const updateAppHeight = (): void => {
   const offsetTop = viewport?.offsetTop ?? 0
   const keyboardInset = Math.max(0, layoutHeight - (visualHeight + offsetTop))
   const keyboardOpen = keyboardInset > 120
-  const routeName = String(route.name || '')
-  const isMatchRoute = routeName.startsWith('public-find-match')
-  const appHeight = isMatchRoute && keyboardOpen ? layoutHeight : visualHeight
 
-  document.documentElement.style.setProperty('--app-height', `${appHeight}px`)
-  document.documentElement.style.setProperty(
-    '--keyboard-offset', isMatchRoute && keyboardOpen ? `${keyboardInset}px` : '0px'
-  )
+  document.documentElement.style.setProperty('--app-height', `${visualHeight}px`)
+  document.documentElement.style.setProperty('--keyboard-offset', '0px')
   document.documentElement.classList.toggle('keyboard-open', keyboardOpen)
 
-  if (keyboardOpen && !isMatchRoute) {
+  if (keyboardOpen) {
     window.scrollTo(0, 0)
   }
 }
