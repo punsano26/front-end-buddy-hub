@@ -59,7 +59,10 @@ const updateAppHeight = (): void => {
   document.documentElement.classList.toggle('keyboard-open', keyboardOpen)
 
   if (keyboardOpen) {
-    window.scrollTo(0, 0)
+    const routeName = String(route.name || '')
+    if (!routeName.startsWith('public-find-match')) {
+      window.scrollTo(0, 0)
+    }
   }
 }
 
