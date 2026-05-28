@@ -17,6 +17,7 @@
         หรือปรึกษาปัญหาทางใจกับผู้รับฟังมืออาชีพ
       </p>
       <Button
+      @click="isCreatePage"
         label="เปิดเช่ารับฟัง"
         icon="pi pi-plus"
         pt:root:class="bg-gradient-primary border-none px-4 py-2 shadow-sm hover:shadow-md hover:scale-105 transition"
@@ -47,9 +48,12 @@
 </template>
 
 <script lang="ts" setup>
-import ButtonGroup from '~/volt/ButtonGroup.vue'
-
 definePageMeta({ layout: "navbar" });
+const router = useRouter()
+
+function isCreatePage (): void {
+  router.push({ name: 'public-rent-create' })
+}
 </script>
 
 <style></style>

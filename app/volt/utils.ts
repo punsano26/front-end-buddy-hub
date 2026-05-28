@@ -1,9 +1,13 @@
-import { twMerge } from 'tailwind-merge';
-import { mergeProps } from 'vue';
+import { twMerge } from 'tailwind-merge'
+import { mergeProps } from 'vue'
 
-export const ptViewMerge = (globalPTProps = {} as any, selfPTProps = {} as any, datasets: any) => {
-    const { class: globalClass, ...globalRest } = globalPTProps;
-    const { class: selfClass, ...selfRest } = selfPTProps;
+export const ptViewMerge = (
+  globalPTProps: Record<string, any> = {},
+  selfPTProps: Record<string, any> = {},
+  datasets: Record<string, any>
+): any => {
+  const { class: globalClass, ...globalRest } = globalPTProps
+  const { class: selfClass, ...selfRest } = selfPTProps
 
-    return mergeProps({ class: twMerge(globalClass, selfClass) }, globalRest, selfRest, datasets);
-};
+  return mergeProps({ class: twMerge(globalClass, selfClass) }, globalRest, selfRest, datasets)
+}
