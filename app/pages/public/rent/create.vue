@@ -143,7 +143,7 @@ import { ref } from 'vue'
 import StepperRent from '~/components/rent/StepperRent.vue'
 import Button from '~/volt/Button.vue'
 
-definePageMeta({ layout: "navbar" });
+// definePageMeta({ layout: "navbar" });
 
 const activeStep = ref(1)
 const isSubmitted = ref(false)
