@@ -1,111 +1,140 @@
 <template>
-  <div class="flex flex-col items-center justify-start py-4 sm:py-8 bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-    <!-- Header -->
-    <div class="flex flex-col items-center gap-1.5 sm:gap-2 mb-5 sm:mb-8 px-4">
-      <div class="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
-        <i class="pi pi-heart text-xl sm:text-2xl text-emerald-400" />
-      </div>
-      <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
-        เปิดรับเช่าคุย
-      </h1>
-      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 text-center">
-        สร้างรายได้จากการเป็นเพื่อนคุยและผู้รับฟังที่ดี
-      </p>
-    </div>
+  <div class="w-full flex flex-col items-stretch">
+    <!-- Stepper from Volt framework -->
+    <Stepper
+      v-model:value="activeStep"
+      :pt="{
+        root: 'flex flex-col',
+        separator: 'hidden'
+      }"
+      class="w-full">
+      <!-- Premium Responsive Stepper Indicator -->
+      <div class="stepper-indicator relative flex flex-col items-center w-full max-w-xl mx-auto mb-10 px-2 select-none">
+        <!-- Stepper Line Connector Track -->
+        <div class="absolute top-[18px] sm:top-[22px] left-6 right-6 h-1 bg-slate-100 dark:bg-slate-800 z-0 rounded-full" />
 
-    <!-- Stepper indicator -->
-    <div class="flex items-center gap-0 mb-5 sm:mb-8 w-full max-w-md px-3 sm:px-4">
-      <template
-        v-for="(step, idx) in steps"
-        :key="step.value">
-        <button
-          :class="[
-            'flex flex-col items-center gap-1.5 flex-1 cursor-pointer group transition-all'
-          ]"
-          type="button"
-          @click="goToStep(step.value)">
-          <div
-            :class="[
-              'w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 border',
-              activeStep === step.value
-                ? 'bg-emerald-500 border-emerald-400 shadow-lg shadow-emerald-500/30 scale-110 text-white'
-                : activeStep > step.value
-                  ? 'bg-emerald-100 border-emerald-300 text-emerald-700 dark:bg-emerald-900/60 dark:border-emerald-700 dark:text-emerald-400'
-                  : 'bg-slate-100 border-slate-200 text-slate-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-500'
-            ]">
-            <i
-              v-if="activeStep > step.value"
-              class="pi pi-check text-emerald-400 text-sm" />
-            <i
-              v-else
-              :class="[step.icon, 'text-sm', activeStep === step.value ? 'text-white' : '']" />
-          </div>
-          <span
-            :class="[
-              'text-[10px] font-semibold transition-colors',
-              activeStep === step.value
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : activeStep > step.value
-                  ? 'text-emerald-700 dark:text-emerald-600'
-                  : 'text-slate-500 dark:text-slate-600'
-            ]">{{ step.label }}</span>
-        </button>
+        <!-- Stepper Animated Brand Gradient Progress Line -->
         <div
-          v-if="idx < steps.length - 1"
-          :class="[
-            'h-0.5 flex-1 mx-1 rounded-full transition-all duration-500 mb-5',
-            activeStep > step.value ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
-          ]" />
-      </template>
-    </div>
+          :style="{ width: progressBarWidth }"
+          class="absolute top-[18px] sm:top-[22px] left-6 h-1 bg-gradient-primary transition-all duration-500 ease-out z-0 rounded-full shadow-[0_2px_8px_rgba(99,102,241,0.2)]" />
 
-    <!-- Card container -->
-    <div class="w-full max-w-4xl mx-auto px-2 sm:px-0">
-      <div class="border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden bg-white dark:bg-slate-900">
-        <!-- Step Components Delegation -->
-        <TypeStep
-          v-if="activeStep === 1"
-          v-model="selectedServiceId"
-          :services="services"
-          @next="activeStep = 2" />
+        <!-- Step List Container from Volt -->
+        <StepList
+          :pt="{
+            root: 'relative z-10 w-full border-none p-0 bg-transparent flex justify-between items-center overflow-visible list-none m-0'
+          }">
+          <Step
+            v-for="step in steps"
+            :key="step.value"
+            :pt="{
+              root: 'flex-initial p-0 gap-0 items-center'
+            }"
+            :value="step.value"
+            as-child>
+            <button
+              class="stepper-step-btn flex flex-col items-center gap-2.5 cursor-pointer focus:outline-none group relative z-10 bg-transparent border-none p-0"
+              type="button"
+              @click="goToStep(step.value)">
+              <!-- Step Ring Node -->
+              <div
+                :class="[
+                  'w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-500 border-2 font-bold text-xs sm:text-sm relative z-20',
+                  activeStep === step.value
+                    ? 'bg-gradient-primary border-none border-transparent text-white shadow-lg shadow-indigo-500/20 scale-110 ring-4 ring-indigo-500/15 dark:ring-indigo-400/20'
+                    : activeStep > step.value
+                      ? 'bg-gradient-primary border-none border-transparent text-white shadow-md shadow-indigo-500/10'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 text-slate-400 dark:border-slate-800 dark:text-slate-500 group-hover:border-slate-350 dark:group-hover:border-slate-700'
+                ]">
+                <!-- Success check icon for completed steps -->
+                <i
+                  v-if="activeStep > step.value"
+                  class="pi pi-check text-xs text-white" />
+                <!-- Standard step icon otherwise -->
+                <i
+                  v-else
+                  :class="[step.icon, 'text-xs sm:text-sm', activeStep === step.value ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 transition-colors']" />
+              </div>
 
-        <FormStep
-          v-if="activeStep === 2"
-          v-model:bio="bio"
-          v-model:selected-expertises="selectedExpertises"
-          v-model:tagline="tagline"
-          @next="activeStep = 3"
-          @prev="activeStep = 1" />
+              <!-- Step Title label (Desktop Only) -->
+              <span
+                :class="[
+                  'hidden sm:block text-xs font-bold transition-all duration-300 whitespace-nowrap uppercase tracking-wider',
+                  activeStep === step.value
+                    ? 'bg-gradient-to-r from-sky-500 to-indigo-600 bg-clip-text text-transparent font-black scale-105'
+                    : activeStep > step.value
+                      ? 'text-indigo-500 dark:text-indigo-400 font-bold'
+                      : 'text-slate-400 dark:text-slate-600 font-semibold'
+                ]">{{ step.label }}</span>
+            </button>
+          </Step>
+        </StepList>
 
-        <PriceStep
-          v-if="activeStep === 3"
-          v-model:price="price"
-          v-model:response-time="responseTime"
-          :selected-service-id="selectedServiceId"
-          @next="activeStep = 4"
-          @prev="activeStep = 2" />
-
-        <CheckStep
-          v-if="activeStep === 4"
-          :bio="bio"
-          :expertises="selectedExpertises"
-          :price="price"
-          :response-time="responseTime"
-          :service="selectedService"
-          :tagline="tagline"
-          @prev="activeStep = 3"
-          @submit="handleSubmit" />
+        <!-- High-End Compact Mobile Step Subtitle Indicator -->
+        <div class="sm:hidden text-center mt-4.5 px-4 py-1 bg-gradient-to-r from-sky-500/10 via-indigo-500/10 to-purple-500/10 dark:from-sky-500/5 dark:to-purple-500/5 rounded-full border border-indigo-500/20 dark:border-indigo-500/10 shadow-2xs animate-fade-in">
+          <span class="text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+            ขั้นตอนที่ {{ activeStep }}: {{ steps[activeStep - 1]?.label }}
+          </span>
+        </div>
       </div>
-    </div>
+
+      <!-- Step Content Panels from Volt -->
+      <StepPanels
+        :pt="{
+          root: 'p-0 bg-transparent'
+        }">
+        <StepPanel
+          v-for="panel in panelConfigs"
+          :key="panel.value"
+          :pt="{
+            root: 'bg-transparent text-surface-700 dark:text-surface-0'
+          }"
+          :value="panel.value">
+          <TypeStep
+            v-if="panel.value === 1"
+            v-model="selectedServiceId"
+            :services="services"
+            @next="activeStep = 2" />
+          <FormStep
+            v-if="panel.value === 2"
+            v-model:bio="bio"
+            v-model:selected-expertises="selectedExpertises"
+            v-model:tagline="tagline"
+            @next="activeStep = 3"
+            @prev="activeStep = 1" />
+          <PriceStep
+            v-if="panel.value === 3"
+            v-model:price="price"
+            v-model:response-time="responseTime"
+            :selected-service-id="selectedServiceId"
+            @next="activeStep = 4"
+            @prev="activeStep = 2" />
+          <CheckStep
+            v-if="panel.value === 4"
+            :bio="bio"
+            :expertises="selectedExpertises"
+            :price="price"
+            :response-time="responseTime"
+            :service="selectedService"
+            :tagline="tagline"
+            @prev="activeStep = 3"
+            @submit="handleSubmit" />
+        </StepPanel>
+      </StepPanels>
+    </Stepper>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import TypeStep from './TypeStep.vue'
+import { computed, ref, watch } from 'vue'
+import CheckStep from './CheckStep.vue'
 import FormStep from './FormStep.vue'
 import PriceStep from './PriceStep.vue'
-import CheckStep from './CheckStep.vue'
+import TypeStep from './TypeStep.vue'
+import Step from '~/volt/Step.vue'
+import StepList from '~/volt/StepList.vue'
+import StepPanel from '~/volt/StepPanel.vue'
+import StepPanels from '~/volt/StepPanels.vue'
+import Stepper from '~/volt/Stepper.vue'
 
 interface RentStep {
   value: number
@@ -164,12 +193,23 @@ const emit = defineEmits<{
 
 const steps: RentStep[] = [
   { value: 1, icon: 'pi pi-th-large', label: 'เลือกประเภท' },
-  { value: 2, icon: 'pi pi-file-edit', label: 'โปรไฟล์' },
-  { value: 3, icon: 'pi pi-bitcoin', label: 'ตั้งราคา' },
-  { value: 4, icon: 'pi pi-check-circle', label: 'ตรวจสอบ' }
+  { value: 2, icon: 'pi pi-file-edit', label: 'กรอกโปรไฟล์' },
+  { value: 3, icon: 'pi pi-bitcoin', label: 'ตั้งค่าราคา' },
+  { value: 4, icon: 'pi pi-check-circle', label: 'ตรวจทาน' }
+]
+
+const panelConfigs = [
+  { value: 1 },
+  { value: 2 },
+  { value: 3 },
+  { value: 4 }
 ]
 
 const activeStep = ref<number>(props.modelValue)
+const progressBarWidth = computed((): string => {
+  const percentage = (activeStep.value - 1) / (steps.length - 1)
+  return `calc(${percentage} * (100% - 48px))`
+})
 const selectedServiceId = ref<string | null>(null)
 const tagline = ref('')
 const bio = ref('')
@@ -221,3 +261,31 @@ function handleSubmit (): void {
   })
 }
 </script>
+
+<style>
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Ensure Volt Stepper separator does not bleed through */
+.stepper-indicator [data-pc-name="stepper"] [data-pc-section="separator"] {
+  display: none !important;
+}
+
+/* Ensure Step root in header-less mode has no extraneous padding/margins */
+.stepper-step-btn {
+  appearance: none;
+  -webkit-appearance: none;
+}
+</style>
