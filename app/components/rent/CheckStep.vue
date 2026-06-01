@@ -1,7 +1,7 @@
 <template>
-  <div class="p-6 flex flex-col gap-6">
+  <div class="p-4 sm:p-6 flex flex-col gap-4 sm:gap-6">
     <div class="text-center px-2">
-      <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center justify-center gap-2">
+      <h2 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center justify-center gap-2">
         <i class="pi pi-check-circle text-emerald-500 text-lg" />
         ตรวจสอบความถูกต้องของข้อมูล
       </h2>
@@ -11,7 +11,7 @@
     </div>
 
     <!-- Review Content Card -->
-    <div class="w-full bg-slate-50/50 dark:bg-slate-800/10 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-5 sm:p-7 flex flex-col gap-5 shadow-inner">
+    <div class="w-full bg-slate-50/50 dark:bg-slate-800/10 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-7 flex flex-col gap-4 sm:gap-5 shadow-inner">
       <!-- 1. Service Row -->
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200/50 dark:border-slate-800/50 pb-4">
         <div class="flex items-center gap-2">

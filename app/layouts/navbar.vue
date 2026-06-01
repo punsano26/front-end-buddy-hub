@@ -4,12 +4,11 @@
       <ToolsBar />
     </div>
     <div class="pb-[calc(env(safe-area-inset-bottom)+5rem)] sm:pb-0">
-      <div class="mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6 lg:px-10">
-        <ButtonBack
-          v-if="route.meta?.backPath && route.meta?.backPlacement !== 'page'"
-          :to="route.meta?.backPath"
-          icon="prime:chevron-left" />
-      </div>
+      <ButtonBack
+        v-if="route.meta?.backPath && route.meta?.backPlacement !== 'page'"
+        :to="route.meta?.backPath"
+        icon="prime:chevron-left" />
+
       <slot />
     </div>
   </div>
