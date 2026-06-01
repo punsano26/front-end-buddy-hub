@@ -1,20 +1,20 @@
 <template>
-  <div class="min-h-screen flex flex-col items-center justify-start py-10 bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+  <div class="flex flex-col items-center justify-start py-4 sm:py-8 bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
     <!-- Header -->
-    <div class="flex flex-col items-center gap-2 mb-8">
-      <div class="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
-        <i class="pi pi-heart text-2xl text-emerald-400" />
+    <div class="flex flex-col items-center gap-1.5 sm:gap-2 mb-5 sm:mb-8 px-4">
+      <div class="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+        <i class="pi pi-heart text-xl sm:text-2xl text-emerald-400" />
       </div>
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">
+      <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
         เปิดรับเช่าคุย
       </h1>
-      <p class="text-sm text-slate-500 dark:text-slate-400">
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 text-center">
         สร้างรายได้จากการเป็นเพื่อนคุยและผู้รับฟังที่ดี
       </p>
     </div>
 
     <!-- Stepper indicator -->
-    <div class="flex items-center gap-0 mb-8 w-full max-w-md px-4">
+    <div class="flex items-center gap-0 mb-5 sm:mb-8 w-full max-w-md px-3 sm:px-4">
       <template
         v-for="(step, idx) in steps"
         :key="step.value">
@@ -26,7 +26,7 @@
           @click="goToStep(step.value)">
           <div
             :class="[
-              'w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 border',
+              'w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 border',
               activeStep === step.value
                 ? 'bg-emerald-500 border-emerald-400 shadow-lg shadow-emerald-500/30 scale-110 text-white'
                 : activeStep > step.value
@@ -60,40 +60,42 @@
     </div>
 
     <!-- Card container -->
-    <div class="w-full max-w-4xl border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden bg-white dark:bg-slate-900">
-      <!-- Step Components Delegation -->
-      <TypeStep
-        v-if="activeStep === 1"
-        v-model="selectedServiceId"
-        :services="services"
-        @next="activeStep = 2" />
+    <div class="w-full max-w-4xl mx-auto px-2 sm:px-0">
+      <div class="border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden bg-white dark:bg-slate-900">
+        <!-- Step Components Delegation -->
+        <TypeStep
+          v-if="activeStep === 1"
+          v-model="selectedServiceId"
+          :services="services"
+          @next="activeStep = 2" />
 
-      <FormStep
-        v-if="activeStep === 2"
-        v-model:bio="bio"
-        v-model:selected-expertises="selectedExpertises"
-        v-model:tagline="tagline"
-        @next="activeStep = 3"
-        @prev="activeStep = 1" />
+        <FormStep
+          v-if="activeStep === 2"
+          v-model:bio="bio"
+          v-model:selected-expertises="selectedExpertises"
+          v-model:tagline="tagline"
+          @next="activeStep = 3"
+          @prev="activeStep = 1" />
 
-      <PriceStep
-        v-if="activeStep === 3"
-        v-model:price="price"
-        v-model:response-time="responseTime"
-        :selected-service-id="selectedServiceId"
-        @next="activeStep = 4"
-        @prev="activeStep = 2" />
+        <PriceStep
+          v-if="activeStep === 3"
+          v-model:price="price"
+          v-model:response-time="responseTime"
+          :selected-service-id="selectedServiceId"
+          @next="activeStep = 4"
+          @prev="activeStep = 2" />
 
-      <CheckStep
-        v-if="activeStep === 4"
-        :bio="bio"
-        :expertises="selectedExpertises"
-        :price="price"
-        :response-time="responseTime"
-        :service="selectedService"
-        :tagline="tagline"
-        @prev="activeStep = 3"
-        @submit="handleSubmit" />
+        <CheckStep
+          v-if="activeStep === 4"
+          :bio="bio"
+          :expertises="selectedExpertises"
+          :price="price"
+          :response-time="responseTime"
+          :service="selectedService"
+          :tagline="tagline"
+          @prev="activeStep = 3"
+          @submit="handleSubmit" />
+      </div>
     </div>
   </div>
 </template>

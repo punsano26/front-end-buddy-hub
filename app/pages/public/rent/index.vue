@@ -3,9 +3,7 @@
     class="flex flex-col gap-2 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10"
   >
     <h1 class="text-2xl font-bold sm:text-4xl">
-      <span
-        class="bg-gradient-to-r from-sky-500 to-indigo-600 bg-clip-text text-transparent"
-      >
+      <span class="bg-gradient-to-r from-sky-500 to-indigo-600 bg-clip-text text-transparent">
         เช่าเพื่อนคุย
       </span>
     </h1>
@@ -48,7 +46,6 @@
 </template>
 
 <script lang="ts" setup>
-definePageMeta({ layout: "navbar" });
 const router = useRouter()
 
 function isCreatePage (): void {
