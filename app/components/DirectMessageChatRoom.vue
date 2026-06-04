@@ -1,32 +1,32 @@
 <template>
   <div
-    class="border-t border-[#E4E6EB] bg-white px-3 py-2 dark:border-surface-700 dark:bg-surface-900">
+    class="border-t border-slate-200/80 bg-white/95 px-4 py-3 dark:border-slate-850 dark:bg-slate-900/95 backdrop-blur-md pb-[calc(env(safe-area-inset-bottom)+0.6rem)] keyboard-offset-pad transition-colors duration-250">
     <!-- Editing -->
     <Transition name="fade">
       <div
         v-if="isEditing"
-        class="mb-2 flex items-center justify-between rounded-2xl bg-[#F0F2F5] px-3 py-2 dark:bg-surface-800">
-        <div class="flex items-center gap-2">
+        class="mb-2 flex items-center justify-between rounded-xl bg-violet-50/80 border border-violet-100/50 px-3.5 py-2 dark:bg-violet-950/20 dark:border-violet-900/30">
+        <div class="flex items-center gap-3">
           <div
-            class="flex h-7 w-7 items-center justify-center rounded-full bg-[#1877F2]/10">
-            <i class="pi pi-pencil text-xs text-[#1877F2]" />
+            class="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-primary text-white shadow-sm">
+            <i class="pi pi-pencil text-xs" />
           </div>
 
           <div class="flex flex-col">
             <span
-              class="text-xs font-semibold text-surface-800 dark:text-surface-100">
+              class="text-xs font-bold text-slate-800 dark:text-slate-200">
               กำลังแก้ไขข้อความ
             </span>
 
             <span
-              class="text-[11px] text-surface-500 dark:text-surface-400">
+              class="text-[10px] text-slate-500 dark:text-slate-400">
               Edit your message
             </span>
           </div>
         </div>
 
         <button
-          class="flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-black/5 dark:hover:bg-white/10"
+          class="flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-slate-200/50 dark:hover:bg-slate-800"
           type="button"
           @click="handleCancelEdit">
           <i class="pi pi-times text-xs" />
@@ -38,30 +38,30 @@
     <Transition name="fade">
       <div
         v-if="allowMedia && imagePreview"
-        class="mb-2 flex items-center gap-3 rounded-2xl bg-[#F0F2F5] p-2 dark:bg-surface-800">
-        <div class="relative">
+        class="mb-2 flex items-center gap-3.5 rounded-xl bg-slate-50 border border-slate-150 p-2.5 dark:bg-slate-950/40 dark:border-slate-850">
+        <div class="relative shrink-0">
           <img
             :src="imagePreview"
             alt="Preview"
-            class="h-14 w-14 rounded-2xl object-cover">
+            class="h-14 w-14 rounded-xl object-cover ring-2 ring-white shadow-sm dark:ring-slate-800">
 
           <button
-            class="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black text-white shadow-lg transition active:scale-95"
+            class="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900 text-white shadow-md transition hover:scale-105 active:scale-95 dark:bg-slate-800 dark:text-slate-200"
             type="button"
             @click="clearImageSelection">
-            <i class="pi pi-times text-[10px]" />
+            <i class="pi pi-times text-[9px]" />
           </button>
         </div>
 
         <div class="min-w-0 flex-1">
           <p
-            class="truncate text-sm font-medium text-surface-800 dark:text-surface-100">
+            class="truncate text-xs font-semibold text-slate-800 dark:text-slate-200">
             {{ selectedImageName || 'Image' }}
           </p>
 
           <p
-            class="text-xs text-surface-500 dark:text-surface-400">
-            พร้อมส่งรูปภาพ
+            class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+            พร้อมส่งรูปภาพ (Ready to send)
           </p>
         </div>
       </div>
@@ -69,14 +69,14 @@
 
     <!-- Chat Input -->
     <div
-      class="flex min-h-[36px] items-center gap-2 rounded-full bg-[#F0F2F5] px-2 py-0.5 dark:bg-surface-800">
+      class="flex min-h-[42px] items-end gap-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 shadow-inner transition-all duration-200 focus-within:border-slate-350 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/10 dark:border-slate-800 dark:bg-slate-950/30 dark:focus-within:border-slate-750 dark:focus-within:bg-slate-950/60 dark:focus-within:ring-indigo-500/5">
       <!-- Upload -->
       <template v-if="allowMedia">
         <button
-          class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#1877F2] transition hover:bg-black/5 active:scale-95 dark:hover:bg-white/10"
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-200/50 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400 active:scale-95"
           type="button"
           @click="onSelectImage">
-          <i class="pi pi-image text-base" />
+          <i class="pi pi-image text-lg" />
         </button>
 
         <input
@@ -88,32 +88,37 @@
       </template>
 
       <!-- Input -->
-      <div class="flex-1">
+      <div class="flex-1 min-w-0 pb-0.5">
         <textarea
           v-model="messageModel"
           :placeholder="
             isEditing
               ? 'แก้ไขข้อความ...'
-              : 'Aa'
+              : 'พิมพ์ข้อความ...'
           "
-          class="facebook-chat-input w-full"
+          class="chat-input w-full text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
           rows="1"
           @keydown.enter.prevent="handleSend" />
       </div>
 
       <!-- Send -->
       <button
+        :class="
+          canSend
+            ? 'bg-gradient-primary text-white shadow-md shadow-indigo-500/15 hover:shadow-indigo-500/25 active:scale-95'
+            : 'bg-slate-200 text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:text-slate-600'
+        "
         :disabled="!canSend"
-        class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1877F2] text-white shadow-sm transition-all duration-150 hover:scale-105 active:scale-95 disabled:scale-100 disabled:cursor-not-allowed disabled:bg-[#BCC0C4]"
+        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-180 hover:scale-105"
         type="button"
         @click="handleSend">
         <i
           v-if="!isEditing"
-          class="pi pi-send text-[10px]" />
+          class="pi pi-send text-xs" />
 
         <i
           v-else
-          class="pi pi-check text-[10px]" />
+          class="pi pi-check text-xs" />
       </button>
     </div>
   </div>
@@ -245,24 +250,24 @@ function handleCancelEdit (): void {
 </script>
 
 <style scoped>
-.facebook-chat-input {
+.chat-input {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
   resize: none !important;
 
-  padding: 6px 0 !important;
+  padding: 4px 0 !important;
 
   font-size: 14px;
-  line-height: 18px;
+  line-height: 20px;
 
-  min-height: 18px !important;
-  max-height: 72px !important;
+  min-height: 20px !important;
+  max-height: 80px !important;
 
   overflow-y: auto !important;
 }
 
-.facebook-chat-input:focus {
+.chat-input:focus {
   outline: none !important;
   box-shadow: none !important;
 }

@@ -1,22 +1,30 @@
 <template>
-  <div class="flex h-full min-h-0 flex-col overflow-hidden">
+  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-slate-50 dark:bg-slate-950 relative transition-colors duration-250">
+    <!-- Ambient subtle background decorative blurs -->
+    <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+      <div class="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl dark:bg-indigo-600/5 animate-pulse" style="animation-duration: 8s" />
+      <div class="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-sky-500/10 blur-3xl dark:bg-purple-600/5 animate-pulse" style="animation-duration: 12s; animation-delay: 1.5s" />
+    </div>
+
     <HeaderChatRoom class="shrink-0" />
     <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div
         ref="chatScrollContainer"
-        class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-2 sm:px-3 lg:px-6 xl:px-8 2xl:px-10 py-3 sm:py-4"
+        class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 sm:px-6 lg:px-8 xl:px-12 py-4"
       >
-        <div class="flex w-full flex-col gap-2">
+        <div class="flex w-full flex-col gap-3">
           <div
             v-for="chat in orderedChatData"
             :key="chat.id"
             class="group flex w-full"
             :class="isOwnMessage(chat) ? 'justify-end' : 'justify-start'"
           >
-            <div class="flex min-w-0 max-w-[90%] flex-col sm:max-w-[75%] lg:max-w-[60%] xl:max-w-[55%]">
+            <div class="flex min-w-0 max-w-[85%] flex-col sm:max-w-[70%] lg:max-w-[55%]">
               <div
-                class="flex items-end gap-1.5 min-w-0"
+                class="flex items-end gap-2 min-w-0"
+                :class="isOwnMessage(chat) ? 'flex-row' : 'flex-row-reverse'"
               >
+                <!-- Message Action Menu -->
                 <DotMenu
                   v-if="isOwnMessage(chat) && !isMessagePending(chat)"
                   :items="getMessageMenuItems(chat)"
@@ -25,58 +33,70 @@
                     isMessageMenuVisible(chat.id)
                       ? 'opacity-100 pointer-events-auto'
                       : 'opacity-0 pointer-events-none',
-                    'transition-opacity duration-150 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 sm:pointer-events-auto'
+                    'transition-opacity duration-150 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 sm:pointer-events-auto self-center'
                   ]"
                 />
 
+                <!-- Message Bubble -->
                 <div
-                  class="flex flex-col gap-1 p-3 rounded-2xl shadow-sm max-w-full min-w-0"
+                  class="flex flex-col gap-1 px-4 py-2.5 rounded-2xl shadow-sm max-w-full min-w-0 transition-all duration-200"
                   @click="onMessageTap(chat)"
                   :class="
                     isOwnMessage(chat)
-                      ? 'bg-gradient-primary text-black rounded-br-md'
-                      : 'bg-white text-gray-800 rounded-bl-md border border-gray-200'
+                      ? 'bg-gradient-primary text-white rounded-br-xs shadow-indigo-500/10 dark:shadow-indigo-950/20'
+                      : 'bg-white text-slate-800 rounded-bl-xs border border-slate-200/80 shadow-slate-100 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-800'
                   "
                 >
+                  <!-- Media/Image Block -->
                   <template v-if="isMediaMessage(chat)">
                     <img
                       v-if="getMediaUrl(chat)"
                       :src="getMediaUrl(chat)"
                       alt="Image message"
-                      class="max-w-[220px] rounded-lg border border-white/40 object-cover"
+                      class="max-w-full sm:max-w-[260px] rounded-lg border border-white/20 dark:border-slate-800/80 object-cover shadow-sm transition hover:scale-[1.015] duration-200 cursor-pointer"
                       loading="lazy">
-                    <p v-else class="text-xs text-gray-700">
+                    <p v-else class="text-xs font-semibold text-slate-500 dark:text-slate-400">
                       Image unavailable
                     </p>
                   </template>
+                  
+                  <!-- Text Block -->
                   <p
                     v-else
-                    class="text-sm break-words whitespace-pre-wrap">
+                    class="text-sm break-words whitespace-pre-wrap leading-relaxed">
                     {{ chat.messageText }}
                   </p>
 
-                  <div class="flex items-center gap-1">
-                    <p class="text-xs text-gray-900">
+                  <!-- Time & Read Status -->
+                  <div class="flex items-center justify-end gap-1.5 mt-1 select-none">
+                    <p
+                      class="text-[10px]"
+                      :class="isOwnMessage(chat) ? 'text-white/75' : 'text-slate-400 dark:text-slate-500'"
+                    >
                       {{ dayjs(chat.createdAt).format("hh:mm A") }}
                     </p>
-                    <i
-                      v-if="isOwnMessage(chat) && isMessagePending(chat)"
-                      class="pi pi-spin pi-spinner text-gray-900 text-[10px]"
-                    />
-                    <i
-                      v-else-if="isOwnMessage(chat)"
-                      :class="
-                        chat.isRead
-                          ? 'text-green-700 pi pi-check-circle text-[10px]'
-                          : 'text-gray-900 pi pi-circle-off text-[10px]'
-                      "
-                    />
+                    
+                    <template v-if="isOwnMessage(chat)">
+                      <i
+                        v-if="isMessagePending(chat)"
+                        class="pi pi-spin pi-spinner text-white/70 text-[9px]"
+                      />
+                      <i
+                        v-else
+                        :class="
+                          chat.isRead
+                            ? 'text-emerald-300 dark:text-emerald-400 pi pi-check-circle'
+                            : 'text-white/60 pi pi-circle-off'
+                        "
+                        class="text-[9px]"
+                      />
+                    </template>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div v-if="sendError" class="text-center text-xs text-red-500">
+          <div v-if="sendError" class="text-center text-xs text-red-500 font-medium">
             <span>{{ sendError }}</span>
           </div>
         </div>
