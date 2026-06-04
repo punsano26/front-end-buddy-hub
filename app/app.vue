@@ -53,39 +53,12 @@ const updateAppHeight = (): void => {
   const visualHeight = viewport?.height ?? window.innerHeight
 
   document.documentElement.style.setProperty('--app-height', `${visualHeight}px`)
-
-  if (document.documentElement.classList.contains('keyboard-open')) {
-    window.scrollTo(0, 0)
-  }
-}
-
-const handleFocusIn = (event: FocusEvent): void => {
-  const target = event.target as HTMLElement
-  if (!target) return
-  const tag = target.tagName
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable) {
-    document.documentElement.classList.add('keyboard-open')
-    nextTick((): void => {
-      updateAppHeight()
-      window.scrollTo(0, 0)
-    })
-  }
-}
-
-const handleFocusOut = (): void => {
-  document.documentElement.classList.remove('keyboard-open')
-  nextTick((): void => {
-    updateAppHeight()
-  })
 }
 
 onMounted((): void => {
   updateAppHeight()
   window.addEventListener('resize', updateAppHeight)
   window.visualViewport?.addEventListener('resize', updateAppHeight)
-  window.visualViewport?.addEventListener('scroll', updateAppHeight)
-  document.addEventListener('focusin', handleFocusIn)
-  document.addEventListener('focusout', handleFocusOut)
 })
 
 watch((): string => String(route.name || ''), (): void => {
@@ -95,9 +68,5 @@ watch((): string => String(route.name || ''), (): void => {
 onUnmounted((): void => {
   window.removeEventListener('resize', updateAppHeight)
   window.visualViewport?.removeEventListener('resize', updateAppHeight)
-  window.visualViewport?.removeEventListener('scroll', updateAppHeight)
-  document.removeEventListener('focusin', handleFocusIn)
-  document.removeEventListener('focusout', handleFocusOut)
-  document.documentElement.classList.remove('keyboard-open')
 })
 </script>
