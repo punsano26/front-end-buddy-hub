@@ -16,13 +16,53 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import SidebarChat from '~/components/app/SidebarChat.vue'
 import ToolsBar from '~/components/app/ToolsBar.vue'
 
 const route = useRoute()
 const isChatIndex = computed((): boolean => route.name === 'public-chat')
+
+const preventSafariScroll = (): void => {
+  if (typeof window !== 'undefined' && window.scrollY !== 0) {
+    window.scrollTo(0, 0)
+  }
+}
+
+onMounted((): void => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.classList.add('chat-layout-active')
+    document.body.classList.add('chat-layout-active')
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener('scroll', preventSafariScroll, { passive: true })
+    window.addEventListener('focusin', preventSafariScroll)
+  }
+})
+
+onUnmounted((): void => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.classList.remove('chat-layout-active')
+    document.body.classList.remove('chat-layout-active')
+  }
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('scroll', preventSafariScroll)
+    window.removeEventListener('focusin', preventSafariScroll)
+  }
+})
 </script>
 
 <style>
+body.chat-layout-active,
+html.chat-layout-active {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
 </style>

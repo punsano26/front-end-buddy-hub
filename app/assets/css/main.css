@@ -32,4 +32,11 @@
   padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
 }
 
+/* Prevent iOS Safari from auto-zooming on focus by forcing mobile input size to 16px */
+@media (max-width: 768px) {
+  input, textarea, select, .p-inputtext, .p-textarea {
+    font-size: 16px !important;
+  }
+}
+
 
