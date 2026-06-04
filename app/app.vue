@@ -50,25 +50,42 @@ useSeoMeta({
 const updateAppHeight = (): void => {
   if (typeof window === 'undefined') return
   const viewport = window.visualViewport
-  const layoutHeight = window.innerHeight
-  const visualHeight = viewport?.height ?? layoutHeight
-  const offsetTop = viewport?.offsetTop ?? 0
-  const keyboardInset = Math.max(0, layoutHeight - (visualHeight + offsetTop))
-  const keyboardOpen = keyboardInset > 120
+  const visualHeight = viewport?.height ?? window.innerHeight
 
   document.documentElement.style.setProperty('--app-height', `${visualHeight}px`)
-  document.documentElement.style.setProperty('--keyboard-offset', '0px')
-  document.documentElement.classList.toggle('keyboard-open', keyboardOpen)
 
-  if (keyboardOpen) {
+  if (document.documentElement.classList.contains('keyboard-open')) {
     window.scrollTo(0, 0)
   }
+}
+
+const handleFocusIn = (event: FocusEvent): void => {
+  const target = event.target as HTMLElement
+  if (!target) return
+  const tag = target.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable) {
+    document.documentElement.classList.add('keyboard-open')
+    nextTick((): void => {
+      updateAppHeight()
+      window.scrollTo(0, 0)
+    })
+  }
+}
+
+const handleFocusOut = (): void => {
+  document.documentElement.classList.remove('keyboard-open')
+  nextTick((): void => {
+    updateAppHeight()
+  })
 }
 
 onMounted((): void => {
   updateAppHeight()
   window.addEventListener('resize', updateAppHeight)
   window.visualViewport?.addEventListener('resize', updateAppHeight)
+  window.visualViewport?.addEventListener('scroll', updateAppHeight)
+  document.addEventListener('focusin', handleFocusIn)
+  document.addEventListener('focusout', handleFocusOut)
 })
 
 watch((): string => String(route.name || ''), (): void => {
@@ -78,6 +95,9 @@ watch((): string => String(route.name || ''), (): void => {
 onUnmounted((): void => {
   window.removeEventListener('resize', updateAppHeight)
   window.visualViewport?.removeEventListener('resize', updateAppHeight)
+  window.visualViewport?.removeEventListener('scroll', updateAppHeight)
+  document.removeEventListener('focusin', handleFocusIn)
+  document.removeEventListener('focusout', handleFocusOut)
   document.documentElement.classList.remove('keyboard-open')
 })
 </script>

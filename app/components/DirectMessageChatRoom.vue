@@ -1,6 +1,6 @@
 <template>
   <div
-    class="border-t border-slate-200/80 bg-white/95 px-4 py-3 dark:border-slate-850 dark:bg-slate-900/95 backdrop-blur-md pb-[calc(env(safe-area-inset-bottom)+0.6rem)] keyboard-offset-pad transition-colors duration-250">
+    class="chat-room-input-container border-t border-slate-200/80 bg-white/95 px-4 pt-3 dark:border-slate-850 dark:bg-slate-900/95 backdrop-blur-md transition-colors duration-250">
     <!-- Editing -->
     <Transition name="fade">
       <div
@@ -281,5 +281,13 @@ function handleCancelEdit (): void {
 .fade-leave-to {
   opacity: 0;
   transform: translateY(6px);
+}
+
+.chat-room-input-container {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);
+}
+
+:root[class~="keyboard-open"] .chat-room-input-container {
+  padding-bottom: 0.75rem !important;
 }
 </style>
