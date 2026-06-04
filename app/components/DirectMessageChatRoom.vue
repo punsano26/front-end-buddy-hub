@@ -287,7 +287,8 @@ function handleCancelEdit (): void {
   padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);
 }
 
-:root[class~="keyboard-open"] .chat-room-input-container {
-  padding-bottom: 0.75rem !important;
+/* When any input inside is focused (keyboard is visible), remove safe-area padding */
+.chat-room-input-container:has(textarea:focus, input:focus) {
+  padding-bottom: 0.75rem;
 }
 </style>
