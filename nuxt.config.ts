@@ -39,7 +39,7 @@ export default defineNuxtConfig({
       titleTemplate: '%s | Buddy Hub',
       meta: [
         { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, interactive-widget=resizes-content' },
         {
           name: 'description',
           content: 'Buddy Hub เว็บหาเพื่อนคุยออนไลน์ เริ่มคุยกับคนใหม่ได้ทันทีในบรรยากาศที่เป็นมิตรและปลอดภัย'

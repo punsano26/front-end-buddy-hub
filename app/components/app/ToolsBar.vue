@@ -160,7 +160,7 @@
       <button
         v-if="menuOpen"
         aria-label="Close menu"
-        class="fixed inset-0 z-40 bg-surface-950/40 backdrop-blur-sm md:hidden"
+        class="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm md:hidden"
         @click="menuOpen = false" />
     </Transition>
 
@@ -176,7 +176,7 @@
         id="mobile-menu"
         aria-label="Mobile navigation"
         aria-modal="true"
-        class="fixed top-0 left-0 z-50 h-full w-80 md:hidden bg-white dark:bg-surface-900 border-r border-surface-200/80 dark:border-surface-800/80 shadow-2xl"
+        class="fixed top-0 left-0 z-[110] h-full w-80 md:hidden bg-white dark:bg-black border-r border-slate-200/80 dark:border-slate-850/80 shadow-2xl"
         role="dialog">
         <div class="relative overflow-hidden px-4 py-4">
           <div

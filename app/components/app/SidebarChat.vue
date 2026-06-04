@@ -1,7 +1,7 @@
 <template>
-  <div class="h-full flex flex-col min-h-0 overflow-hidden border-r border-gray-800 p-4">
-    <h2 class="shrink-0">
-      Message
+  <div class="h-full flex flex-col min-h-0 overflow-hidden p-4 bg-white dark:bg-black transition-colors duration-200">
+    <h2 class="shrink-0 text-xl font-extrabold tracking-tight text-slate-800 dark:text-slate-105">
+      ห้องแชท
     </h2>
 
     <InputSearch
