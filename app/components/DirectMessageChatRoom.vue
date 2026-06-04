@@ -258,11 +258,11 @@ function handleCancelEdit (): void {
 
   padding: 4px 0 !important;
 
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 16px !important;
+  line-height: 24px !important;
 
-  min-height: 20px !important;
-  max-height: 80px !important;
+  min-height: 24px !important;
+  max-height: 120px !important;
 
   overflow-y: auto !important;
 }
