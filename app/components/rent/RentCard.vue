@@ -26,7 +26,6 @@
               <div class="flex items-center gap-1 text-xs mt-1 text-slate-700 dark:text-slate-200">
                 <i class="pi pi-star text-amber-400" />
                 <span class="font-semibold">4.5</span>
-                <span class="text-slate-400 dark:text-slate-500">(6 รีวิว · 361 เซสชัน)</span>
               </div>
             </div>
           </div>
