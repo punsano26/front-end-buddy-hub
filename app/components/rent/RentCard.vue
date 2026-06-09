@@ -93,7 +93,8 @@
             pt:label:class="font-semibold"
             pt:root:class="bg-gradient-primary border-none px-4 py-2 shadow-sm hover:shadow-md hover:scale-105 transition"
             size="small"
-            rounded />
+            rounded
+            @click="emit('rent')" />
         </div>
       </div>
     </template>
@@ -101,6 +102,9 @@
 </template>
 
 <script lang="ts" setup>
+const emit = defineEmits<{
+  (e: 'rent'): void
+}>()
 </script>
 
 <style>
