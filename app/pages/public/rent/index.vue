@@ -34,23 +34,27 @@
     </div>
 
     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-      <RentCard />
-      <RentCard />
-      <RentCard />
-      <RentCard />
-      <RentCard />
-      <RentCard />
-      <RentCard />
+      <RentCard @rent="rentModalVisible = true" />
+      <RentCard @rent="rentModalVisible = true" />
+      <RentCard @rent="rentModalVisible = true" />
+      <RentCard @rent="rentModalVisible = true" />
+      <RentCard @rent="rentModalVisible = true" />
+      <RentCard @rent="rentModalVisible = true" />
+      <RentCard @rent="rentModalVisible = true" />
     </div>
   </div>
+  <RentModal v-model:visible="rentModalVisible" />
 </template>
 
 <script lang="ts" setup>
-const router = useRouter()
+import RentModal from '@/components/rent/RentModal.vue'
 
+const router = useRouter()
+const rentModalVisible = ref(false)
 function isCreatePage (): void {
   router.push({ name: 'public-rent-create' })
 }
+
 </script>
 
 <style></style>
