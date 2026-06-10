@@ -14,6 +14,13 @@
         เลือกเพื่อนคุยที่ใช่ — คุยเล่นสนุกๆ
         หรือปรึกษาปัญหาทางใจกับผู้รับฟังมืออาชีพ
       </p>
+      <div class="flex gap-2">
+      <Button 
+        @click="router.push({ name: 'public-rent-chat' })"
+        icon="pi pi-comments"
+        pt:root:class="border-none px-4 py-2 shadow-sm hover:shadow-md hover:scale-105 transition"
+        rounded  
+      />
       <Button
       @click="isCreatePage"
         label="เปิดเช่ารับฟัง"
@@ -21,6 +28,7 @@
         pt:root:class="bg-gradient-primary border-none px-4 py-2 shadow-sm hover:shadow-md hover:scale-105 transition"
         rounded
       />
+      </div>
     </div>
     <div class="grid grid-cols-1 gap-1 sm:grid-cols-[1fr_auto] sm:items-center">
       <InputSearch placeholder="ค้นหาชื่อ ความเชี่ยวชาญ..." class="w-full" />
@@ -48,6 +56,7 @@
 
 <script lang="ts" setup>
 import RentModal from '@/components/rent/RentModal.vue'
+import { B } from 'vue-router/dist/router-CWoNjPRp.mjs'
 
 const router = useRouter()
 const rentModalVisible = ref(false)
