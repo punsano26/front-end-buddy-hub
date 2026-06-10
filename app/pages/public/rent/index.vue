@@ -56,7 +56,6 @@
 
 <script lang="ts" setup>
 import RentModal from '@/components/rent/RentModal.vue'
-import { B } from 'vue-router/dist/router-CWoNjPRp.mjs'
 
 const router = useRouter()
 const rentModalVisible = ref(false)
