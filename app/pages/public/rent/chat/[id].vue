@@ -1,0 +1,412 @@
+<template>
+  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-slate-50 dark:bg-slate-950 relative transition-colors duration-250">
+    <!-- Ambient subtle background decorative blurs -->
+    <div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+      <div class="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-600/5 animate-pulse" style="animation-duration: 8s" />
+      <div class="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-purple-500/10 blur-3xl dark:bg-purple-600/5 animate-pulse" style="animation-duration: 12s; animation-delay: 1.5s" />
+    </div>
+
+    <!-- Header Section -->
+    <header
+      v-if="currentPartner"
+      class="relative w-full shrink-0 border-b border-slate-200/80 bg-white/90 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-900/90 pt-[calc(env(safe-area-inset-top)+0.6rem)] pb-3 px-4 md:px-6 transition-colors duration-250"
+    >
+      <div class="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-primary opacity-60" />
+      
+      <div class="flex items-center justify-between gap-3 mx-auto max-w-7xl">
+        <div class="flex items-center gap-3 min-w-0">
+          <ButtonBack
+            :to="{ name: 'public-rent-chat' }"
+            class="shrink-0 transition-transform active:scale-95 text-slate-600 dark:text-slate-300"
+            icon="mdi:arrow-left"
+          />
+
+          <!-- Partner Avatar with Status indicator -->
+          <div class="relative shrink-0">
+            <img
+              src="/png/upload-profile.png"
+              alt="Profile Image"
+              class="w-10 h-10 rounded-xl object-cover border border-slate-200/60 dark:border-slate-800 shadow-sm"
+            >
+            <span
+              v-if="currentPartner.status === 'online'"
+              class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900"
+            />
+            <span
+              v-else-if="currentPartner.status === 'idle'"
+              class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-amber-500 dark:border-slate-900"
+            />
+          </div>
+
+          <!-- Partner Name & Category -->
+          <div class="min-w-0 leading-tight">
+            <div class="flex items-center gap-1.5">
+              <p class="font-bold text-slate-850 dark:text-slate-50 text-sm md:text-base truncate">
+                {{ currentPartner.nickname }}
+              </p>
+              <span class="hidden sm:inline-block text-[9px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-medium whitespace-nowrap">
+                {{ currentPartner.category }}
+              </span>
+            </div>
+            
+            <p
+              v-if="currentPartner.status === 'online' || currentPartner.status === 'idle'"
+              class="text-[11px] font-semibold text-emerald-500 flex items-center gap-1.5 mt-0.5"
+            >
+              <span class="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse" />
+              พร้อมให้บริการ
+            </p>
+            <p
+              v-else
+              class="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5"
+            >
+              Offline
+            </p>
+          </div>
+        </div>
+
+        <!-- Price Rate / Session overlay -->
+        <div class="flex items-center gap-3 shrink-0">
+          <div class="flex items-center gap-1 border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/50 rounded-lg px-2.5 py-1 text-xs">
+            <i class="pi pi-coin text-amber-500" />
+            <span class="font-bold text-slate-700 dark:text-slate-200">{{ currentPartner.rate }}</span>
+            <span class="text-slate-400">/ชม.</span>
+          </div>
+          
+          <Button
+            size="small"
+            severity="contrast"
+            variant="outlined"
+            class="text-xs py-1"
+          >
+            จบแชท
+          </Button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Scrollable Messages Container -->
+    <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div
+        ref="chatScrollContainer"
+        class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 sm:px-6 lg:px-8 xl:px-12 py-4"
+      >
+        <div class="flex w-full flex-col gap-3">
+          <!-- Chat Start Indicator -->
+          <div class="text-center my-4 select-none">
+            <span class="inline-block text-[11px] text-slate-400 dark:text-slate-500 bg-slate-200/50 dark:bg-slate-800/40 rounded-full px-3 py-1 font-medium">
+              เริ่มสนทนาบริการเพื่อนเช่าคุยออนไลน์แล้ว
+            </span>
+          </div>
+
+          <!-- Message bubbles -->
+          <div
+            v-for="chat in messages"
+            :key="chat.id"
+            class="group flex w-full"
+            :class="chat.sender === 'self' ? 'justify-end' : 'justify-start'"
+          >
+            <div class="flex min-w-0 max-w-[85%] flex-col sm:max-w-[75%] lg:max-w-[60%]">
+              <div
+                class="flex items-end gap-2 min-w-0"
+                :class="chat.sender === 'self' ? 'flex-row' : 'flex-row-reverse'"
+              >
+                <!-- Message Bubble -->
+                <div
+                  class="flex flex-col gap-1 px-4 py-2.5 rounded-2xl shadow-sm max-w-full min-w-0 transition-all duration-200"
+                  :class="
+                    chat.sender === 'self'
+                      ? 'bg-gradient-primary text-white rounded-br-xs shadow-indigo-500/10 dark:shadow-indigo-950/20'
+                      : 'bg-white text-slate-800 rounded-bl-xs border border-slate-200/80 shadow-slate-100 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-800'
+                  "
+                >
+                  <!-- Text Block -->
+                  <p class="text-sm break-words whitespace-pre-wrap leading-relaxed">
+                    {{ chat.text }}
+                  </p>
+
+                  <!-- Time & Read Status -->
+                  <div class="flex items-center justify-end gap-1.5 mt-1 select-none">
+                    <p
+                      class="text-[10px]"
+                      :class="chat.sender === 'self' ? 'text-white/75' : 'text-slate-400 dark:text-slate-500'"
+                    >
+                      {{ dayjs(chat.createdAt).format("hh:mm A") }}
+                    </p>
+                    
+                    <template v-if="chat.sender === 'self'">
+                      <i class="text-[9px] text-emerald-300 dark:text-emerald-400 pi pi-check-circle" />
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Simulated Typing Indicator -->
+          <Transition name="fade">
+            <div v-if="isTyping" class="flex justify-start">
+              <div class="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200/85 dark:border-slate-800 rounded-2xl px-4 py-3 shadow-sm">
+                <span class="text-xs text-slate-400 dark:text-slate-500">กำลังพิมพ์</span>
+                <div class="flex gap-1">
+                  <span class="h-1.5 w-1.5 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0s" />
+                  <span class="h-1.5 w-1.5 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.15s" />
+                  <span class="h-1.5 w-1.5 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.3s" />
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </div>
+
+      <!-- Chat Room Input Container -->
+      <div class="chat-room-input-container border-t border-slate-200/80 bg-white/95 px-4 pt-3 dark:border-slate-850 dark:bg-slate-900/95 backdrop-blur-md transition-colors duration-250">
+        <div class="flex min-h-[42px] items-end gap-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 shadow-inner transition-all duration-200 focus-within:border-slate-350 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/10 dark:border-slate-800 dark:bg-slate-950/30 dark:focus-within:border-slate-750 dark:focus-within:bg-slate-950/60 dark:focus-within:ring-indigo-500/5">
+          <!-- Decoration Option (Sticker/Image mockup) -->
+          <button
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-200/50 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400 active:scale-95"
+            type="button"
+            @click="showStickerAlert"
+          >
+            <i class="pi pi-image text-lg" />
+          </button>
+
+          <!-- Input field -->
+          <div class="flex-1 min-w-0 pb-0.5">
+            <textarea
+              v-model="userMessageText"
+              placeholder="พิมพ์ข้อความ..."
+              class="chat-input w-full text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
+              rows="1"
+              @keydown.enter.prevent="handleSendMessage"
+            />
+          </div>
+
+          <!-- Send Button -->
+          <button
+            :class="
+              userMessageText.trim()
+                ? 'bg-gradient-primary text-white shadow-md shadow-indigo-500/15 hover:shadow-indigo-500/25 active:scale-95'
+                : 'bg-slate-200 text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:text-slate-600'
+            "
+            :disabled="!userMessageText.trim()"
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-180 hover:scale-105"
+            type="button"
+            @click="handleSendMessage"
+          >
+            <i class="pi pi-send text-xs" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import dayjs from 'dayjs'
+
+definePageMeta({ layout: "chat-rent", title: "แชท" });
+
+const route = useRoute()
+const partnerId = computed(() => Number(route.params.id))
+
+const chatScrollContainer = ref<HTMLElement | null>(null)
+const userMessageText = ref('')
+const isTyping = ref(false)
+
+// Mock partners dataset
+const partners = [
+  {
+    id: 1,
+    nickname: 'น้องนุ่น (Smile Partner)',
+    username: 'noon_smile',
+    status: 'online',
+    category: 'ผู้รับฟังที่ดี',
+    rating: '4.9',
+    rate: '120',
+    welcomeMessage: 'สวัสดีค่ะพี่ ยินดีต้อนรับนะคะ! วันนี้มีเรื่องอะไรไม่สบายใจ หรืออยากเล่าให้ฟังเป็นพิเศษไหมคะ? นุ่นพร้อมฟังและอยู่เคียงข้างพี่เสมอค่ะ'
+  },
+  {
+    id: 2,
+    nickname: 'พี่นัท (Life Coach)',
+    username: 'nut_coach',
+    status: 'online',
+    category: 'ที่ปรึกษา',
+    rating: '5.0',
+    rate: '150',
+    welcomeMessage: 'สวัสดีครับ! ยินดีที่ได้คุยกันนะ วันนี้อยากปรึกษาเรื่องอะไรเป็นพิเศษครับ? ไม่ว่าจะเป็นเรื่องงาน ความคิด หรือทิศทางชีวิต พี่พร้อมช่วยซัพพอร์ตครับ'
+  },
+  {
+    id: 3,
+    nickname: 'มินนี่ (Gamer Buddy)',
+    username: 'minnie_game',
+    status: 'idle',
+    category: 'เพื่อนเล่นเกม',
+    rating: '4.8',
+    rate: '100',
+    welcomeMessage: 'หวัดดีค่า! พร้อมตี้หรือยังคะ? คืนนี้จะเล่นเกมอะไรดี ลุยไปด้วยกันนะ เดี๋ยวหนูแบกเอง (หรือให้พี่แบกดีนะ ฮ่าๆ)'
+  },
+  {
+    id: 4,
+    nickname: 'เจมส์ (Cafe Hopper)',
+    username: 'james_cafe',
+    status: 'online',
+    category: 'เพื่อนเที่ยว',
+    rating: '4.9',
+    rate: '130',
+    welcomeMessage: 'สวัสดีครับพี่! วันนี้อยากหาเพื่อนคุยสไตล์เที่ยวชิลๆ หรือแชร์ร้านคาเฟ่ลับๆ ดีครับ? มีพิกัดเจ๋งๆ แนะนำเพียบเลย!'
+  }
+]
+
+const currentPartner = computed(() => {
+  return partners.find(p => p.id === partnerId.value) || partners[0]
+})
+
+// Reactive chat messages
+const messages = ref<{
+  id: number
+  sender: 'self' | 'partner'
+  text: string
+  createdAt: Date
+}[]>([])
+
+const scrollToBottom = async () => {
+  await nextTick()
+  if (chatScrollContainer.value) {
+    chatScrollContainer.value.scrollTop = chatScrollContainer.value.scrollHeight
+  }
+}
+
+const initializeMessages = () => {
+  const partner = currentPartner.value
+  if (!partner) return
+
+  messages.value = [
+    {
+      id: 101,
+      sender: 'partner',
+      text: `สวัสดีครับ/ค่ะ ยินดีที่ได้คุยกันในระบบเช่าเพื่อนคุยของ Buddy Hub นะครับ/ค่ะ!`,
+      createdAt: new Date(Date.now() - 1000 * 60 * 10)
+    },
+    {
+      id: 102,
+      sender: 'self',
+      text: 'สวัสดีครับ ยินดีเช่นกันครับ',
+      createdAt: new Date(Date.now() - 1000 * 60 * 9)
+    },
+    {
+      id: 103,
+      sender: 'partner',
+      text: partner.welcomeMessage,
+      createdAt: new Date(Date.now() - 1000 * 60 * 8)
+    }
+  ]
+  void scrollToBottom()
+}
+
+const handleSendMessage = () => {
+  const text = userMessageText.value.trim()
+  if (!text) return
+
+  // Push user message
+  messages.value.push({
+    id: Date.now(),
+    sender: 'self',
+    text,
+    createdAt: new Date()
+  })
+
+  userMessageText.value = ''
+  void scrollToBottom()
+
+  // Simulate response delay from companion
+  isTyping.value = true
+  setTimeout(() => {
+    isTyping.value = false
+    
+    let replyText = 'ขอบคุณที่แวะมาทักทายและคุยกันนะคะ!'
+    const partnerIdVal = currentPartner.value?.id
+    
+    if (partnerIdVal === 1) {
+      replyText = `เข้าใจพี่เลยค่ะ การมีเรื่องให้คิดเยอะๆ มันก็เหนื่อยเหมือนกันนะ ถ้ารู้สึกเครียดตรงไหน นุ่นเป็นเซฟโซนคอยซัพพอร์ตพี่ได้เสมอนะคะ สู้ๆ ค่ะ 💖`
+    } else if (partnerIdVal === 2) {
+      replyText = `นั่นเป็นมุมมองที่เป็นระบบมากครับ การแก้ปัญหาทีละจุดจะทำให้เราเห็นภาพรวมได้ชัดขึ้น ลองลิสต์หัวข้อออกมาก่อนแล้วคุยกันทีละข้อดีไหมครับ พี่นัทจะช่วยแนะแนวให้เองครับ`
+    } else if (partnerIdVal === 3) {
+      replyText = `โอ้ว เจ๋งเลยพี่! งั้นจองคิวไว้เลย คืนนี้ลุยยาวๆ คีย์บอร์ดพร้อม หูฟังพร้อม ลุยโลดดดด! 🎮✨`
+    } else if (partnerIdVal === 4) {
+      replyText = `ดีเลยครับพี่! ร้านนั้นมุมถ่ายรูปเยอะและกาแฟคั่วกลางดีมากครับ ไว้ถ้าพี่อยากหาเพื่อนเดินชิลๆ หรือชิมเค้กอร่อยๆ ทักเจมส์มาได้เลยนะฮะ`
+    }
+
+    messages.value.push({
+      id: Date.now() + 1,
+      sender: 'partner',
+      text: replyText,
+      createdAt: new Date()
+    })
+
+    void scrollToBottom()
+  }, 1500)
+}
+
+const showStickerAlert = () => {
+  alert('ฟีเจอร์ส่งรูปภาพ/สติกเกอร์เป็นส่วนหนึ่งของดีไซน์ mockup หน้าแชทจริง')
+}
+
+// Watch route parameter changes to re-initialize
+watch(
+  () => partnerId.value,
+  () => {
+    initializeMessages()
+  },
+  { immediate: true }
+)
+
+onMounted(() => {
+  initializeMessages()
+})
+</script>
+
+<style scoped>
+.chat-input {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  resize: none !important;
+
+  padding: 4px 0 !important;
+
+  font-size: 16px !important;
+  line-height: 24px !important;
+
+  min-height: 24px !important;
+  max-height: 120px !important;
+
+  overflow-y: auto !important;
+}
+
+.chat-input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.18s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.chat-room-input-container {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);
+}
+
+/* When any input inside is focused (keyboard is visible), remove safe-area padding */
+.chat-room-input-container:has(textarea:focus, input:focus) {
+  padding-bottom: 0.75rem;
+}
+</style>
