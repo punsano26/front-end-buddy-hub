@@ -1,25 +1,29 @@
 <template>
-  <div>
-    <div class="flex justify-between items-center">
-      <div>
-        <i class="pi pi-comment text-gray-500 mr-2" />
-        <span class="text-gray-500">เช่าเพื่อนคุย</span>
+  <div class="h-full flex flex-col min-h-0 overflow-hidden p-4 bg-white dark:bg-black transition-colors duration-200">
+    <div class="flex justify-between items-center shrink-0 mb-3">
+      <div class="flex items-center">
+        <i class="pi pi-users text-blue-500 dark:text-blue-400 mr-2 text-lg" />
+        <h2 class="text-lg font-extrabold tracking-tight text-slate-800 dark:text-slate-100">
+          เช่าเพื่อนคุย
+        </h2>
       </div>
       <Button
-        class="text-gray-500 hover:bg-transparent focus:bg-transparent active:bg-transparent"
-        size="sm"
+        class="text-blue-500 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-900 border-none p-1.5"
+        size="small"
         variant="text"
         @click="router.push({ name: 'public-rent-chat' })">
-        สำรวจ
+        สำรวจทั้งหมด
       </Button>
     </div>
 
+    <!-- Search input -->
     <InputSearch
-      class="w-full mt-3 mb-2"
+      class="w-full shrink-0 mb-3"
       placeholder="ค้นหาชื่อ ความเชี่ยวชาญ..." />
 
-    <div class="flex-1 min-h-0 md:flex-none md:h-[calc(var(--app-height,100dvh)-230px)] overflow-y-auto overscroll-y-contain pr-1 pb-[calc(env(safe-area-inset-bottom)+5rem)] sm:pb-0">
-      <div class="grid gap-1">
+    <!-- Scrollable conversation list -->
+    <div class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pr-1 pb-[calc(env(safe-area-inset-bottom)+5rem)] sm:pb-0">
+      <div class="grid gap-2">
         <ConversationRent
           v-for="conversation in conversationsRent"
           :key="conversation.id"
@@ -27,46 +31,96 @@
       </div>
       <p
         v-if="conversationsRent.length === 0"
-        class="px-2 py-4 text-sm text-gray-500">
-        No conversations yet.
+        class="px-2 py-4 text-sm text-gray-500 text-center">
+        ไม่มีเพื่อนคุยที่เลือก
       </p>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
+import ConversationRent from '~/components/rent/ConversationRent.vue'
+
+const router = useRouter()
+
+// Rich mockup data representing various rent partners
 const conversationsRent = ref<any[]>([
   {
     id: 1,
-    nickname: 'เพื่อนคุย A',
-    username: 'friendA',
+    nickname: 'น้องนุ่น (Smile Partner)',
+    username: 'noon_smile',
     profileImg: null,
-    type: 'chat',
-    lastMessageText: 'สวัสดีครับ มีอะไรให้ช่วยไหม?',
-    lastMessageCreatedAt: new Date()
+    status: 'online',
+    category: 'ผู้รับฟังที่ดี',
+    rating: '4.9',
+    rate: '120',
+    lastMessageText: 'ยินดีรับฟังทุกเรื่องเลยค่ะ สบายใจขึ้นไหมคะ?',
+    lastMessageCreatedAt: new Date(Date.now() - 1000 * 60 * 5) // 5 mins ago
   },
   {
     id: 2,
-    nickname: 'เพื่อนคุย B',
-    username: 'friendB',
-    type: 'chat',
+    nickname: 'พี่นัท (Life Coach)',
+    username: 'nut_coach',
     profileImg: null,
-    lastMessageText: 'วันนี้เป็นยังไงบ้าง?',
-    lastMessageCreatedAt: new Date()
+    status: 'online',
+    category: 'ที่ปรึกษา',
+    rating: '5.0',
+    rate: '150',
+    lastMessageText: 'เรื่องงานลองจัดสรรเวลาแบบใหม่ดูนะครับ',
+    lastMessageCreatedAt: new Date(Date.now() - 1000 * 60 * 30) // 30 mins ago
   },
   {
     id: 3,
-    nickname: 'เพื่อนคุย C',
-    username: 'friendC',
-    type: 'emo',
+    nickname: 'มินนี่ (Gamer Buddy)',
+    username: 'minnie_game',
     profileImg: null,
-    lastMessageText: 'อยากคุยเรื่องอะไร?',
-    lastMessageCreatedAt: new Date()
+    status: 'idle',
+    category: 'เพื่อนเล่นเกม',
+    rating: '4.8',
+    rate: '100',
+    lastMessageText: 'คืนนี้มาลงแรงค์กันต่อไหมคะ เดี๋ยวซัพพอร์ตให้เอง!',
+    lastMessageCreatedAt: new Date(Date.now() - 1000 * 60 * 120) // 2 hours ago
+  },
+  {
+    id: 4,
+    nickname: 'เจมส์ (Cafe Hopper)',
+    username: 'james_cafe',
+    profileImg: null,
+    status: 'online',
+    category: 'เพื่อนเที่ยว',
+    rating: '4.9',
+    rate: '130',
+    lastMessageText: 'ร้านกาแฟเปิดใหม่แถวอารีย์บรรยากาศดีมากครับ',
+    lastMessageCreatedAt: new Date(Date.now() - 1000 * 60 * 360) // 6 hours ago
   }
 ])
-const router = useRouter()
 </script>
 
-<style>
+<script lang="ts">
+// Explicit component registration to avoid resolving issues
+export default {
+  name: 'SidebarChat'
+}
+</script>
 
+<style scoped>
+.overflow-y-auto::-webkit-scrollbar {
+  width: 4px;
+}
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: var(--p-surface-300);
+  border-radius: 4px;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: var(--p-surface-400);
+}
+.dark .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: var(--p-surface-700);
+}
+.dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: var(--p-surface-600);
+}
 </style>
