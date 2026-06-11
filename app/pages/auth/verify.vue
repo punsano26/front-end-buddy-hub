@@ -4,7 +4,7 @@
     @submit.prevent="onSubmit">
     <InputLabelField
       v-model="account"
-      :rules="[validate.required]"
+      :rules="formRules.account"
       :show-error="submitted"
       label="อีเมลหรือชื่อผู้ใช้"
       placeholder="อีเมลหรือชื่อผู้ใช้"
@@ -23,7 +23,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import InputLabelField from '~/components/input/InputLabelField.vue'
-import { validate } from '~/plugins/Validate'
+import { validate, validateForm } from '~/plugins/Validate'
 import type { IAuthProvider } from '~/resource/provider/Auth.provider'
 import AuthProvider from '~/resource/provider/Auth.provider'
 import Button from '~/volt/Button.vue'
@@ -41,6 +41,10 @@ const { $handleLoading } = useNuxtApp()
 
 const account = ref<string>('')
 const submitted = ref(false)
+
+const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> => ({
+  account: [validate.required, validate.textEnglish]
+}))
 
 async function onVerify (): Promise<void> {
   const value = account.value?.trim()
@@ -70,7 +74,7 @@ async function onVerify (): Promise<void> {
 async function onSubmit (): Promise<void> {
   submitted.value = true
 
-  if (!account.value?.trim()) {
+  if (!validateForm({ account: account.value }, formRules.value)) {
     return
   }
 
