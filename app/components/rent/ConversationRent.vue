@@ -8,7 +8,6 @@
       pt:body:class="p-3">
       <template #content>
         <div class="flex items-start gap-3 min-w-0">
-          <!-- Avatar + Status indicator -->
           <div class="relative shrink-0 mt-0.5">
             <img
               :src="props.conversation.profileImg || '/png/upload-profile.png'"
@@ -34,9 +33,7 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
-              <span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-medium">
-                {{ props.conversation.category }}
-              </span>
+
               <div class="flex items-center gap-0.5 text-[10px] text-amber-500 font-semibold">
                 <i class="pi pi-star-fill text-[9px]" />
                 <span>{{ props.conversation.rating }}</span>
@@ -49,20 +46,14 @@
           </div>
         </div>
 
-        <!-- Divider line -->
-        <div class="my-2 border-t border-slate-100 dark:border-slate-800/80" />
 
-        <!-- Footer section: Rate & Availability -->
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
             <i class="pi pi-coin text-slate-400 dark:text-slate-500 text-[10px]" />
             <span class="font-medium text-slate-700 dark:text-slate-300">{{ props.conversation.rate }}</span>
-            <span class="text-slate-400">/ชม.</span>
+            <span class="text-slate-400">/นาที</span>
           </div>
-          <span class="text-[10px] text-emerald-500 font-semibold flex items-center gap-1">
-            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
-            <span>พร้อมให้บริการ</span>
-          </span>
+
         </div>
       </template>
     </Card>
