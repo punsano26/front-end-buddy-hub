@@ -53,5 +53,5 @@
 - ใช้ `JSON.parse(JSON.stringify(obj))` เมื่อต้องการดูค่าปัจจุบันของ Proxy object (Vue Ref)
 - ลบ log ออกทุกครั้งเมื่อแก้เสร็จ (Surgical Cleanup)
 
-if your test run using bun 
+### if your test run using bun 
 - bun run lint or bun run test and bun lint when you want to check for linting errors
