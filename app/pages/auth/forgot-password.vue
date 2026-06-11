@@ -2,14 +2,14 @@
   <form @submit.prevent="forgotPasswordRequest">
     <InputLabelField
       v-model="form.email"
-      :rules="[validate.required]"
+      :rules="formRules.email"
       :show-error="submitted"
       label="อีเมล"
       placeholder="กรอกอีเมลของคุณ"
       required />
     <InputLabelField
       v-model="form.username"
-      :rules="[validate.required]"
+      :rules="formRules.username"
       :show-error="submitted"
       label="ชื่อผู้ใช้"
       placeholder="กรอกชื่อผู้ใช้ของคุณ"
@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import type { IForgotPasswordPayload } from '~/models/request/AuthReq.model'
-import { validate } from '~/plugins/Validate'
+import { validate, validateForm } from '~/plugins/Validate'
 import type { IAuthProvider } from '~/resource/provider/Auth.provider'
 import AuthProvider from '~/resource/provider/Auth.provider'
 
@@ -46,8 +46,12 @@ const form = ref<IForgotPasswordPayload>({
   username: ''
 })
 
+const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> => ({
+  email: [validate.required],
+  username: [validate.required]
+}))
+
 async function onCheckEmailUsername (): Promise<void> {
-  if (!form.value.email || !form.value.username) return
   const payload = {
     email: form.value.email,
     username: form.value.username
@@ -59,7 +63,7 @@ async function onCheckEmailUsername (): Promise<void> {
 
 function forgotPasswordRequest (): void {
   submitted.value = true
-  if (!form.value.email.trim() || !form.value.username.trim()) {
+  if (!validateForm(form.value, formRules.value)) {
     return
   }
   $handleLoading(onCheckEmailUsername, {

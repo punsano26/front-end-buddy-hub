@@ -16,6 +16,8 @@ export interface IValidate {
   numOnly (val: any): boolean | string
   maxValue (val: any, max: number): boolean | string
   minValue (val: any, min: number): boolean | string
+  textThai (val: string): boolean | string
+  textEnglish (val: string): boolean | string
 }
 
 const emailRegex = /^[\w.-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*(?:\.[a-zA-Z]{2,})$/
@@ -29,6 +31,14 @@ export const validate: IValidate = {
   requiredImage: (val: any): boolean | string => {
     if (val) return true
     return 'กรุณาอัปโหลดรูปภาพ'
+  },
+  textThai: (val: string): boolean | string => {
+    if (!val) return true
+    return (/^[ก-๙\s]+$/).test(String(val)) || 'กรุณากรอกเป็นภาษาไทยเท่านั้น'
+  },
+  textEnglish: (val: string): boolean | string => {
+    if (!val) return true
+    return (/^[a-zA-Z\s]+$/).test(String(val)) || 'กรุณากรอกเป็นภาษาอังกฤษเท่านั้น'
   },
   email: (val: any): boolean | string => emailRegex.test(val) || 'รูปแบบอีเมลไม่ถูกต้อง',
   emailOptional: (val: any): boolean | string => !val || emailRegex.test(val) || 'รูปแบบอีเมลไม่ถูกต้อง',
@@ -72,6 +82,21 @@ export const validate: IValidate = {
     const isValid = val === 0 || val >= min
     return isValid || `กรุณากรอกค่าที่มากกว่าหรือเท่ากับ ${min}`
   }
+}
+
+export function validateForm<T extends Record<string, any>> (
+  form: T,
+  rules: Partial<Record<keyof T, ((v: any) => boolean | string)[]>>
+): boolean {
+  for (const key in rules) {
+    const fieldRules = rules[key]
+    if (!fieldRules) continue
+    const value = form[key]
+    for (const rule of fieldRules) {
+      if (rule(value) !== true) return false
+    }
+  }
+  return true
 }
 
 export default defineNuxtPlugin((_nuxtApp: any): {

@@ -2,6 +2,7 @@
   <form @submit.prevent="resetPassword">
     <InputLabelField
       v-model="form.newPassword"
+      :rules="formRules.newPassword"
       :show-error="submitted"
       label="รหัสผ่านใหม่"
       placeholder="กรอกรหัสผ่านใหม่"
@@ -10,7 +11,7 @@
     <CheckPasswordStrength :password="form.newPassword" />
     <InputLabelField
       v-model="form.confirmNewPassword"
-      :rules="[validate.required, (val: string) => validate.confirmPassword(val, form.newPassword)]"
+      :rules="formRules.confirmNewPassword"
       :show-error="submitted"
       label="ยืนยันรหัสผ่าน"
       placeholder="ยืนยันรหัสผ่าน"
@@ -27,7 +28,7 @@
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
 import type { IResetPasswordPayload } from '~/models/request/AuthReq.model'
-import { validate } from '~/plugins/Validate'
+import { validate, validateForm } from '~/plugins/Validate'
 import type { IAuthProvider } from '~/resource/provider/Auth.provider'
 import AuthProvider from '~/resource/provider/Auth.provider'
 
@@ -46,15 +47,15 @@ const form = ref<IResetPasswordPayload>({
   confirmNewPassword: ''
 })
 
+const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> => ({
+  newPassword: [validate.required],
+  confirmNewPassword: [
+    validate.required,
+    (val: string): boolean | string => validate.confirmPassword(val, form.value.newPassword)
+  ]
+}))
+
 async function onResetPassword (): Promise<void> {
-  if (form.value.newPassword !== form.value.confirmNewPassword) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'รหัสผ่านไม่ตรงกัน'
-    })
-    return
-  }
   const payload = {
     newPassword: form.value.newPassword,
     confirmNewPassword: form.value.confirmNewPassword
@@ -65,7 +66,7 @@ async function onResetPassword (): Promise<void> {
 
 function resetPassword (): void {
   submitted.value = true
-  if (!form.value.newPassword.trim() || !form.value.confirmNewPassword.trim()) {
+  if (!validateForm(form.value, formRules.value)) {
     return
   }
   $handleLoading(onResetPassword, {

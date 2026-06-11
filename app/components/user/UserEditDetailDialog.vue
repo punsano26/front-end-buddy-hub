@@ -26,7 +26,7 @@
         </InputLabelField>
         <InputLabelField
           v-model="form.email"
-          :rules="[validate.required, validate.email]"
+          :rules="formRules.email"
           :show-error="submitted"
           label="อีเมล" />
         <InputBirthDatePicker
@@ -50,7 +50,7 @@ import { toGenderEnum, UserGenderOptions } from '~/models/enums/User.enum'
 import type { IBaseOptions } from '~/models/Global.model'
 import type { IUpdateUserPayload } from '~/models/request/UserReq.model'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
-import { validate } from '~/plugins/Validate'
+import { validate, validateForm } from '~/plugins/Validate'
 import AuthProvider, { type IAuthProvider } from '~/resource/provider/Auth.provider'
 import type { IUserProvider } from '~/resource/provider/User.provider'
 import UserProvider from '~/resource/provider/User.provider'
@@ -89,6 +89,10 @@ const form = ref<IEditUserForm>({
   email: ''
 })
 
+const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> => ({
+  email: [validate.required, validate.email]
+}))
+
 
 watch((): boolean => props.visible, (isOpen: boolean): void => {
   if (!isOpen) return
@@ -114,7 +118,7 @@ async function useUpdate (): Promise<void> {
 }
 function update (): void {
   submitted.value = true
-  if (!(form.value.email ?? '').trim()) {
+  if (!validateForm(form.value, formRules.value)) {
     return
   }
   $handleLoading(useUpdate, {
