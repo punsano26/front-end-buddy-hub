@@ -3,13 +3,13 @@
     <div class="grid md:flex md:gap-2 gap-4 pt-2">
       <InputLabelField
         v-model="form.email"
-        :rules="[validate.required, validate.email]"
+        :rules="formRules.email"
         :show-error="submitted"
         label="อีเมล"
         placeholder="อีเมลของคุณ" />
       <InputLabelField
         v-model="form.username"
-        :rules="[validate.required]"
+        :rules="formRules.username"
         :show-error="submitted"
         label="ชื่อผู้ใช้"
         placeholder="ชื่อผู้ใช้ของคุณ" />
@@ -27,7 +27,7 @@
       </InputLabelField>
       <InputBirthDatePicker
         v-model="form.dateOfBirth"
-        :rules="[validate.required]"
+        :rules="formRules.dateOfBirth"
         :show-error="submitted"
         label="วันเกิด"
         placeholder="เลือกวันเกิดของคุณ"
@@ -36,13 +36,14 @@
 
     <InputPasswordField
       v-model="form.password"
+      :rules="formRules.password"
       :show-error="submitted"
       label="รหัสผ่าน" />
     <CheckPasswordStrength :password="form.password" />
 
     <InputPasswordField
       v-model="form.confirmPassword"
-      :rules="[validate.required, (val: string) => validate.confirmPassword(val, form.password)]"
+      :rules="formRules.confirmPassword"
       :show-error="submitted"
       label="ยืนยันรหัสผ่าน" />
 
@@ -65,7 +66,7 @@ import InputLabelField from '~/components/input/InputLabelField.vue'
 import { genderEnum } from '~/models/enums/User.enum'
 import type { IBaseOptions } from '~/models/Global.model'
 import type { IAuthRegisterPayload } from '~/models/request/AuthReq.model'
-import { validate } from '~/plugins/Validate'
+import { validate, validateForm } from '~/plugins/Validate'
 import type { IAuthProvider } from '~/resource/provider/Auth.provider'
 import AuthProvider from '~/resource/provider/Auth.provider'
 
@@ -95,6 +96,17 @@ const form = ref<IAuthRegisterPayload>({
   gender: genderEnum.MALE,
   dateOfBirth: ''
 })
+
+const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> => ({
+  email: [validate.required, validate.email],
+  username: [validate.required],
+  dateOfBirth: [validate.required],
+  password: [validate.required],
+  confirmPassword: [
+    validate.required,
+    (val: string): boolean | string => validate.confirmPassword(val, form.value.password)
+  ]
+}))
 
 
 const gender = ref<IBaseOptions[]>([
@@ -144,10 +156,11 @@ function register (): void {
   if (!checked.value) {
     return
   }
-  if (!form.value.email.trim() || !form.value.username.trim() || !form.value.dateOfBirth.trim()
-    || !form.value.password.trim() || !form.value.confirmPassword.trim()) {
+
+  if (!validateForm(form.value, formRules.value)) {
     return
   }
+
   $handleLoading(onRegister, {
     toast: {
       instance: toast
