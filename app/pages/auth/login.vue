@@ -57,7 +57,7 @@ const form = ref<IAuthLoginPayload>({
 })
 
 const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> => ({
-  account: [validate.textThai],
+  account: [validate.textEnglish],
   password: [validate.required]
 }))
 
