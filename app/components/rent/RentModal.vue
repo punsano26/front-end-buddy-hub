@@ -29,17 +29,26 @@
     </Card>
     <div class="flex flex-col gap-4">
       <p>ระยะเวลาที่ต้องการคุย</p>
+      <InputLabelField label="กรอกระยะเวลา (นาที)">
+        <InputNumber
+          v-model="minuteInput"
+          :max="60"
+          :min="1"
+          class="w-full"
+          @update:model-value="onMinuteInput" />
+      </InputLabelField>
       <SelectButton
-        v-model="value"
+        v-model="selectedOption"
         :options="options"
-        option-label="name" />
+        option-label="name"
+        @update:model-value="onSelectOption" />
     </div>
     <Card>
       <template #content>
         <div class="flex flex-col gap-4">
           <div class="flex justify-between items-center ">
             <p>ค่าบริการ</p>
-            <span>18 x {{ value?.value || 0 }} นาที</span>
+            <span>18 x {{ minuteInput || 0 }} นาที</span>
           </div>
           <div class="flex justify-between items-center ">
             <p class="font-bold">
@@ -77,15 +86,27 @@
 import { computed, ref } from 'vue'
 
 const visible = defineModel<boolean>('visible', { default: false })
-const value = ref<{ name: string, value: number } | null>(null)
+const minuteInput = ref<number | null>(null)
+const selectedOption = ref<{ name: string, value: number } | null>(null)
 const options = ref([
   { name: '15 นาที', value: 15 },
   { name: '30 นาที', value: 30 },
   { name: '50 นาที', value: 50 }
 ])
 
+function onSelectOption (option: { name: string, value: number } | null): void {
+  if (option) {
+    minuteInput.value = option.value
+  }
+}
+
+function onMinuteInput (val: number | null): void {
+  const matched = options.value.find((o: { name: string, value: number }): boolean => o.value === val)
+  selectedOption.value = matched || null
+}
+
 const showValue = computed((): number => {
-  return 18 * (value.value?.value || 0)
+  return 18 * (minuteInput.value || 0)
 })
 </script>
 
