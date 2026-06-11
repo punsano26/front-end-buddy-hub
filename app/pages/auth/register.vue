@@ -99,7 +99,7 @@ const form = ref<IAuthRegisterPayload>({
 
 const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> => ({
   email: [validate.required, validate.email],
-  username: [validate.required],
+  username: [validate.required, validate.textEnglish],
   dateOfBirth: [validate.required],
   password: [validate.required],
   confirmPassword: [
