@@ -51,9 +51,8 @@ const conversationsRent = ref<any[]>([
     username: 'noon_smile',
     profileImg: null,
     status: 'online',
-    category: 'ผู้รับฟังที่ดี',
     rating: '4.9',
-    rate: '120',
+    rate: '30',
     lastMessageText: 'ยินดีรับฟังทุกเรื่องเลยค่ะ สบายใจขึ้นไหมคะ?',
     lastMessageCreatedAt: new Date(Date.now() - 1000 * 60 * 5) // 5 mins ago
   },
@@ -63,9 +62,8 @@ const conversationsRent = ref<any[]>([
     username: 'nut_coach',
     profileImg: null,
     status: 'online',
-    category: 'ที่ปรึกษา',
     rating: '5.0',
-    rate: '150',
+    rate: '30',
     lastMessageText: 'เรื่องงานลองจัดสรรเวลาแบบใหม่ดูนะครับ',
     lastMessageCreatedAt: new Date(Date.now() - 1000 * 60 * 30) // 30 mins ago
   },
@@ -75,9 +73,8 @@ const conversationsRent = ref<any[]>([
     username: 'minnie_game',
     profileImg: null,
     status: 'idle',
-    category: 'เพื่อนเล่นเกม',
     rating: '4.8',
-    rate: '100',
+    rate: '40',
     lastMessageText: 'คืนนี้มาลงแรงค์กันต่อไหมคะ เดี๋ยวซัพพอร์ตให้เอง!',
     lastMessageCreatedAt: new Date(Date.now() - 1000 * 60 * 120) // 2 hours ago
   },
@@ -87,9 +84,8 @@ const conversationsRent = ref<any[]>([
     username: 'james_cafe',
     profileImg: null,
     status: 'online',
-    category: 'เพื่อนเที่ยว',
     rating: '4.9',
-    rate: '130',
+    rate: '60',
     lastMessageText: 'ร้านกาแฟเปิดใหม่แถวอารีย์บรรยากาศดีมากครับ',
     lastMessageCreatedAt: new Date(Date.now() - 1000 * 60 * 360) // 6 hours ago
   }
