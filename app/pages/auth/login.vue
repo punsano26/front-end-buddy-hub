@@ -3,12 +3,16 @@
     <InputLabelField
       v-model="form.account"
       :disabled="!!route.query.account"
+      :rules="formRules.account"
+      :show-error="submitted"
       label="อีเมลหรือชื่อผู้ใช้"
       placeholder="กรอกอีเมลหรือชื่อผู้ใช้ของคุณ"
       required />
-    <InputLabelField label="รหัสผ่าน">
-      <InputPasswordField v-model="form.password" />
-    </InputLabelField>
+    <InputPasswordField
+      v-model="form.password"
+      :rules="formRules.password"
+      :show-error="submitted"
+      label="รหัสผ่าน" />
     <Button
       label="เข้าสู่ระบบ"
       pt:label:class="font-bold"
@@ -27,6 +31,7 @@ import { useToast } from 'primevue/usetoast'
 import InputLabelField from '~/components/input/InputLabelField.vue'
 import InputPasswordField from '~/components/input/InputPasswordField.vue'
 import type { IAuthLoginPayload } from '~/models/request/AuthReq.model'
+import { validate, validateForm } from '~/plugins/Validate'
 import type { IAuthProvider } from '~/resource/provider/Auth.provider'
 import AuthProvider from '~/resource/provider/Auth.provider'
 
@@ -37,6 +42,7 @@ const toast = useToast()
 const router = useRouter()
 const authStore = useAuthStore()
 const { $handleLoading } = useNuxtApp()
+const submitted = ref(false)
 
 definePageMeta({
   title: 'เข้าสู่ระบบเพื่อใช้งาน',
@@ -50,8 +56,12 @@ const form = ref<IAuthLoginPayload>({
   password: ''
 })
 
+const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> => ({
+  account: [validate.textThai],
+  password: [validate.required]
+}))
+
 async function onLogin (): Promise<void> {
-  if (!form.value.account || !form.value.password) return
   const payload = {
     account: form.value.account,
     password: form.value.password
@@ -63,6 +73,10 @@ async function onLogin (): Promise<void> {
 }
 
 function login (): void {
+  submitted.value = true
+  if (!validateForm(form.value, formRules.value)) {
+    return
+  }
   $handleLoading(onLogin, {
     toast: {
       instance: toast
