@@ -6,29 +6,32 @@
         <!-- Left: Back Button & User Info -->
         <div class="flex items-center gap-3 min-w-0">
           <Button
-            @click="onNavigateBack"
-            icon="pi pi-arrow-left"
-            text
-            rounded
-            severity="secondary"
             class="w-10 h-10 flex items-center justify-center shrink-0 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
             aria-label="Back"
-          />
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            rounded
+            text
+            @click="onNavigateBack" />
           <div class="relative shrink-0 select-none">
             <!-- Pulsing premium avatar outline -->
             <div class="w-11 h-11 md:w-13 md:h-13 rounded-full bg-gradient-primary p-0.5 shadow-md flex items-center justify-center relative overflow-hidden animate-pulse-slow">
               <div class="w-full h-full rounded-full bg-surface-100 dark:bg-surface-800 flex items-center justify-center text-surface-500 dark:text-surface-400">
-                <i class="pi pi-user text-lg md:text-xl"></i>
+                <i class="pi pi-user text-lg md:text-xl" />
               </div>
             </div>
-            <span class="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-surface-900 rounded-full shadow-md animate-pulse"></span>
+            <span class="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-surface-900 rounded-full shadow-md animate-pulse" />
           </div>
           <div class="flex flex-col min-w-0">
             <div class="flex items-center gap-2">
               <span class="text-sm md:text-base font-bold text-surface-900 dark:text-surface-0 truncate leading-tight">
                 ผู้ใช้งานคนนี้คือเพื่อนใหม่ของคุณ
               </span>
-              <Tag value="Private" severity="secondary" rounded class="text-[9px] md:text-[10px] px-2 py-0.5 font-semibold bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 shrink-0" />
+              <Tag
+                class="text-[9px] md:text-[10px] px-2 py-0.5 font-semibold bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 shrink-0"
+                severity="secondary"
+                value="Private"
+                rounded />
             </div>
             <span class="text-xs text-surface-400 dark:text-surface-500 truncate mt-0.5">ข้อมูลถูกซ่อนเพื่อความเป็นส่วนตัว</span>
           </div>
@@ -40,97 +43,90 @@
           <div class="hidden sm:flex items-center gap-2">
             <template v-if="isAccepted">
               <Button
-                disabled
-                size="small"
-                label="เป็นเพื่อนกันแล้ว"
-                icon="pi pi-check"
                 class="px-4 py-2 font-medium bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400 border border-green-200 dark:border-green-800/50 shadow-sm"
-              />
+                icon="pi pi-check"
+                label="เป็นเพื่อนกันแล้ว"
+                size="small"
+                disabled />
             </template>
             <template v-else-if="isIncomingRequest">
               <Button
-                disabled
-                size="small"
-                label="ได้รับคำขอเป็นเพื่อนแล้ว"
-                icon="pi pi-bell"
                 class="px-4 py-2 font-medium shadow-sm"
-              />
+                icon="pi pi-bell"
+                label="ได้รับคำขอเป็นเพื่อนแล้ว"
+                size="small"
+                disabled />
             </template>
             <template v-else>
               <Button
                 :disabled="isFriendRequestSent || isSubmitting"
-                @click="sendAFriendSessionRequest"
-                size="small"
-                :label="isFriendRequestSent ? 'ส่งคำขอแล้ว' : 'เพิ่มเพื่อน'"
                 :icon="isFriendRequestSent ? 'pi pi-check' : 'pi pi-user-plus'"
+                :label="isFriendRequestSent ? 'ส่งคำขอแล้ว' : 'เพิ่มเพื่อน'"
                 class="px-4 py-2 font-medium shadow-sm bg-gradient-primary border-0 text-slate-950 hover:opacity-90 active:scale-98 transition-all"
-              />
+                size="small"
+                @click="sendAFriendSessionRequest" />
             </template>
             <Button
-              @click="onOpenReportDialog"
-              size="small"
-              label="รายงาน"
               icon="pi pi-flag"
-              severity="secondary"
-              outlined
               class="px-4 py-2 font-medium shadow-sm hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors"
-            />
+              label="รายงาน"
+              severity="secondary"
+              size="small"
+              outlined
+              @click="onOpenReportDialog" />
           </div>
 
           <!-- Mobile Actions Dropdown menu -->
           <div class="sm:hidden relative">
             <Button
-              @click="toggleMobileMenu"
-              icon="pi pi-ellipsis-v"
-              text
-              rounded
-              severity="secondary"
               class="w-10 h-10 flex items-center justify-center hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
               aria-label="Actions Menu"
-            />
-            <Popover ref="mobileMenu" class="shadow-xl rounded-xl border border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900">
+              icon="pi pi-ellipsis-v"
+              severity="secondary"
+              rounded
+              text
+              @click="toggleMobileMenu" />
+            <Popover
+              ref="mobileMenu"
+              class="shadow-xl rounded-xl border border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900">
               <div class="flex flex-col p-1.5 min-w-[170px] gap-1 select-none">
                 <template v-if="isAccepted">
                   <Button
-                    disabled
-                    text
-                    size="small"
-                    label="เป็นเพื่อนกันแล้ว"
-                    icon="pi pi-check"
                     class="justify-start w-full text-green-600 dark:text-green-400 font-medium"
-                  />
+                    icon="pi pi-check"
+                    label="เป็นเพื่อนกันแล้ว"
+                    size="small"
+                    disabled
+                    text />
                 </template>
                 <template v-else-if="isIncomingRequest">
                   <Button
-                    disabled
-                    text
-                    size="small"
-                    label="ได้รับคำขอแล้ว"
-                    icon="pi pi-bell"
                     class="justify-start w-full font-medium"
-                  />
+                    icon="pi pi-bell"
+                    label="ได้รับคำขอแล้ว"
+                    size="small"
+                    disabled
+                    text />
                 </template>
                 <template v-else>
                   <Button
                     :disabled="isFriendRequestSent || isSubmitting"
-                    @click="sendAFriendSessionRequestFromMenu"
-                    text
-                    size="small"
-                    :label="isFriendRequestSent ? 'ส่งคำขอแล้ว' : 'เพิ่มเพื่อน'"
                     :icon="isFriendRequestSent ? 'pi pi-check' : 'pi pi-user-plus'"
+                    :label="isFriendRequestSent ? 'ส่งคำขอแล้ว' : 'เพิ่มเพื่อน'"
                     class="justify-start w-full text-primary-500 font-medium hover:bg-primary-50 dark:hover:bg-primary-950/20"
-                  />
+                    size="small"
+                    text
+                    @click="sendAFriendSessionRequestFromMenu" />
                 </template>
-                <div class="h-[1px] bg-surface-200 dark:bg-surface-800 my-1"></div>
+                <div class="h-[1px] bg-surface-200 dark:bg-surface-800 my-1" />
                 <Button
-                  @click="onOpenReportDialogFromMenu"
-                  text
-                  size="small"
-                  label="รายงานผู้ใช้"
                   icon="pi pi-flag"
-                  severity="danger"
                   class="justify-start w-full text-red-500 font-medium hover:bg-red-50 dark:hover:bg-red-950/20"
-                />
+                  label="รายงานผู้ใช้"
+                  severity="danger"
+                  size="small"
+                  text
+                  @click="onOpenReportDialogFromMenu" />
               </div>
             </Popover>
           </div>
@@ -140,12 +136,17 @@
 
     <SpaceChat
       :messages="matchStore.sessionMessages"
-      @send-message="sendMessageSessionMatch"
       class="flex-1 min-h-0"
-    />
+      @send-message="sendMessageSessionMatch" />
 
     <!-- Report Dialog -->
     <ReportModalDialog v-model:visible="isReportDialogVisible" />
+    <ConfirmModalDialog
+      v-model:visible="dialogOpenConfirmLeaveSessionEarly"
+      confirm-button="ใช่, ฉันต้องการออกจากเซสชัน"
+      message="คุณแน่ใจว่าต้องการออกจากเซสชันหรือไม่?"
+      title="คุณต้องการออกจากเซสชัน ?"
+      @confirm="onConfirmLeaveSessionEarly" />
   </div>
 </template>
 
@@ -174,7 +175,7 @@ const friendStore = useFriendStore()
 const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
-
+const dialogOpenConfirmLeaveSessionEarly = ref(false)
 const isSubmitting = ref(false)
 const isReportDialogVisible = ref(false)
 const mobileMenu = ref()
@@ -224,7 +225,7 @@ const partnerUserId = computed<number | null>(() => {
   const fromFound = findPartnerIdFromAnywhere(matchStore.getLastEventByType(MatchEvent.FOUND)?.data)
   if (fromFound) return fromFound
 
-  const partnerMsg = matchStore.sessionMessages.find(msg => !msg.isOwn && typeof msg.senderId === 'number')
+  const partnerMsg = matchStore.sessionMessages.find((msg) => !msg.isOwn && typeof msg.senderId === 'number')
   if (partnerMsg?.senderId) return partnerMsg.senderId
 
   const queryPartnerId = Number(route.query.partnerUserId)
@@ -327,8 +328,7 @@ watch(sessionId, (newId) => {
 }, { immediate: true })
 
 watch(
-  () => matchStore.getLastEventByType(MatchEvent.MESSAGE)?.receivedAt,
-  () => {
+  () => matchStore.getLastEventByType(MatchEvent.MESSAGE)?.receivedAt, () => {
     const socketEvent = matchStore.getLastEventByType(MatchEvent.MESSAGE)
     if (!socketEvent) return
     if (!sessionId.value) return
@@ -348,8 +348,7 @@ watch(
 )
 
 watch(
-  () => matchStore.getLastEventByType(MatchEvent.FRIEND_REQUEST)?.receivedAt,
-  () => {
+  () => matchStore.getLastEventByType(MatchEvent.FRIEND_REQUEST)?.receivedAt, () => {
     const socketEvent = matchStore.getLastEventByType(MatchEvent.FRIEND_REQUEST)
     if (!socketEvent) return
     if (!sessionId.value) return
@@ -358,8 +357,27 @@ watch(
     if (incomingSessionId && incomingSessionId !== sessionId.value) return
 
     isFriendRequestSent.value = true
-  },
-  { immediate: true }
+  }, { immediate: true }
+)
+
+watch(
+  () => matchStore.getLastEventByType(MatchEvent.PARTNER_LEFT)?.receivedAt, () => {
+    const socketEvent = matchStore.getLastEventByType(MatchEvent.PARTNER_LEFT)
+    if (!socketEvent) return
+    if (!sessionId.value) return
+
+    const incomingSessionId = getSessionIdFromEvent(socketEvent.data)
+    if (incomingSessionId && incomingSessionId !== sessionId.value) return
+
+    toast.add({
+      severity: 'info',
+      summary: 'คู่สนทนาออกจากห้องแล้ว',
+      detail: 'ระบบกำลังนำคุณกลับไปหน้าค้นหาคู่',
+      life: 3000
+    })
+
+    router.push({ name: 'public-find-match' })
+  }
 )
 
 async function leaveTheMatchChatSessionEarly (): Promise<void> {
@@ -369,9 +387,13 @@ async function leaveTheMatchChatSessionEarly (): Promise<void> {
 }
 
 function onNavigateBack (): void {
+  dialogOpenConfirmLeaveSessionEarly.value = true
+}
+
+function onConfirmLeaveSessionEarly (): void {
   $handleLoading(leaveTheMatchChatSessionEarly, {
     toast: {
-      instance: toast,
+      instance: toast
     }
   })
 }
