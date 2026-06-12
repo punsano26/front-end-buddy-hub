@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia'
+import { useAuthStore } from './Auth'
 import type { MatchEvent } from '~/models/enums/Match.enum'
-import type { TBaseParamsId } from '~/models/request/Request.model'
 import type { ISendASessionMessagePayload } from '~/models/request/MatchReq.model'
+import type { TBaseParamsId } from '~/models/request/Request.model'
 import type { ISendASessionMessageData } from '~/models/response/MatchRes.model'
 import MatchProvider from '~/resource/provider/Match.provider'
-import { useAuthStore } from './Auth'
 
 export interface IMatchSocketEvent {
   event: MatchEvent
