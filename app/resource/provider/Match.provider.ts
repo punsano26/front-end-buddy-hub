@@ -5,6 +5,7 @@ import type { ISendAFriendRequestResponse } from '~/models/response/FriendRes.mo
 import type {
   IFindAllSessionMessagesResponse,
   IJoinTheRandomMatchQueueResponse,
+  ILeaveTheMatchChatSessionEarlyResponse,
   ILeaveTheRandomMatchQueueResponse,
   ISendASessionMessageResponse
 } from '~/models/response/MatchRes.model'
@@ -15,6 +16,7 @@ export interface IMatchProvider {
   SendASessionMessage (id: TBaseParamsId, payload: ISendASessionMessagePayload): Promise<ISendASessionMessageResponse>
   findAllSessionMessages (id: TBaseParamsId): Promise<IFindAllSessionMessagesResponse>
   sendAFriendSessionRequest (id: TBaseParamsId): Promise<ISendAFriendRequestResponse>
+  leaveTheMatchChatSessionEarly (id: TBaseParamsId): Promise<ILeaveTheMatchChatSessionEarlyResponse>
 }
 
 class MatchProvider extends HttpRequest implements IMatchProvider {
@@ -47,6 +49,12 @@ class MatchProvider extends HttpRequest implements IMatchProvider {
   public async sendAFriendSessionRequest (id: TBaseParamsId): Promise<ISendAFriendRequestResponse> {
     this.setUserAuthHeader()
     const response = await this.post(`${this.urlPrefix}/sessions/${id}/friend-request`, {})
+    return response
+  }
+
+  public async leaveTheMatchChatSessionEarly (id: TBaseParamsId): Promise<ILeaveTheMatchChatSessionEarlyResponse> {
+    this.setUserAuthHeader()
+    const response = await this.delete(`${this.urlPrefix}/sessions/${id}`)
     return response
   }
 }

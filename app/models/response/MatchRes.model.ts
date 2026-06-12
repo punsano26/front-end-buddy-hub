@@ -8,6 +8,10 @@ export interface ILeaveTheRandomMatchQueueData {
   removed: boolean
 }
 
+export interface ILeaveTheMatchChatSessionEarlyData {
+  left: boolean
+}
+
 export interface ISendASessionMessageData {
   id: number | string
   senderId?: number
@@ -20,3 +24,4 @@ export type IFindAllSessionMessagesResponse = IApiResponse<ISendASessionMessageD
 export type ISendASessionMessageResponse = IApiResponse<ISendASessionMessageData>
 export type ILeaveTheRandomMatchQueueResponse = IApiResponse<ILeaveTheRandomMatchQueueData>
 export type IJoinTheRandomMatchQueueResponse = IApiResponse<IJoinTheRandomMatchQueueData>
+export type ILeaveTheMatchChatSessionEarlyResponse = IApiResponse<ILeaveTheMatchChatSessionEarlyData>
