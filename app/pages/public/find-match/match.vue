@@ -362,8 +362,18 @@ watch(
   { immediate: true }
 )
 
+async function leaveTheMatchChatSessionEarly (): Promise<void> {
+  if (!sessionId.value) return
+  await matchService.leaveTheMatchChatSessionEarly(sessionId.value)
+  router.push({ name: 'public-find-match' })
+}
+
 function onNavigateBack (): void {
-   router.push({ name: 'public-find-match' })
+  $handleLoading(leaveTheMatchChatSessionEarly, {
+    toast: {
+      instance: toast,
+    }
+  })
 }
 </script>
 
