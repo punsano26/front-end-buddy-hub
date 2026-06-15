@@ -13,10 +13,8 @@
       <!-- Tagline -->
       <InputLabelField
         v-model="tagline"
-        :rules="[
-          (v: string) => v.length <= 50 || 'ข้อมูลต้องยาวไม่เกิน 50 ตัวอักษร'
-        ]"
-        :show-error="tagline.length > 50"
+        :rules="formRules.tagline"
+        :show-error="submitted"
         label="สโลแกนหรือประโยคดึงดูดใจ"
         maxlength="60"
         placeholder="เช่น เพื่อนคุยคู่คิดเรื่องงาน, พื้นที่ปลอดภัย 24 ชม."
@@ -32,10 +30,8 @@
       <!-- Bio -->
       <InputLabelTextarea
         v-model="bio"
-        :rules="[
-          (v: string) => v.length <= 200 || 'ข้อมูลต้องยาวไม่เกิน 200 ตัวอักษร'
-        ]"
-        :show-error="bio.length > 200"
+        :rules="formRules.bio"
+        :show-error="submitted"
         label="แนะนำตัวสั้นๆ"
         maxlength="220"
         placeholder="อธิบายสไตล์การพูดคุย วิธีการรับฟัง หรือประสบการณ์ของคุณ..."
@@ -81,7 +77,7 @@
         </div>
 
         <p
-          v-if="selectedExpertises.length === 0"
+          v-if="submitted && selectedExpertises.length === 0"
           class="text-[10px] text-rose-500 font-bold mt-1.5 flex items-center gap-1">
           <span>⚠️</span> โปรดเลือกอย่างน้อย 1 ความเชี่ยวชาญ
         </p>
@@ -100,19 +96,23 @@
         text
         @click="$emit('prev')" />
       <Button
-        :disabled="!tagline || !bio || tagline.length > 50 || bio.length > 200 || selectedExpertises.length === 0"
         icon="pi pi-arrow-right"
         icon-pos="right"
         label="ขั้นตอนถัดไป"
         pt:root:class="!rounded-xl px-5 py-2.5 bg-gradient-primary border-none text-white shadow-md hover:shadow-lg hover:shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-xs sm:text-sm font-extrabold cursor-pointer"
-        @click="tagline && bio && tagline.length <= 50 && bio.length <= 200 && selectedExpertises.length > 0 && $emit('next')" />
+        @click="nextStep" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useToast } from 'primevue/usetoast'
 import InputLabelField from '~/components/input/InputLabelField.vue'
 import InputLabelTextarea from '~/components/input/InputLabelTextarea.vue'
+import type { IFindAllRentTagsData } from '~/models/response/RentRes.model'
+import { validate, validateForm } from '~/plugins/Validate'
+import RentProvider, { type IRentProvider } from '~/resource/provider/Rent.provider'
 import Badge from '~/volt/Badge.vue'
 import Button from '~/volt/Button.vue'
 import Divider from '~/volt/Divider.vue'
@@ -121,15 +121,52 @@ const tagline = defineModel<string>('tagline', { default: '' })
 const bio = defineModel<string>('bio', { default: '' })
 const selectedExpertises = defineModel<string[]>('selectedExpertises', { default: (): string[] => [] })
 
-defineEmits<{
+const emit = defineEmits<{
   next: []
   prev: []
 }>()
 
-const expertiseOptions = [
-  'ความรัก', 'ความสัมพันธ์', 'การเลิกรา', 'การเรียน', 'การทำงาน',
-  'ครอบครัว', 'พัฒนาตนเอง', 'ความเครียด', 'คุยแก้เหงา', 'สุขภาพจิต'
-]
+const rentService: IRentProvider = new RentProvider()
+const { $handleLoading } = useNuxtApp()
+const toast = useToast()
+const submitted = ref(false)
+
+const form = computed((): { tagline: string, bio: string, selectedExpertises: string[] } => ({
+  tagline: tagline.value,
+  bio: bio.value,
+  selectedExpertises: selectedExpertises.value
+}))
+
+const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> => ({
+  tagline: [
+    validate.required,
+    (v: string): boolean | string => validate.maxLength(v, 50)
+  ],
+  bio: [
+    validate.required,
+    (v: string): boolean | string => validate.maxLength(v, 200)
+  ],
+  selectedExpertises: [
+    (v: string[]): boolean | string => validate.atLeast(v, 1)
+  ]
+}))
+
+const expertiseOptions = ref<string[]>([])
+
+async function onGetAllRentTags (): Promise<void> {
+  const response = await rentService.findAllRentTags()
+  if (response && response.data) {
+    expertiseOptions.value = response.data.map((tag: IFindAllRentTagsData): string => tag.name)
+  }
+}
+
+function getAllRentTags (): void {
+  $handleLoading(onGetAllRentTags, {
+    toast: {
+      instance: toast
+    }
+  })
+}
 
 function toggleExpertise (option: string): void {
   const index = selectedExpertises.value.indexOf(option)
@@ -139,4 +176,16 @@ function toggleExpertise (option: string): void {
     selectedExpertises.value.push(option)
   }
 }
+
+function nextStep (): void {
+  submitted.value = true
+  if (!validateForm(form.value, formRules.value)) {
+    return
+  }
+  emit('next')
+}
+
+onMounted((): void => {
+  getAllRentTags()
+})
 </script>
