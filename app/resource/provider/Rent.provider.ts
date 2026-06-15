@@ -1,9 +1,11 @@
 import HttpRequest from '../HttpRequest'
-import type { IFindAllRentCategoriesResponse, IFindAllRentTagsResponse } from '~/models/response/RentRes.model'
+import type { IFindAllRentPostsPaginateQuery } from '~/models/request/RentReq.model'
+import type { IFindAllRentCategoriesResponse, IFindAllRentPostsPaginateResponse, IFindAllRentTagsResponse } from '~/models/response/RentRes.model'
 
 export interface IRentProvider {
   findAllRentTags (): Promise<IFindAllRentTagsResponse>
   findAllRentCategories (): Promise<IFindAllRentCategoriesResponse>
+  findAllRentPostsPaginate (query: IFindAllRentPostsPaginateQuery): Promise<IFindAllRentPostsPaginateResponse>
 }
 
 class RentProvider extends HttpRequest implements IRentProvider {
@@ -18,6 +20,12 @@ class RentProvider extends HttpRequest implements IRentProvider {
   public async findAllRentCategories (): Promise<IFindAllRentCategoriesResponse> {
     this.setUserAuthHeader()
     const response = await this.get(`${this.urlPrefix}/categories`)
+    return response
+  }
+
+  public async findAllRentPostsPaginate (query: IFindAllRentPostsPaginateQuery): Promise<IFindAllRentPostsPaginateResponse> {
+    this.setUserAuthHeader()
+    const response = await this.get(`${this.urlPrefix}`, { params: query })
     return response
   }
 }
