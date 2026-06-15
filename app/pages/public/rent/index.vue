@@ -42,26 +42,45 @@
     </div>
 
     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-      <RentCard @rent="rentModalVisible = true" />
-      <RentCard @rent="rentModalVisible = true" />
-      <RentCard @rent="rentModalVisible = true" />
-      <RentCard @rent="rentModalVisible = true" />
-      <RentCard @rent="rentModalVisible = true" />
-      <RentCard @rent="rentModalVisible = true" />
-      <RentCard @rent="rentModalVisible = true" />
+      <RentCard v-for="(item, index) in items" :key="index" :item="item" @rent="rentModalVisible = true" />
     </div>
   </div>
   <RentModal v-model:visible="rentModalVisible" />
 </template>
 
 <script lang="ts" setup>
+import { onMounted, ref } from 'vue'
 import RentModal from '@/components/rent/RentModal.vue'
+import type { IFindAllRentPostList } from '~/models/response/RentRes.model'
+import RentProvider, { type IRentProvider } from '~/resource/provider/Rent.provider'
 
 const router = useRouter()
 const rentModalVisible = ref(false)
+const { $handleLoading } = useNuxtApp()
+const items = ref<IFindAllRentPostList[]>([])
+const { pagination, extractPagination } = usePagination()
+const rentService: IRentProvider = new RentProvider()
+
+async function useFetch (): Promise<void> {
+  const response = await rentService.findAllRentPostsPaginate({
+    page: pagination.value.page,
+    limit: pagination.value.limit
+  })
+  items.value = response?.data || []
+  pagination.value = extractPagination(response?.pagination)
+}
+
+function fetch (): void {
+  $handleLoading(useFetch)
+}
+
 function isCreatePage (): void {
   router.push({ name: 'public-rent-create' })
 }
+
+onMounted((): void => {
+  fetch()
+})
 
 </script>
 
