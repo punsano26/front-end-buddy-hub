@@ -144,6 +144,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import StepperRent from '~/components/rent/StepperRent.vue'
+import RentProvider, { type IRentProvider } from '~/resource/provider/Rent.provider'
 import Button from '~/volt/Button.vue'
 
 definePageMeta({ layout: "navbar" });
@@ -161,6 +162,8 @@ function onFormSubmit (data: any): void {
   isSubmitted.value = true
   submittedData.value = data
 }
+
+const rentCategories = ref<any[]>([]);
 
 const rentServices = [
   {
@@ -180,6 +183,12 @@ const rentServices = [
     icon: 'pi pi-heart'
   }
 ]
+
+const rentService: IRentProvider = new RentProvider()
+// async function getCategoriesRent (): Promise<void> {
+//   const response = await rentService.findAllRentCategories();
+//   rentCategories.value = response 
+// }
 </script>
 
 <style>
