@@ -48,5 +48,5 @@ export interface IRating {
 export type IFindAllRentTagsResponse = IApiResponse<IFindAllRentTagsData[]>
 export type IFindAllRentCategoriesResponse = IApiResponse<IFindAllRentCategoriesData[]>
 export type IFindOneRentPostResponse = IApiResponse<IFindAllRentPostList>
-
+export type ICreateRentPostResponse = IApiResponse<IFindAllRentPostList>
 export interface IFindAllRentPostsPaginateResponse extends IBasePaginationResponse<IFindAllRentPostList> {}

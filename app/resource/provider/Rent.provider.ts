@@ -1,7 +1,8 @@
 import HttpRequest from '../HttpRequest'
-import type { IFindAllRentPostsPaginateQuery } from '~/models/request/RentReq.model'
+import type { ICreateRentPostPayload, IFindAllRentPostsPaginateQuery } from '~/models/request/RentReq.model'
 import type { TBaseParamsId } from '~/models/request/Request.model'
 import type {
+  ICreateRentPostResponse,
   IFindAllRentCategoriesResponse,
   IFindAllRentPostsPaginateResponse,
   IFindAllRentTagsResponse,
@@ -13,6 +14,7 @@ export interface IRentProvider {
   findAllRentCategories (): Promise<IFindAllRentCategoriesResponse>
   findAllRentPostsPaginate (query: IFindAllRentPostsPaginateQuery): Promise<IFindAllRentPostsPaginateResponse>
   findOneRentPostById (id: TBaseParamsId): Promise<IFindOneRentPostResponse>
+  createRentPost (payload: ICreateRentPostPayload): Promise<ICreateRentPostResponse>
 }
 
 class RentProvider extends HttpRequest implements IRentProvider {
@@ -39,6 +41,12 @@ class RentProvider extends HttpRequest implements IRentProvider {
   public async findOneRentPostById (id: TBaseParamsId): Promise<IFindOneRentPostResponse> {
     this.setUserAuthHeader()
     const response = await this.get(`${this.urlPrefix}/${id}`)
+    return response
+  }
+
+  public async createRentPost (payload: ICreateRentPostPayload): Promise<ICreateRentPostResponse> {
+    this.setUserAuthHeader()
+    const response = await this.post(`${this.urlPrefix}`, payload)
     return response
   }
 }
