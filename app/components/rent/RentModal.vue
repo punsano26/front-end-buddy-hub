@@ -31,7 +31,7 @@
       <InputLabelField label="กรอกระยะเวลา (นาที)">
         <InputNumber
           v-model="minuteInput"
-          :max="60"
+          :max="item?.maxDurationMinutes || 60"
           :min="1"
           class="w-full"
           @update:model-value="onMinuteInput" />
@@ -107,11 +107,37 @@ const emit = defineEmits<{
 }>()
 
 const selectedOption = ref<{ name: string, value: number } | null>(null)
-const options = ref([
-  { name: '15 นาที', value: 15 },
-  { name: '30 นาที', value: 30 },
-  { name: '50 นาที', value: 50 }
-])
+const options = computed((): { name: string, value: number }[] => {
+  const max = props.item?.maxDurationMinutes || 60
+
+  if (max <= 15) {
+    return [
+      { name: `${Math.round(max / 2)} นาที`, value: Math.round(max / 2) },
+      { name: `${max} นาที`, value: max }
+    ]
+  }
+
+  if (max <= 30) {
+    return [
+      { name: '15 นาที', value: 15 },
+      { name: `${max} นาที`, value: max }
+    ]
+  }
+
+  if (max <= 60) {
+    return [
+      { name: '15 นาที', value: 15 },
+      { name: '30 นาที', value: 30 },
+      { name: `${max} นาที`, value: max }
+    ]
+  }
+
+  return [
+    { name: '30 นาที', value: 30 },
+    { name: '60 นาที', value: 60 },
+    { name: `${max} นาที`, value: max }
+  ]
+})
 
 function onSelectOption (option: { name: string, value: number } | null): void {
   if (option) {
