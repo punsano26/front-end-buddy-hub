@@ -159,24 +159,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: 1,
-  services: (): RentServiceOption[] => [
-    {
-      id: 'casual-friend',
-      title: 'เพื่อนคุยทั่วไป (Casual Friend)',
-      priceLabel: '4-10 เหรียญ/นาที',
-      description: 'บริการเพื่อนคุยทั่วไปสำหรับผู้ที่ต้องการพูดคุยและแชร์ประสบการณ์ชีวิต',
-      icon: 'pi pi-comments'
-    },
-    {
-      id: 'emotional-support',
-      title: 'ที่ปรึกษาทางใจ (Emotional Support)',
-      priceLabel: '12-21 เหรียญ/นาที',
-      description: 'รับฟังและให้คำปรึกษาในเรื่องส่วนตัว เช่น ความเครียด ความสัมพันธ์ หรือปัญหาชีวิตต่างๆ โดยไม่ตัดสินและเป็นความลับ',
-      note: 'ข้อมูลส่วนตัวจะถูกเก็บเป็นความลับและไม่ถูกเปิดเผย',
-      noteIcon: 'pi pi-shield',
-      icon: 'pi pi-heart'
-    }
-  ]
+  services: (): RentServiceOption[] => []
 })
 
 const emit = defineEmits<{
