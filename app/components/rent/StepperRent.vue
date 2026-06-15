@@ -105,7 +105,7 @@
             v-if="panel.value === 3"
             v-model:price="price"
             v-model:response-time="responseTime"
-            :selected-service-id="selectedServiceId"
+            :selected-service="selectedService"
             @next="activeStep = 4"
             @prev="activeStep = 2" />
           <CheckStep
@@ -219,10 +219,13 @@ const responseTime = ref<number>(15)
 
 // Auto-suggest price when service changes
 watch(selectedServiceId, (newId: string | null): void => {
-  if (newId === 'casual-friend') {
-    price.value = 4
-  } else if (newId === 'emotional-support') {
+  const service = props.services.find((s: RentServiceOption): boolean => s.id === newId)
+  if (!service) return
+
+  if (service.title.includes('ที่ปรึกษา') || service.title.toLowerCase().includes('emotional')) {
     price.value = 12
+  } else {
+    price.value = 4
   }
 })
 

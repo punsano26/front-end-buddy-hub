@@ -133,7 +133,7 @@
         <div class="w-full bg-white/70 dark:bg-slate-900/75 backdrop-blur-xl border border-white/20 dark:border-slate-800/80 rounded-3xl p-4 sm:p-6 lg:p-8 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.04)] dark:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.4)] transition-all duration-500">
           <StepperRent
             v-model="activeStep"
-            :services="rentServices"
+            :services="rentCategories"
             @submit="onFormSubmit" />
         </div>
       </div>
@@ -142,16 +142,19 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useToast } from 'primevue/usetoast'
 import StepperRent from '~/components/rent/StepperRent.vue'
+import type { IFindAllRentCategoriesData } from '~/models/response/RentRes.model'
 import RentProvider, { type IRentProvider } from '~/resource/provider/Rent.provider'
 import Button from '~/volt/Button.vue'
 
-definePageMeta({ layout: "navbar" });
+definePageMeta({ layout: 'navbar' })
 
 const activeStep = ref(1)
 const isSubmitted = ref(false)
 const submittedData = ref<any>(null)
+const toast = useToast()
 
 const router = useRouter()
 function navigateToRent (): void {
@@ -163,32 +166,58 @@ function onFormSubmit (data: any): void {
   submittedData.value = data
 }
 
-const rentCategories = ref<any[]>([]);
+interface RentServiceOption {
+  id: string
+  title: string
+  priceLabel: string
+  description: string
+  icon?: string
+  note?: string
+  noteIcon?: string
+}
 
-const rentServices = [
-  {
-    id: 'casual-friend',
-    title: 'เพื่อนคุยทั่วไป (Casual Friend)',
-    priceLabel: '4-10 เหรียญ/นาที',
-    description: 'บริการเพื่อนคุยทั่วไปสำหรับผู้ที่ต้องการพูดคุยและแชร์ประสบการณ์ชีวิต',
-    icon: 'pi pi-comments'
-  },
-  {
-    id: 'emotional-support',
-    title: 'ที่ปรึกษาทางใจ (Emotional Support)',
-    priceLabel: '12-21 เหรียญ/นาที',
-    description: 'รับฟังและให้คำปรึกษาในเรื่องส่วนตัว เช่น ความเครียด ความสัมพันธ์ หรือปัญหาชีวิตต่างๆ โดยไม่ตัดสินและเป็นความลับ',
-    note: 'ข้อมูลส่วนตัวจะถูกเก็บเป็นความลับและไม่ถูกเปิดเผย',
-    noteIcon: 'pi pi-shield',
-    icon: 'pi pi-heart'
-  }
-]
+const rentCategories = ref<RentServiceOption[]>([])
 
 const rentService: IRentProvider = new RentProvider()
-// async function getCategoriesRent (): Promise<void> {
-//   const response = await rentService.findAllRentCategories();
-//   rentCategories.value = response 
-// }
+async function getCategoriesRent (): Promise<void> {
+  const { $handleLoading } = useNuxtApp()
+  await $handleLoading(async (): Promise<void> => {
+    const response = await rentService.findAllRentCategories()
+    if (response && response.data) {
+      rentCategories.value = response.data.map((category: IFindAllRentCategoriesData): RentServiceOption => {
+        const name = category.name
+        let icon = 'pi pi-comments'
+        let priceLabel = '4-10 เหรียญ/นาที'
+        let note: string | undefined
+        let noteIcon = 'pi pi-shield'
+
+        if (name.includes('ที่ปรึกษา') || name.toLowerCase().includes('emotional')) {
+          icon = 'pi pi-heart'
+          priceLabel = '12-21 เหรียญ/นาที'
+          note = 'ข้อมูลส่วนตัวจะถูกเก็บเป็นความลับและไม่ถูกเปิดเผย'
+        }
+
+        return {
+          id: category.id.toString(),
+          title: name,
+          priceLabel: priceLabel,
+          description: category.description,
+          icon: icon,
+          note: note,
+          noteIcon: noteIcon
+        }
+      })
+    }
+  }, {
+    toast: {
+      instance: toast
+    }
+  })
+}
+
+onMounted((): void => {
+  getCategoriesRent()
+})
 </script>
 
 <style>

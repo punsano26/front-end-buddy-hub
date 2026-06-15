@@ -1,3 +1,5 @@
+import type { IApiResponse } from './Response.model'
+
 export interface IFindAllRentTagsData {
   id: number
   name: string
@@ -11,5 +13,5 @@ export interface IFindAllRentCategoriesData {
   isActive: boolean
 }
 
-export type IFindAllRentTagsResponse = IFindAllRentTagsData
-export type IFindAllRentCategoriesResponse = IFindAllRentCategoriesData
+export type IFindAllRentTagsResponse = IApiResponse<IFindAllRentTagsData[]>
+export type IFindAllRentCategoriesResponse = IApiResponse<IFindAllRentCategoriesData[]>
