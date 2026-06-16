@@ -290,9 +290,10 @@
     </Card>
     <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-end">
       <Button
+        :disabled="!hasChanges"
         label="บันทึกการเปลี่ยนแปลง"
         icon="pi pi-save"
-        pt:root:class="w-full sm:w-auto bg-gradient-primary border-none shadow-md hover:shadow-lg hover:scale-[1.02] transition-all px-5 sm:px-8 py-2.5 sm:py-3 rounded-2xl cursor-pointer"
+        pt:root:class="w-full sm:w-auto bg-gradient-primary border-none shadow-md hover:shadow-lg hover:scale-[1.02] transition-all px-5 sm:px-8 py-2.5 sm:py-3 rounded-2xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none"
         @click="saveChanges" />
       <Button
         label="ลบโพสต์เช่าคุยนี้"
@@ -300,6 +301,13 @@
         pt:root:class="w-full sm:w-auto bg-red-500 hover:bg-red-600! border-none shadow-md hover:shadow-lg hover:scale-[1.02] transition-all px-5 sm:px-8 py-2.5 sm:py-3 rounded-2xl cursor-pointer"
         @click="deletePost" />
     </div>
+
+    <ConfirmModalDialog
+      v-model:visible="dialogOpenConfirmDeletePost"
+      confirm-button="ใช่, ฉันต้องการลบโพสต์"
+      message="คุณแน่ใจหรือไม่ว่าต้องการลบโพสต์เช่าคุยนี้?"
+      title="ยืนยันการลบโพสต์"
+      @confirm="confirmDeletePost" />
   </div>
 </template>
 
@@ -334,6 +342,35 @@ const isActive = ref<boolean>(true)
 const testDuration = ref<number>(30)
 const item = ref<IFindAllRentPostList>()
 const submitted = ref<boolean>(false)
+const dialogOpenConfirmDeletePost = ref<boolean>(false)
+
+const initialData = ref<{
+  tagline: string
+  description: string
+  selectedExpertise: string[]
+  price: number | null
+  responseTime: number
+  isActive: boolean
+} | null>(null)
+
+function arraysEqual (a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false
+  const sortedA = [...a].sort()
+  const sortedB = [...b].sort()
+  return sortedA.every((val, index) => val === sortedB[index])
+}
+
+const hasChanges = computed((): boolean => {
+  if (!initialData.value) return false
+  return (
+    tagline.value !== initialData.value.tagline ||
+    description.value !== initialData.value.description ||
+    price.value !== initialData.value.price ||
+    responseTime.value !== initialData.value.responseTime ||
+    isActive.value !== initialData.value.isActive ||
+    !arraysEqual(selectedExpertise.value, initialData.value.selectedExpertise)
+  )
+})
 
 const priceTier = computed((): { label: string, style: string } => {
   const p = price.value || 0
@@ -400,6 +437,15 @@ async function useFetch (): Promise<void> {
     price.value = detail.coinRatePerMinute
     responseTime.value = detail.maxDurationMinutes
     isActive.value = detail.isActive
+
+    initialData.value = {
+      tagline: tagline.value,
+      description: description.value,
+      selectedExpertise: [...selectedExpertise.value],
+      price: price.value,
+      responseTime: responseTime.value,
+      isActive: isActive.value
+    }
   }
 }
 
@@ -456,16 +502,18 @@ async function useDeletePost (): Promise<void> {
 }
 
 function deletePost (): void {
-  if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบโพสต์เช่าคุยนี้?')) {
-    $handleLoading(useDeletePost, {
-      toast: {
-        instance: toast,
-        success: {
-          detail: 'ลบโพสต์เช่าคุยสำเร็จ'
-        }
+  dialogOpenConfirmDeletePost.value = true
+}
+
+function confirmDeletePost (): void {
+  $handleLoading(useDeletePost, {
+    toast: {
+      instance: toast,
+      success: {
+        detail: 'ลบโพสต์เช่าคุยสำเร็จ'
       }
-    })
-  }
+    }
+  })
 }
 
 onMounted((): void => {
