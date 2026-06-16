@@ -142,9 +142,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import StepperRent from '~/components/rent/StepperRent.vue'
+import type { ICreateRentPostPayload } from '~/models/request/RentReq.model'
 import type { IFindAllRentCategoriesData } from '~/models/response/RentRes.model'
 import RentProvider, { type IRentProvider } from '~/resource/provider/Rent.provider'
 import Button from '~/volt/Button.vue'
@@ -162,8 +163,30 @@ function navigateToRent (): void {
 }
 
 function onFormSubmit (data: any): void {
-  isSubmitted.value = true
-  submittedData.value = data
+  const payload: ICreateRentPostPayload = {
+    categoryId: Number(data.service?.id || 0),
+    tagline: data.tagline,
+    description: data.bio,
+    coinRatePerMinute: Number(data.price || 0),
+    maxDurationMinutes: Number(data.responseTime || 0),
+    tagNames: data.expertises || []
+  }
+
+  $handleLoading(
+    async (): Promise<void> => {
+      await rentService.createRentPost(payload)
+      submittedData.value = data
+      isSubmitted.value = true
+    },
+    {
+      toast: {
+        instance: toast,
+        success: {
+          detail: 'เปิดรับเช่าเพื่อนคุยสำเร็จ'
+        }
+      }
+    }
+  )
 }
 
 interface RentServiceOption {
@@ -177,10 +200,9 @@ interface RentServiceOption {
 }
 
 const rentCategories = ref<RentServiceOption[]>([])
-
+const { $handleLoading } = useNuxtApp()
 const rentService: IRentProvider = new RentProvider()
 async function getCategoriesRent (): Promise<void> {
-  const { $handleLoading } = useNuxtApp()
   await $handleLoading(async (): Promise<void> => {
     const response = await rentService.findAllRentCategories()
     if (response && response.data) {
@@ -207,10 +229,6 @@ async function getCategoriesRent (): Promise<void> {
           noteIcon: noteIcon
         }
       })
-    }
-  }, {
-    toast: {
-      instance: toast
     }
   })
 }

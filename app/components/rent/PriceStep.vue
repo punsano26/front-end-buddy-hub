@@ -93,9 +93,9 @@
               <div class="relative flex items-center w-full group">
                 <InputNumber
                   v-model="responseTime"
-                  :max="240"
+                  :max="60"
                   :min="1"
-                  class="w-full !rounded-xl transition-all duration-300 border-slate-200/80 dark:border-slate-850 hover:border-indigo-500/30 focus:border-indigo-500"
+                  class="w-full rounded-xl! transition-all duration-300 border-slate-200/80 dark:border-slate-850 hover:border-indigo-500/30 focus:border-indigo-500"
                   placeholder="เช่น 15" />
                 <span class="absolute right-4 text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 pointer-events-none">
                   นาที
@@ -246,7 +246,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import InputLabelField from '~/components/input/InputLabelField.vue'
 import Button from '~/volt/Button.vue'
 import Divider from '~/volt/Divider.vue'
