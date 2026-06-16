@@ -1,5 +1,5 @@
 import HttpRequest from '../HttpRequest'
-import type { ICreateRentPostPayload, IFindAllRentPostsPaginateQuery } from '~/models/request/RentReq.model'
+import type { ICreateRentPostPayload, IFindAllRentPostsPaginateQuery, IUpdateRentPostPayload } from '~/models/request/RentReq.model'
 import type { TBaseParamsId } from '~/models/request/Request.model'
 import type {
   ICreateRentPostResponse,
@@ -8,6 +8,7 @@ import type {
   IFindAllRentTagsResponse,
   IFindOneRentPostResponse
 } from '~/models/response/RentRes.model'
+import type { IMessageResponse } from '~/models/response/Response.model'
 
 export interface IRentProvider {
   findAllRentTags (): Promise<IFindAllRentTagsResponse>
@@ -15,6 +16,9 @@ export interface IRentProvider {
   findAllRentPostsPaginate (query: IFindAllRentPostsPaginateQuery): Promise<IFindAllRentPostsPaginateResponse>
   findOneRentPostById (id: TBaseParamsId): Promise<IFindOneRentPostResponse>
   createRentPost (payload: ICreateRentPostPayload): Promise<ICreateRentPostResponse>
+  findOneMyRentPost (): Promise<IFindOneRentPostResponse>
+  updateRentPost (id: TBaseParamsId, payload: IUpdateRentPostPayload): Promise<IFindOneRentPostResponse>
+  deleteRentPost (id: TBaseParamsId): Promise<IMessageResponse>
 }
 
 class RentProvider extends HttpRequest implements IRentProvider {
@@ -47,6 +51,24 @@ class RentProvider extends HttpRequest implements IRentProvider {
   public async createRentPost (payload: ICreateRentPostPayload): Promise<ICreateRentPostResponse> {
     this.setUserAuthHeader()
     const response = await this.post(`${this.urlPrefix}`, payload)
+    return response
+  }
+
+  public async findOneMyRentPost (): Promise<IFindOneRentPostResponse> {
+    this.setUserAuthHeader()
+    const response = await this.get(`${this.urlPrefix}/me`)
+    return response
+  }
+
+  public async updateRentPost (id: TBaseParamsId, payload: IUpdateRentPostPayload): Promise<IFindOneRentPostResponse> {
+    this.setUserAuthHeader()
+    const response = await this.patch(`${this.urlPrefix}/${id}`, payload)
+    return response
+  }
+
+  public async deleteRentPost (id: TBaseParamsId): Promise<IMessageResponse> {
+    this.setUserAuthHeader()
+    const response = await this.delete(`${this.urlPrefix}/${id}`)
     return response
   }
 }

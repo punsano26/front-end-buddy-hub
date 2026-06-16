@@ -9,6 +9,16 @@ export interface ICreateRentPostPayload {
   tagNames: string[]
 }
 
+export interface IUpdateRentPostPayload {
+  categoryId?: number
+  tagline?: string
+  description?: string
+  coinRatePerMinute?: number
+  maxDurationMinutes?: number
+  isActive?: boolean
+  tagNames?: string[]
+}
+
 export interface IFindRentPostsFilters {
 
 }
