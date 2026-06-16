@@ -314,9 +314,9 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import type { IFindAllRentPostList, IFindAllRentTagsData } from '~/models/response/RentRes.model'
+import type { IFindAllRentPostList } from '~/models/response/RentRes.model'
 import { validate, validateForm } from '~/plugins/Validate'
-import RentProvider, { type IRentProvider } from '~/resource/provider/Rent.provider'
+import { useRentStore } from '~/stores/Rent'
 import Badge from '~/volt/Badge.vue'
 
 definePageMeta({
@@ -325,7 +325,7 @@ definePageMeta({
   backPlacement: 'page'
 })
 
-const rentService: IRentProvider = new RentProvider()
+const rentStore = useRentStore()
 const { $handleLoading } = useNuxtApp()
 const dayjs = useDayjs()
 const toast = useToast()
@@ -422,13 +422,11 @@ const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> 
 }))
 
 async function useFetch (): Promise<void> {
-  const tagsResponse = await rentService.findAllRentTags()
-  if (tagsResponse && tagsResponse.data) {
-    expertiseOptions.value = tagsResponse.data.map((tag: IFindAllRentTagsData): string => tag.name)
-  }
+  await rentStore.fetchTags()
+  expertiseOptions.value = rentStore.tagNames
 
-  const response = await rentService.findOneMyRentPost()
-  const detail = response?.data
+  await rentStore.fetchMyPost()
+  const detail = rentStore.myPost
   if (detail) {
     item.value = detail
     tagline.value = detail.tagline || ''
@@ -468,7 +466,7 @@ async function useUpdatePost (): Promise<void> {
     isActive: isActive.value,
     tagNames: selectedExpertise.value
   }
-  await rentService.updateRentPost(item.value.id, payload)
+  await rentStore.updatePost(item.value.id, payload)
   await useFetch()
 }
 
@@ -497,7 +495,7 @@ function saveChanges (): void {
 
 async function useDeletePost (): Promise<void> {
   if (!item.value) return
-  await rentService.deleteRentPost(item.value.id)
+  await rentStore.deletePost(item.value.id)
   router.push({ name: 'public-rent' })
 }
 

@@ -147,7 +147,7 @@ import { useToast } from 'primevue/usetoast'
 import StepperRent from '~/components/rent/StepperRent.vue'
 import type { ICreateRentPostPayload } from '~/models/request/RentReq.model'
 import type { IFindAllRentCategoriesData } from '~/models/response/RentRes.model'
-import RentProvider, { type IRentProvider } from '~/resource/provider/Rent.provider'
+import { useRentStore } from '~/stores/Rent'
 import Button from '~/volt/Button.vue'
 
 definePageMeta({ layout: 'navbar' })
@@ -174,7 +174,7 @@ function onFormSubmit (data: any): void {
 
   $handleLoading(
     async (): Promise<void> => {
-      await rentService.createRentPost(payload)
+      await rentStore.createPost(payload)
       submittedData.value = data
       isSubmitted.value = true
     },
@@ -201,35 +201,33 @@ interface RentServiceOption {
 
 const rentCategories = ref<RentServiceOption[]>([])
 const { $handleLoading } = useNuxtApp()
-const rentService: IRentProvider = new RentProvider()
+const rentStore = useRentStore()
 async function getCategoriesRent (): Promise<void> {
   await $handleLoading(async (): Promise<void> => {
-    const response = await rentService.findAllRentCategories()
-    if (response && response.data) {
-      rentCategories.value = response.data.map((category: IFindAllRentCategoriesData): RentServiceOption => {
-        const name = category.name
-        let icon = 'pi pi-comments'
-        let priceLabel = '4-10 เหรียญ/นาที'
-        let note: string | undefined
-        let noteIcon = 'pi pi-shield'
+    await rentStore.fetchCategories()
+    rentCategories.value = rentStore.categories.map((category: IFindAllRentCategoriesData): RentServiceOption => {
+      const name = category.name
+      let icon = 'pi pi-comments'
+      let priceLabel = '4-10 เหรียญ/นาที'
+      let note: string | undefined
+      let noteIcon = 'pi pi-shield'
 
-        if (name.includes('ที่ปรึกษา') || name.toLowerCase().includes('emotional')) {
-          icon = 'pi pi-heart'
-          priceLabel = '12-21 เหรียญ/นาที'
-          note = 'ข้อมูลส่วนตัวจะถูกเก็บเป็นความลับและไม่ถูกเปิดเผย'
-        }
+      if (name.includes('ที่ปรึกษา') || name.toLowerCase().includes('emotional')) {
+        icon = 'pi pi-heart'
+        priceLabel = '12-21 เหรียญ/นาที'
+        note = 'ข้อมูลส่วนตัวจะถูกเก็บเป็นความลับและไม่ถูกเปิดเผย'
+      }
 
-        return {
-          id: category.id.toString(),
-          title: name,
-          priceLabel: priceLabel,
-          description: category.description,
-          icon: icon,
-          note: note,
-          noteIcon: noteIcon
-        }
-      })
-    }
+      return {
+        id: category.id.toString(),
+        title: name,
+        priceLabel: priceLabel,
+        description: category.description,
+        icon: icon,
+        note: note,
+        noteIcon: noteIcon
+      }
+    })
   })
 }
 

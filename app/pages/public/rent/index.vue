@@ -42,39 +42,35 @@
     </div>
 
     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-      <RentCard v-for="(item, index) in items" :key="index" :item="item" @rent="selectRentPost(item.id)" />
+      <RentCard v-for="(item, index) in rentStore.posts" :key="index" :item="item" @rent="selectRentPost(item.id)" />
     </div>
   </div>
-  <RentModal :item="selectedRentPost" :wallet-balance="myWalletBalance" v-model:visible="rentModalVisible" @confirm="onConfirmRent" />
+  <RentModal :item="rentStore.selectedPost" :wallet-balance="myWalletBalance" v-model:visible="rentModalVisible" @confirm="onConfirmRent" />
 </template>
 
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
 import RentModal from '@/components/rent/RentModal.vue'
 import type { TBaseParamsId } from '~/models/request/Request.model'
-import type { IFindAllRentPostList } from '~/models/response/RentRes.model'
 import type { IFindWalletBalanceData } from '~/models/response/WallRes.model'
-import RentProvider, { type IRentProvider } from '~/resource/provider/Rent.provider'
 import WalletProvider, { type IWalletProvider } from '~/resource/provider/Wallet.provider'
+import { useRentStore } from '~/stores/Rent'
 
 const router = useRouter()
 const rentModalVisible = ref(false)
 const { $handleLoading } = useNuxtApp()
-const items = ref<IFindAllRentPostList[]>([])
 const myWalletBalance = ref<IFindWalletBalanceData>({ userId: 0, balance: 0 })
-const selectedRentPost = ref<IFindAllRentPostList | null>(null)
 const { pagination, extractPagination } = usePagination()
-const rentService: IRentProvider = new RentProvider()
+const rentStore = useRentStore()
 const walletService: IWalletProvider = new WalletProvider()
 const conversationsRent = useState<any[]>('conversationsRent')
 
 async function useFetch (): Promise<void> {
-  const response = await rentService.findAllRentPostsPaginate({
+  const paginationResult = await rentStore.fetchPosts({
     page: pagination.value.page,
     limit: pagination.value.limit
   })
-  items.value = response?.data || []
-  pagination.value = extractPagination(response?.pagination)
+  pagination.value = extractPagination(paginationResult)
 }
 
 function fetch (): void {
@@ -82,8 +78,7 @@ function fetch (): void {
 }
 
 async function onSelectedRentPost (id: TBaseParamsId): Promise<void> {
-  const response = await rentService.findOneRentPostById(id)
-  selectedRentPost.value = response?.data || null
+  await rentStore.fetchPostById(id)
   rentModalVisible.value = true
 }
 
@@ -101,8 +96,8 @@ function getMyWalletBalance (): void {
 }
 
 function onConfirmRent (payload: { duration: number, cost: number }): void {
-  if (!selectedRentPost.value) return
-  const provider = selectedRentPost.value.provider
+  if (!rentStore.selectedPost) return
+  const provider = rentStore.selectedPost.provider
 
   myWalletBalance.value.balance -= payload.cost
 
@@ -117,13 +112,13 @@ function onConfirmRent (payload: { duration: number, cost: number }): void {
       username: provider.username,
       profileImg: provider.profileImg,
       status: provider.isOnline ? 'online' : 'offline',
-      category: selectedRentPost.value.category?.name || 'เพื่อนคุย',
+      category: rentStore.selectedPost.category?.name || 'เพื่อนคุย',
       rating: String(provider.rating?.averageRating || '5.0'),
-      rate: String(selectedRentPost.value.coinRatePerMinute),
-      rateHour: String(selectedRentPost.value.coinRatePerMinute * 60),
+      rate: String(rentStore.selectedPost.coinRatePerMinute),
+      rateHour: String(rentStore.selectedPost.coinRatePerMinute * 60),
       lastMessageText: 'เริ่มเซสชันเช่าคุยแล้ว',
       lastMessageCreatedAt: new Date(),
-      welcomeMessage: selectedRentPost.value.description || 'สวัสดีค่ะ ยินดีต้อนรับนะคะ!',
+      welcomeMessage: rentStore.selectedPost.description || 'สวัสดีค่ะ ยินดีต้อนรับนะคะ!',
       sessionStatus: 'active',
       maxDurationMinutes: payload.duration
     })
