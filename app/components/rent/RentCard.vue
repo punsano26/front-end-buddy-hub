@@ -84,23 +84,36 @@
               <i class="pi pi-clock" /> สูงสุด {{ item.maxDurationMinutes }} นาที
             </p>
           </div>
+          <div>
+            <Button
+              icon="pi pi-eye"
+              pt:root:class="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition"
+              text
+              @click="rentPostDetailVisible = true" />
 
-          <Button
-            icon="pi pi-send"
-            label="เช่าคุย"
-            pt:label:class="font-semibold"
-            pt:root:class="bg-gradient-primary border-none px-4 py-2 shadow-sm hover:shadow-md hover:scale-105 transition"
-            size="small"
-            rounded
-            @click="emit('rent')" />
+            <Button
+              icon="pi pi-send"
+              label="เช่าคุย"
+              pt:label:class="font-semibold"
+              pt:root:class="bg-gradient-primary border-none px-4 py-2 shadow-sm hover:shadow-md hover:scale-105 transition"
+              size="small"
+              rounded
+              @click="emit('rent')" />
+          </div>
         </div>
       </div>
     </template>
   </Card>
+  <RentPostDetailDialog
+    v-model:visible="rentPostDetailVisible"
+    :item="item" />
 </template>
 
 <script lang="ts" setup>
+import RentPostDetailDialog from '~/components/rent/RentPostDetailDialog.vue'
 import type { IFindAllRentPostList } from '~/models/response/RentRes.model'
+
+const rentPostDetailVisible = ref(false)
 
 defineProps<{
   item: IFindAllRentPostList

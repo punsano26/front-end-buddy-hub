@@ -64,28 +64,43 @@
               selectedExpertises.includes(option)
                 ? 'bg-gradient-primary border-transparent text-white shadow-md shadow-indigo-500/10 scale-[1.03] cursor-pointer'
                 : selectedExpertises.length >= 5
-                  ? 'bg-slate-50 border-slate-100 text-slate-300 dark:bg-slate-900/30 dark:border-slate-900 dark:text-slate-600 cursor-not-allowed opacity-50'
+                  ? 'bg-slate-50 border-slate-100 text-slate-300 dark:bg-slate-900/30 dark:border-slate-900 dark:text-slate-605 cursor-not-allowed opacity-50'
                   : 'bg-slate-50/50 border-slate-200/80 text-slate-650 hover:border-indigo-500/30 hover:bg-slate-100 hover:text-indigo-600 dark:bg-slate-950 dark:border-slate-800/80 dark:text-slate-350 dark:hover:border-indigo-500/30 dark:hover:bg-slate-900 cursor-pointer shadow-2xs'
             ]"
             type="button"
             @click="toggleExpertise(option)">
             <i
               v-if="selectedExpertises.includes(option)"
-              class="pi pi-check text-[9px] text-white animate-scale-up" />
+              class="pi pi-times text-[9px] text-white animate-scale-up" />
             {{ option }}
           </button>
-          <Button>
-            <Tag
-              icon="pi pi-plus text-xs"
-              value="เพิ่มแท็ก" />
-          </Button>
-          <Button>
-            <i class="pi pi-cog text-xs" />
-            เพิ่มมาใหม่
-            <i
-              class="pi pi-times text-xs"
-              right />
-          </Button>
+
+          <!-- Inline Input for custom tag -->
+          <div
+            v-if="isAddingCustomTag"
+            class="flex items-center">
+            <input
+              ref="customTagInputRef"
+              v-model="customTagInput"
+              class="px-3.5 py-1.5 rounded-full border border-indigo-500 text-xs font-bold focus:outline-hidden dark:bg-slate-950 dark:text-white max-w-[120px]"
+              maxlength="20"
+              placeholder="ระบุแท็ก..."
+              type="text"
+              @blur="submitCustomTag"
+              @keydown.enter="submitCustomTag"
+              @keydown.esc="cancelCustomTag">
+          </div>
+
+          <!-- "+ เพิ่มแท็ก" Mini Button -->
+          <button
+            v-else
+            :disabled="selectedExpertises.length >= 5"
+            class="px-3.5 py-1.5 rounded-full border border-dashed border-indigo-500/60 text-indigo-600 hover:bg-indigo-500/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs font-bold flex items-center gap-1.5 active:scale-95 cursor-pointer dark:text-indigo-400 dark:border-indigo-500/40"
+            type="button"
+            @click="startAddingCustomTag">
+            <i class="pi pi-plus text-[10px]" />
+            เพิ่มแท็ก
+          </button>
         </div>
 
         <p
@@ -118,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import InputLabelField from '~/components/input/InputLabelField.vue'
 import InputLabelTextarea from '~/components/input/InputLabelTextarea.vue'
@@ -142,6 +157,88 @@ const rentService: IRentProvider = new RentProvider()
 const { $handleLoading } = useNuxtApp()
 const toast = useToast()
 const submitted = ref(false)
+
+const customTagInputRef = ref<HTMLInputElement | null>(null)
+const isAddingCustomTag = ref<boolean>(false)
+const customTagInput = ref<string>('')
+let isSubmitting = false
+
+function startAddingCustomTag (): void {
+  if (selectedExpertises.value.length >= 5) {
+    toast.add({ severity: 'warn', summary: 'คำเตือน', detail: 'เลือกความเชี่ยวชาญได้ไม่เกิน 5 อย่าง', life: 3000 })
+    return
+  }
+  isAddingCustomTag.value = true
+  nextTick((): void => {
+    customTagInputRef.value?.focus()
+  })
+}
+
+async function submitCustomTag (): Promise<void> {
+  if (isSubmitting) return
+  isSubmitting = true
+  try {
+    const tagName = customTagInput.value.trim()
+    if (!tagName) {
+      cancelCustomTag()
+      return
+    }
+
+    // Check if tag already exists in options (case insensitive)
+    const existingOption = expertiseOptions.value.find((opt: string): boolean => opt.toLowerCase() === tagName.toLowerCase())
+    const finalTagName = existingOption || tagName
+
+    // Check if already selected
+    if (selectedExpertises.value.includes(finalTagName)) {
+      toast.add({ severity: 'info', summary: 'ข้อมูล', detail: 'เลือกแท็กนี้อยู่แล้ว', life: 3000 })
+      cancelCustomTag()
+      return
+    }
+
+    // Check cap
+    if (selectedExpertises.value.length >= 5) {
+      toast.add({ severity: 'warn', summary: 'คำเตือน', detail: 'เลือกความเชี่ยวชาญได้ไม่เกิน 5 อย่าง', life: 3000 })
+      cancelCustomTag()
+      return
+    }
+
+    let success = false
+    // Call API to create/register custom tag
+    await $handleLoading(
+      async (): Promise<void> => {
+        await rentService.createTagsRent({ name: finalTagName })
+        await onGetAllRentTags()
+
+        const matchedTag = expertiseOptions.value.find((opt: string): boolean => opt.toLowerCase() === finalTagName.toLowerCase()) || finalTagName
+        if (!selectedExpertises.value.includes(matchedTag)) {
+          selectedExpertises.value.push(matchedTag)
+        }
+        success = true
+      }, {
+        toast: {
+          instance: toast,
+          success: {
+            detail: 'เพิ่มแท็กใหม่สำเร็จ'
+          }
+        }
+      }
+    )
+
+    if (success) {
+      cancelCustomTag()
+    } else {
+      isAddingCustomTag.value = false
+      customTagInput.value = ''
+    }
+  } finally {
+    isSubmitting = false
+  }
+}
+
+function cancelCustomTag (): void {
+  isAddingCustomTag.value = false
+  customTagInput.value = ''
+}
 
 const form = computed((): { tagline: string, bio: string, selectedExpertises: string[] } => ({
   tagline: tagline.value,

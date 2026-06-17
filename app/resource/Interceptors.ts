@@ -1,37 +1,15 @@
 import type { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios'
 import humps from 'humps'
 
-let cachedClientIp: string | null = '127.0.0.1'
-
-const enableXForwardedFor: boolean = import.meta.env.VITE_ENV_ENABLE_X_FORWARDED_FOR === 'true'
-
-if (enableXForwardedFor && typeof window !== 'undefined') {
-  fetch('https://api.ipify.org?format=json')
-    .then((response: Response): Promise<any> => response.json())
-    .then((data: any): void => {
-      cachedClientIp = (data?.ip as string) ?? '127.0.0.1'
-    })
-    .catch((): void => {
-      cachedClientIp = '127.0.0.1'
-    })
-}
-
 export function onRequest (config: AxiosRequestConfig): AxiosRequestConfig {
   config.headers = config.headers ?? {}
-
-  if (enableXForwardedFor && cachedClientIp && !config.headers['X-Forwarded-For']) {
-    if (typeof config.headers.set === 'function') {
-      config.headers.set('X-Forwarded-For', cachedClientIp)
-    } else {
-      config.headers['X-Forwarded-For'] = cachedClientIp
-    }
-  }
-
   if (config.headers['Content-Type'] === 'multipart/form-data') {
     return config
   }
   return {
     ...config
+    // data: config.data ? humps.decamelizeKeys(config.data) : config.data,
+    // params: config.params ? humps.decamelizeKeys(config.params) : config.params
   }
 }
 

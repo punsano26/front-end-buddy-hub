@@ -173,33 +173,14 @@ interface RentFormSubmitData {
   responseTime: number
 }
 
-const rentService: IRentProvider = new RentProvider()
 const activeStep = ref(1)
 const isSubmitted = ref(false)
 const submittedData = ref<RentFormSubmitData | null>(null)
+const rentCategories = ref<RentServiceOption[]>([])
 const toast = useToast()
 const router = useRouter()
 function navigateToRent (): void {
   router.push({ name: 'public-rent' })
-}
-
-const form = ref({
-  name: '',
-})
-function resetForm (): void {
-  form.value.name = ''
-}
- async function onCreateTags (): Promise<void> {
-   await rentService.createTagsRent({ name: form.value.name })
-    resetForm()
-}
-
-async function createTags (): Promise<void> {
-  $handleLoading(onCreateTags, {
-    toast: {
-      instance: toast,
-    }
-  })
 }
 
 function onFormSubmit (data: RentFormSubmitData): void {
@@ -229,8 +210,6 @@ function onFormSubmit (data: RentFormSubmitData): void {
   )
 }
 
-
-const rentCategories = ref<RentServiceOption[]>([])
 const { $handleLoading } = useNuxtApp()
 const rentStore = useRentStore()
 async function getCategoriesRent (): Promise<void> {
