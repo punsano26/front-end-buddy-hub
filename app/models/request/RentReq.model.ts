@@ -9,6 +9,10 @@ export interface ICreateRentPostPayload {
   tagNames: string[]
 }
 
+export interface ICreateTagsRentPayload {
+  name: string
+}
+
 export interface IUpdateRentPostPayload {
   categoryId?: number
   tagline?: string

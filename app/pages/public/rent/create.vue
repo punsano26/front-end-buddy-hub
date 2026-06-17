@@ -147,22 +147,62 @@ import { useToast } from 'primevue/usetoast'
 import StepperRent from '~/components/rent/StepperRent.vue'
 import type { ICreateRentPostPayload } from '~/models/request/RentReq.model'
 import type { IFindAllRentCategoriesData } from '~/models/response/RentRes.model'
+import type { IRentProvider } from '~/resource/provider/Rent.provider'
+import RentProvider from '~/resource/provider/Rent.provider'
 import { useRentStore } from '~/stores/Rent'
 import Button from '~/volt/Button.vue'
 
 definePageMeta({ layout: 'navbar' })
 
+interface RentServiceOption {
+  id: string
+  title: string
+  priceLabel: string
+  description: string
+  icon?: string
+  note?: string
+  noteIcon?: string
+}
+
+interface RentFormSubmitData {
+  service: RentServiceOption | null
+  tagline: string
+  bio: string
+  expertises: string[]
+  price: number | null
+  responseTime: number
+}
+
+const rentService: IRentProvider = new RentProvider()
 const activeStep = ref(1)
 const isSubmitted = ref(false)
-const submittedData = ref<any>(null)
+const submittedData = ref<RentFormSubmitData | null>(null)
 const toast = useToast()
-
 const router = useRouter()
 function navigateToRent (): void {
   router.push({ name: 'public-rent' })
 }
 
-function onFormSubmit (data: any): void {
+const form = ref({
+  name: '',
+})
+function resetForm (): void {
+  form.value.name = ''
+}
+ async function onCreateTags (): Promise<void> {
+   await rentService.createTagsRent({ name: form.value.name })
+    resetForm()
+}
+
+async function createTags (): Promise<void> {
+  $handleLoading(onCreateTags, {
+    toast: {
+      instance: toast,
+    }
+  })
+}
+
+function onFormSubmit (data: RentFormSubmitData): void {
   const payload: ICreateRentPostPayload = {
     categoryId: Number(data.service?.id || 0),
     tagline: data.tagline,
@@ -189,15 +229,6 @@ function onFormSubmit (data: any): void {
   )
 }
 
-interface RentServiceOption {
-  id: string
-  title: string
-  priceLabel: string
-  description: string
-  icon?: string
-  note?: string
-  noteIcon?: string
-}
 
 const rentCategories = ref<RentServiceOption[]>([])
 const { $handleLoading } = useNuxtApp()

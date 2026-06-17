@@ -74,6 +74,18 @@
               class="pi pi-check text-[9px] text-white animate-scale-up" />
             {{ option }}
           </button>
+          <Button>
+            <Tag
+              icon="pi pi-plus text-xs"
+              value="เพิ่มแท็ก" />
+          </Button>
+          <Button>
+            <i class="pi pi-cog text-xs" />
+            เพิ่มมาใหม่
+            <i
+              class="pi pi-times text-xs"
+              right />
+          </Button>
         </div>
 
         <p
@@ -106,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import InputLabelField from '~/components/input/InputLabelField.vue'
 import InputLabelTextarea from '~/components/input/InputLabelTextarea.vue'

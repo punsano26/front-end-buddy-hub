@@ -44,7 +44,13 @@ export interface IRating {
   reviewCount: number
 }
 
+export interface ICreateTagsRentData {
+  id: number
+  name: string
+  isActive: boolean
+}
 
+export type ICreateTagsRentResponse = IApiResponse<ICreateTagsRentData[]>
 export type IFindAllRentTagsResponse = IApiResponse<IFindAllRentTagsData[]>
 export type IFindAllRentCategoriesResponse = IApiResponse<IFindAllRentCategoriesData[]>
 export type IFindOneRentPostResponse = IApiResponse<IFindAllRentPostList>
