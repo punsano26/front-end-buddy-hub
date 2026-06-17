@@ -56,83 +56,105 @@
       <!-- Details & Stats Container -->
       <div class="px-6 flex flex-col gap-4">
         <!-- Tagline & Description Card -->
-        <div class="bg-gradient-to-br from-slate-50 to-slate-100/50 dark:from-slate-800/40 dark:to-slate-800/20 border border-slate-100  rounded-2xl p-4">
-          <h4 class="text-base font-bold text-slate-850 dark:text-slate-200 flex items-center gap-2 mb-2 leading-snug">
-            <span class="text-lg">🤍</span> {{ displayData.tagline }}
-          </h4>
-          <p
-            v-if="displayData.description"
-            class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            {{ displayData.description }}
-          </p>
-        </div>
+        <Card
+          pt:body:class="p-4 gap-0"
+          pt:root:class="bg-slate-50/60 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-none">
+          <template #content>
+            <h4 class="text-base font-bold text-slate-850 dark:text-slate-200 flex items-center gap-2 mb-2 leading-snug">
+              <span class="text-lg">🤍</span> {{ displayData.tagline }}
+            </h4>
+            <p
+              v-if="displayData.description"
+              class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              {{ displayData.description }}
+            </p>
+          </template>
+        </Card>
 
         <!-- Stats Grid -->
         <div class="grid grid-cols-3 gap-4">
           <!-- Rate Per Minute -->
-          <div class="bg-amber-50/40 dark:bg-amber-950/10 border border-amber-100/50 dark:border-amber-900/20 rounded-2xl p-3.5 text-center transition-all duration-300 hover:shadow-xs">
-            <div class="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center mx-auto mb-2">
-              <i class="pi pi-bitcoin text-amber-500 text-sm" />
-            </div>
-            <p class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-              เรต/นาที
-            </p>
-            <p class="text-sm font-bold text-slate-700 dark:text-slate-200 mt-0.5">
-              {{ displayData.coinRatePerMinute }} เหรียญ
-            </p>
-          </div>
+          <Card
+            pt:body:class="p-3.5 gap-0"
+            pt:root:class="bg-amber-50/40 dark:bg-amber-950/10 border border-amber-100/50 dark:border-amber-900/20 rounded-2xl text-center shadow-none transition-all duration-300 hover:shadow-xs">
+            <template #content>
+              <div class="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center mx-auto mb-2">
+                <i class="pi pi-bitcoin text-amber-500 text-sm" />
+              </div>
+              <p class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                เรต/นาที
+              </p>
+              <p class="text-sm font-bold text-slate-700 dark:text-slate-200 mt-0.5">
+                {{ displayData.coinRatePerMinute }} เหรียญ
+              </p>
+            </template>
+          </Card>
 
           <!-- Max Duration -->
-          <div class="bg-blue-50/40 dark:bg-blue-950/10 border border-blue-100/50 dark:border-blue-900/20 rounded-2xl p-3.5 text-center transition-all duration-300 hover:shadow-xs">
-            <div class="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center mx-auto mb-2">
-              <i class="pi pi-clock text-blue-500 text-sm" />
-            </div>
-            <p class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-              นานสูงสุด
-            </p>
-            <p class="text-sm font-bold text-slate-700 dark:text-slate-200 mt-0.5">
-              {{ displayData.maxDurationMinutes }} นาที
-            </p>
-          </div>
+          <Card
+            pt:body:class="p-3.5 gap-0"
+            pt:root:class="bg-blue-50/40 dark:bg-blue-950/10 border border-blue-100/50 dark:border-blue-900/20 rounded-2xl text-center shadow-none transition-all duration-300 hover:shadow-xs">
+            <template #content>
+              <div class="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center mx-auto mb-2">
+                <i class="pi pi-clock text-blue-500 text-sm" />
+              </div>
+              <p class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                นานสูงสุด
+              </p>
+              <p class="text-sm font-bold text-slate-700 dark:text-slate-200 mt-0.5">
+                {{ displayData.maxDurationMinutes }} นาที
+              </p>
+            </template>
+          </Card>
 
           <!-- Sessions count -->
-          <div class="bg-indigo-50/40 dark:bg-indigo-950/10 border border-indigo-100/50 dark:border-indigo-900/20 rounded-2xl p-3.5 text-center transition-all duration-300 hover:shadow-xs">
-            <div class="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-950/50 flex items-center justify-center mx-auto mb-2">
-              <i class="pi pi-activity text-indigo-500 text-sm" />
-            </div>
-            <p class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-              เซสชัน
-            </p>
-            <p class="text-sm font-bold text-slate-700 dark:text-slate-200 mt-0.5">
-              {{ displayData.sessionCount }} ครั้ง
-            </p>
-          </div>
+          <Card
+            pt:body:class="p-3.5 gap-0"
+            pt:root:class="bg-indigo-50/40 dark:bg-indigo-950/10 border border-indigo-100/50 dark:border-indigo-900/20 rounded-2xl text-center shadow-none transition-all duration-300 hover:shadow-xs">
+            <template #content>
+              <div class="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-950/50 flex items-center justify-center mx-auto mb-2">
+                <i class="pi pi-wave-pulse text-indigo-500 text-sm" />
+              </div>
+              <p class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                เซสชัน
+              </p>
+              <p class="text-sm font-bold text-slate-700 dark:text-slate-200 mt-0.5">
+                {{ displayData.sessionCount }} ครั้ง
+              </p>
+            </template>
+          </Card>
         </div>
 
         <!-- Rating & Reviews -->
-        <div class="bg-slate-50/60 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-850 rounded-xl px-4 py-3 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-950/30 flex items-center justify-center">
-              <i class="pi pi-star-fill text-amber-500 text-xs" />
+        <Card
+          pt:body:class="px-4 py-3"
+          pt:root:class="bg-slate-50/60 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 rounded-xl shadow-none">
+          <template #content>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-950/30 flex items-center justify-center">
+                  <i class="pi pi-star-fill text-amber-500 text-xs" />
+                </div>
+                <div>
+                  <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    รีวิวและการตอบรับ
+                  </p>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                    จากผู้ใช้งานจริงในระบบ
+                  </p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="text-sm font-bold text-slate-700 dark:text-slate-200">
+                  {{ displayData.rating.averageRating.toFixed(1) }} / 5.0
+                </p>
+                <p class="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                  {{ displayData.rating.reviewCount }} รีวิว
+                </p>
+              </div>
             </div>
-            <div>
-              <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                รีวิวและการตอบรับ
-              </p>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400">
-                จากผู้ใช้งานจริงในระบบ
-              </p>
-            </div>
-          </div>
-          <div class="text-right">
-            <p class="text-sm font-bold text-slate-700 dark:text-slate-200">
-              {{ displayData.rating.averageRating.toFixed(1) }} / 5.0
-            </p>
-            <p class="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-              {{ displayData.rating.reviewCount }} รีวิว
-            </p>
-          </div>
-        </div>
+          </template>
+        </Card>
 
         <!-- All tags list -->
         <div v-if="displayData.tags && displayData.tags.length">
@@ -140,12 +162,11 @@
             แท็กทั้งหมด
           </h5>
           <div class="flex flex-wrap gap-1.5">
-            <span
+            <Tag
               v-for="(tag, index) in displayData.tags"
               :key="index"
-              class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-750 transition duration-200">
-              {{ tag }}
-            </span>
+              :value="tag"
+              pt:root:class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50" />
           </div>
         </div>
       </div>
@@ -170,6 +191,10 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import type { IFindAllRentPostList, IFindAllRentTagsData } from '~/models/response/RentRes.model'
+import Button from '~/volt/Button.vue'
+import Card from '~/volt/Card.vue'
+import Dialog from '~/volt/Dialog.vue'
+import Tag from '~/volt/Tag.vue'
 
 interface DisplayData {
   nickname: string
