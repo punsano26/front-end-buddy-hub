@@ -12,33 +12,29 @@
       <!-- Avatar with status indicator -->
       <div class="relative flex-shrink-0">
         <img
-          :src="displayData.profileImg"
+          :src="item?.provider.profileImg ? imageBaseUrl + item.provider.profileImg : '/png/upload-profile.png'"
           alt="Profile Image"
           class="w-24 h-24 rounded-full border-4 border-[#0c1612] bg-slate-800 object-cover shadow-lg">
         <span
           :class="[
             'absolute bottom-1 right-1 w-4.5 h-4.5 border-3 border-[#13231c] rounded-full',
-            displayData.isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+            item?.provider.isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
           ]" />
       </div>
 
       <!-- Info Details -->
       <div class="flex-1 flex flex-col gap-1">
         <h3 class="text-2xl font-bold text-white leading-tight">
-          {{ displayData.nickname }}
+          {{ item?.provider.nickname || item?.provider.username }}
         </h3>
-        <p class="text-sm text-slate-400 leading-normal flex items-center gap-1.5">
-          @{{ displayData.username }}
-          <span
-            v-if="displayData.age"
-            class="text-slate-500">·</span>
-          <span v-if="displayData.age">{{ displayData.age }}</span>
+        <p class="text-sm text-primary-950 leading-normal flex items-center gap-2">
+          @{{ item?.provider.username }}
         </p>
         <div class="flex flex-wrap gap-2">
           <Tag
-            class="text-xs font-medium"
+            :value="item?.category.name || 'ไม่ระบุหมวดหมู่'"
+            class="text-xs font-medium dark:text-primary-950 dark:bg-primary-500 dark:border-primary-500"
             icon="pi pi-heart"
-            value="เพื่อนคุยทั่วไป"
             rounded />
         </div>
       </div>
@@ -61,12 +57,16 @@
           pt:root:class="bg-slate-50/60 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-none">
           <template #content>
             <h4 class="text-base font-bold text-slate-850 dark:text-slate-200 flex items-center gap-2 mb-2 leading-snug">
-              <span class="text-lg">🤍</span> {{ displayData.tagline }}
+              <Tag
+                :value="item?.tagline || 'ไม่มีคำโปรย'"
+                class="text-xs font-medium"
+                severity="info"
+                rounded />
             </h4>
             <p
-              v-if="displayData.description"
+              v-if="item?.description"
               class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              {{ displayData.description }}
+              {{ item?.description }}
             </p>
           </template>
         </Card>
@@ -85,7 +85,7 @@
                 เรต/นาที
               </p>
               <p class="text-sm font-bold text-slate-700 dark:text-slate-200 mt-0.5">
-                {{ displayData.coinRatePerMinute }} เหรียญ
+                {{ item?.coinRatePerMinute }} เหรียญ
               </p>
             </template>
           </Card>
@@ -102,7 +102,7 @@
                 นานสูงสุด
               </p>
               <p class="text-sm font-bold text-slate-700 dark:text-slate-200 mt-0.5">
-                {{ displayData.maxDurationMinutes }} นาที
+                {{ item?.maxDurationMinutes }} นาที
               </p>
             </template>
           </Card>
@@ -119,7 +119,7 @@
                 เซสชัน
               </p>
               <p class="text-sm font-bold text-slate-700 dark:text-slate-200 mt-0.5">
-                {{ displayData.sessionCount }} ครั้ง
+                {{ item?.provider.rating.reviewCount }} ครั้ง
               </p>
             </template>
           </Card>
@@ -146,10 +146,10 @@
               </div>
               <div class="text-right">
                 <p class="text-sm font-bold text-slate-700 dark:text-slate-200">
-                  {{ displayData.rating.averageRating.toFixed(1) }} / 5.0
+                  {{ item?.provider.rating.averageRating !== null && item?.provider.rating.averageRating !== undefined ? item.provider.rating.averageRating.toFixed(1) : '0.0' }} / 5
                 </p>
                 <p class="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-                  {{ displayData.rating.reviewCount }} รีวิว
+                  {{ item?.provider.rating.reviewCount }} รีวิว
                 </p>
               </div>
             </div>
@@ -157,15 +157,15 @@
         </Card>
 
         <!-- All tags list -->
-        <div v-if="displayData.tags && displayData.tags.length">
+        <div v-if="item?.tags && item.tags.length">
           <h5 class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
             แท็กทั้งหมด
           </h5>
           <div class="flex flex-wrap gap-1.5">
             <Tag
-              v-for="(tag, index) in displayData.tags"
+              v-for="(tag, index) in item.tags"
               :key="index"
-              :value="tag"
+              :value="tag.name"
               pt:root:class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50" />
           </div>
         </div>
@@ -175,10 +175,10 @@
       <div class="border-t border-slate-100 dark:border-slate-800/80 px-6 py-4 bg-slate-50/50 dark:bg-slate-900/30 flex gap-3 justify-end rounded-b-2xl mt-4">
         <Button
           label="ปิดหน้าต่าง"
-          pt:root:class="!px-4 !py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold rounded-xl transition-all duration-200 active:scale-95 text-xs sm:text-sm bg-transparent"
+          pt:root:class="!px-4 !py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold rounded-xl transition-all duration-200 active:scale-95 text-xs sm:text-sm bg-transparent"
           @click="visible = false" />
         <Button
-          icon="pi pi-phone"
+          icon="pi pi-send"
           label="เริ่มเช่าคุย"
           pt:label:class="font-semibold text-xs sm:text-sm text-white"
           pt:root:class="bg-gradient-primary border-none !px-5 !py-2 text-white shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 rounded-xl"
@@ -189,104 +189,22 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
-import type { IFindAllRentPostList, IFindAllRentTagsData } from '~/models/response/RentRes.model'
+import type { IFindAllRentPostList } from '~/models/response/RentRes.model'
 import Button from '~/volt/Button.vue'
 import Card from '~/volt/Card.vue'
 import Dialog from '~/volt/Dialog.vue'
 import Tag from '~/volt/Tag.vue'
 
-interface DisplayData {
-  nickname: string
-  username: string
-  age: string
-  profileImg: string
-  tagline: string
-  description: string
-  coinRatePerMinute: number
-  maxDurationMinutes: number
-  sessionCount: number
-  tags: string[]
-  rating: {
-    averageRating: number
-    reviewCount: number
-  }
-  isOnline: boolean
-}
-
 const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
+const visible = defineModel<boolean>('visible', { default: false })
 
-const props = defineProps<{
+defineProps<{
   item?: IFindAllRentPostList | null
 }>()
-
-const visible = defineModel<boolean>('visible', { default: false })
 
 const emit = defineEmits<{
   (e: 'rent'): void
 }>()
-
-// Fallback mockup data matching current values in the file
-const mockData = {
-  provider: {
-    nickname: 'John Doe',
-    username: 'caseywright',
-    age: '27 ปี',
-    profileImg: '/png/upload-profile.png',
-    rating: {
-      averageRating: 4.9,
-      reviewCount: 120
-    }
-  },
-  tagline: 'พื้นที่ปลอดภัยสำหรับระบายความรู้สึก รับฟังโดยไม่ตัดสิน 🤍',
-  description: 'ยินดีรับฟังทุกเรื่องโดยไม่ตัดสิน พร้อมแชร์ประสบการณ์และค้นหาทางออกไปพร้อมกัน 💚',
-  coinRatePerMinute: 2,
-  maxDurationMinutes: 90,
-  sessionCount: 858,
-  tags: ['เพื่อนคุยทั่วไป', 'เปิดรับจ้าง', 'รับฟังปัญหาทางใจ', 'ปรึกษาเรื่องงาน']
-}
-
-
-const displayData = computed((): DisplayData => {
-  if (props.item) {
-    const item = props.item
-    return {
-      nickname: item.provider.nickname || item.provider.username,
-      username: item.provider.username,
-      age: (item.provider as any).age ? `${(item.provider as any).age} ปี` : '',
-      profileImg: item.provider.profileImg ? `${imageBaseUrl}${item.provider.profileImg}` : '/png/upload-profile.png',
-      tagline: item.tagline,
-      description: item.description || '',
-      coinRatePerMinute: item.coinRatePerMinute,
-      maxDurationMinutes: item.maxDurationMinutes,
-      sessionCount: 858, // default placeholder sessions
-      tags: item.tags?.map((t: IFindAllRentTagsData): string => t.name) || [],
-      rating: {
-        averageRating: item.provider.rating.averageRating !== null ? item.provider.rating.averageRating : 0,
-        reviewCount: item.provider.rating.reviewCount || 0
-      },
-      isOnline: item.isOnline
-    }
-  }
-
-  return {
-    nickname: mockData.provider.nickname,
-    username: mockData.provider.username,
-    age: mockData.provider.age,
-    profileImg: mockData.provider.profileImg,
-    tagline: mockData.tagline,
-    description: mockData.description,
-    coinRatePerMinute: mockData.coinRatePerMinute,
-    maxDurationMinutes: mockData.maxDurationMinutes,
-    sessionCount: mockData.sessionCount,
-    tags: mockData.tags,
-    rating: {
-      averageRating: mockData.provider.rating.averageRating,
-      reviewCount: mockData.provider.rating.reviewCount
-    },
-    isOnline: true
-  }
-})
 
 const handleRent = (): void => {
   emit('rent')
