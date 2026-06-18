@@ -89,7 +89,7 @@
               icon="pi pi-eye"
               pt:root:class="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition"
               text
-              @click="rentPostDetailVisible = true" />
+              @click="handleShowDetail(item.id)" />
 
             <Button
               icon="pi pi-send"
@@ -106,14 +106,19 @@
   </Card>
   <RentPostDetailDialog
     v-model:visible="rentPostDetailVisible"
-    :item="item" />
+    :item="detailItem" />
 </template>
 
 <script lang="ts" setup>
 import RentPostDetailDialog from '~/components/rent/RentPostDetailDialog.vue'
 import type { IFindAllRentPostList } from '~/models/response/RentRes.model'
+import type { TBaseParamsId } from '~/models/request/Request.model'
+
+const rentStore = useRentStore()
+const { $handleLoading } = useNuxtApp()
 
 const rentPostDetailVisible = ref(false)
+const detailItem = ref<IFindAllRentPostList | null>(null)
 
 defineProps<{
   item: IFindAllRentPostList
@@ -122,6 +127,16 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'rent'): void
 }>()
+
+async function fetchPostDetail (id: TBaseParamsId): Promise<void> {
+  await rentStore.fetchPostById(id)
+  detailItem.value = rentStore.selectedPost
+  rentPostDetailVisible.value = true
+}
+
+function handleShowDetail (id: TBaseParamsId): void {
+  $handleLoading((): Promise<void> => fetchPostDetail(id))
+}
 
 const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
 </script>
