@@ -70,9 +70,16 @@
             type="button"
             @click="toggleExpertise(option)">
             <i
-              v-if="selectedExpertises.includes(option)"
+              v-if="selectedExpertises.includes(option) && isOriginalTag(option)"
               class="pi pi-times text-[9px] text-white animate-scale-up" />
             {{ option }}
+            <i
+              v-if="!isOriginalTag(option)"
+              :class="[
+                'pi pi-times-circle text-[12px] ml-1.5 transition-colors cursor-pointer hover:text-rose-200 active:scale-90',
+                selectedExpertises.includes(option) ? 'text-white/80' : 'text-slate-400 dark:text-slate-500 hover:text-rose-500'
+              ]"
+              @click.stop="removeCustomTag(option)" />
           </button>
 
           <!-- Inline Input for custom tag -->
@@ -202,34 +209,20 @@ async function submitCustomTag (): Promise<void> {
       return
     }
 
-    let success = false
-    // Call API to create/register custom tag
-    await $handleLoading(
-      async (): Promise<void> => {
-        await rentService.createTagsRent({ name: finalTagName })
-        await onGetAllRentTags()
-
-        const matchedTag = expertiseOptions.value.find((opt: string): boolean => opt.toLowerCase() === finalTagName.toLowerCase()) || finalTagName
-        if (!selectedExpertises.value.includes(matchedTag)) {
-          selectedExpertises.value.push(matchedTag)
-        }
-        success = true
-      }, {
-        toast: {
-          instance: toast,
-          success: {
-            detail: 'เพิ่มแท็กใหม่สำเร็จ'
-          }
-        }
-      }
-    )
-
-    if (success) {
-      cancelCustomTag()
-    } else {
-      isAddingCustomTag.value = false
-      customTagInput.value = ''
+    if (!expertiseOptions.value.includes(finalTagName)) {
+      expertiseOptions.value.push(finalTagName)
     }
+
+    selectedExpertises.value.push(finalTagName)
+
+    toast.add({
+      severity: 'success',
+      summary: 'สำเร็จ',
+      detail: 'เพิ่มแท็กใหม่สำเร็จ',
+      life: 3000
+    })
+
+    cancelCustomTag()
   } finally {
     isSubmitting = false
   }
@@ -238,6 +231,21 @@ async function submitCustomTag (): Promise<void> {
 function cancelCustomTag (): void {
   isAddingCustomTag.value = false
   customTagInput.value = ''
+}
+
+function isOriginalTag (option: string): boolean {
+  return originalTags.value.includes(option)
+}
+
+function removeCustomTag (option: string): void {
+  const selIndex = selectedExpertises.value.indexOf(option)
+  if (selIndex !== -1) {
+    selectedExpertises.value.splice(selIndex, 1)
+  }
+  const optIndex = expertiseOptions.value.indexOf(option)
+  if (optIndex !== -1) {
+    expertiseOptions.value.splice(optIndex, 1)
+  }
 }
 
 const form = computed((): { tagline: string, bio: string, selectedExpertises: string[] } => ({
@@ -260,12 +268,15 @@ const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> 
   ]
 }))
 
+const originalTags = ref<string[]>([])
 const expertiseOptions = ref<string[]>([])
 
 async function onGetAllRentTags (): Promise<void> {
   const response = await rentService.findAllRentTags()
   if (response && response.data) {
-    expertiseOptions.value = response.data.map((tag: IFindAllRentTagsData): string => tag.name)
+    const tags = response.data.map((tag: IFindAllRentTagsData): string => tag.name)
+    expertiseOptions.value = [...tags]
+    originalTags.value = [...tags]
   }
 }
 
