@@ -1,4 +1,39 @@
+import type { rentStatusEnum } from '../enums/Rent.enum'
 import type { IApiResponse, IBasePaginationResponse } from './Response.model'
+
+export interface IRentAPostData {
+  id: number
+  customerId: number
+  hirePostId: number
+  coinTransactionId: number
+  coinPaid: number
+  durationMinutes: number
+  status: rentStatusEnum
+  acceptedAt: string | null
+  startedAt: string | null
+  expiresAt: string | null
+  endedAt: string | null
+  cancelledAt: string | null
+  createdAt: string
+  updatedAt: string
+  customer: ICustomer
+  provider: IProvider
+  rating: IRating
+  hirePost: IHirePost
+}
+
+export interface ICustomer {
+  id: number
+  username: string
+  nickname: string
+  profileImg: string
+  isOnline: boolean
+}
+
+export interface IHirePost {
+  id: number
+  tagline: string
+}
 
 export interface IFindAllRentTagsData {
   id: number
@@ -61,3 +96,5 @@ export type IFindAllRentCategoriesResponse = IApiResponse<IFindAllRentCategories
 export type IFindOneRentPostResponse = IApiResponse<IFindAllRentPostList>
 export type ICreateRentPostResponse = IApiResponse<IFindAllRentPostList>
 export interface IFindAllRentPostsPaginateResponse extends IBasePaginationResponse<IFindAllRentPostList> {}
+
+export type IRentAPostResponse = IApiResponse<IRentAPostData>
