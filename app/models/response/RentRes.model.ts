@@ -50,6 +50,11 @@ export interface ICreateTagsRentData {
   isActive: boolean
 }
 
+export interface ICheckRentPostAlreadyExistsData {
+  hasPost: boolean
+}
+
+export type ICheckRentPostAlreadyExistsResponse = IApiResponse<ICheckRentPostAlreadyExistsData>
 export type ICreateTagsRentResponse = IApiResponse<ICreateTagsRentData[]>
 export type IFindAllRentTagsResponse = IApiResponse<IFindAllRentTagsData[]>
 export type IFindAllRentCategoriesResponse = IApiResponse<IFindAllRentCategoriesData[]>
