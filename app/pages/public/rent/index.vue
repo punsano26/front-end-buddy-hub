@@ -22,9 +22,9 @@
         rounded  
       />
       <Button
-      @click="isCreatePage"
-        label="เปิดเช่ารับฟัง"
-        icon="pi pi-plus"
+        @click="checkRentPostAlreadyExists"
+        :label="rentStore.rentPostAlreadyExists?.data?.hasPost ? 'แก้ไขเช่ารับฟัง' : 'เปิดเช่ารับฟัง'"
+        :icon="rentStore.rentPostAlreadyExists?.data?.hasPost ? 'pi pi-pencil' : 'pi pi-plus'"
         pt:root:class="bg-gradient-primary border-none px-4 py-2 shadow-sm hover:shadow-md hover:scale-105 transition"
         rounded
       />
@@ -71,6 +71,7 @@ async function useFetch (): Promise<void> {
     limit: pagination.value.limit
   })
   pagination.value = extractPagination(paginationResult)
+  await rentStore.checkRentPostAlreadyExists()
 }
 
 function fetch (): void {
@@ -84,6 +85,19 @@ async function onSelectedRentPost (id: TBaseParamsId): Promise<void> {
 
 function selectRentPost (id: TBaseParamsId): void {
   $handleLoading(() => onSelectedRentPost(id))
+}
+
+async function onCheckRentPostAlreadyExists (): Promise<void> {
+  const response = await rentStore.checkRentPostAlreadyExists()
+  if (response?.data?.hasPost) {
+    router.push({ name: 'public-rent-my-post' })
+  } else {
+    router.push({ name: 'public-rent-create' })
+  }
+}
+
+function checkRentPostAlreadyExists (): void {
+  $handleLoading(onCheckRentPostAlreadyExists)
 }
 
 async function onGetMyWalletBalance (): Promise<void> {
@@ -128,9 +142,6 @@ function onConfirmRent (payload: { duration: number, cost: number }): void {
   router.push({ name: 'public-rent-chat-id', params: { id: provider.id } })
 }
 
-function isCreatePage (): void {
-  router.push({ name: 'public-rent-create' })
-}
 
 onMounted((): void => {
   fetch()
