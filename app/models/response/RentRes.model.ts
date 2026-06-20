@@ -26,7 +26,7 @@ export interface IFindAllRentPostList {
   updatedAt: string
   category: IFindAllRentCategoriesData
   provider: IProvider
-  tags: IFindAllRentTagsData[]
+  tags: string[]
   isOnline: boolean
 }
 
