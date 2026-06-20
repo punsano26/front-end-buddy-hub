@@ -165,7 +165,7 @@
             <Tag
               v-for="(tag, index) in item.tags"
               :key="index"
-              :value="tag.name"
+              :value="tag"
               pt:root:class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50" />
           </div>
         </div>
