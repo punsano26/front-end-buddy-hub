@@ -90,9 +90,16 @@
               type="button"
               @click="toggleExpertise(option)">
               <i
-                v-if="selectedExpertise.includes(option)"
+                v-if="selectedExpertise.includes(option) && isOriginalTag(option)"
                 class="pi pi-times text-[9px] text-white animate-scale-up" />
               {{ option }}
+              <i
+                v-if="!isOriginalTag(option)"
+                :class="[
+                  'pi pi-times-circle text-[12px] ml-1.5 transition-colors cursor-pointer hover:text-rose-200 active:scale-90',
+                  selectedExpertise.includes(option) ? 'text-white/80' : 'text-slate-400 dark:text-slate-500 hover:text-rose-500'
+                ]"
+                @click.stop="removeCustomTag(option)" />
             </button>
 
             <!-- Inline Input for custom tag -->
@@ -404,37 +411,20 @@ async function submitCustomTag (): Promise<void> {
       return
     }
 
-    let success = false
-    // Call API to create/register custom tag
-    await $handleLoading(
-      async (): Promise<void> => {
-        await rentService.createTagsRent({ name: finalTagName })
-        
-        await rentStore.fetchTags()
-        expertiseOptions.value = rentStore.tagNames
-        
-        const matchedTag = expertiseOptions.value.find((opt: string): boolean => opt.toLowerCase() === finalTagName.toLowerCase()) || finalTagName
-        if (!selectedExpertise.value.includes(matchedTag)) {
-          selectedExpertise.value.push(matchedTag)
-        }
-        success = true
-      },
-      {
-        toast: {
-          instance: toast,
-          success: {
-            detail: 'เพิ่มแท็กใหม่สำเร็จ'
-          }
-        }
-      }
-    )
-
-    if (success) {
-      cancelCustomTag()
-    } else {
-      isAddingCustomTag.value = false
-      customTagInput.value = ''
+    if (!expertiseOptions.value.includes(finalTagName)) {
+      expertiseOptions.value.push(finalTagName)
     }
+
+    selectedExpertise.value.push(finalTagName)
+
+    toast.add({
+      severity: 'success',
+      summary: 'สำเร็จ',
+      detail: 'เพิ่มแท็กใหม่สำเร็จ',
+      life: 3000
+    })
+
+    cancelCustomTag()
   } finally {
     isSubmitting = false
   }
@@ -445,6 +435,22 @@ function cancelCustomTag (): void {
   customTagInput.value = ''
 }
 
+function isOriginalTag (option: string): boolean {
+  return originalTags.value.includes(option)
+}
+
+function removeCustomTag (option: string): void {
+  const selIndex = selectedExpertise.value.indexOf(option)
+  if (selIndex !== -1) {
+    selectedExpertise.value.splice(selIndex, 1)
+  }
+  const optIndex = expertiseOptions.value.indexOf(option)
+  if (optIndex !== -1) {
+    expertiseOptions.value.splice(optIndex, 1)
+  }
+}
+
+const originalTags = ref<string[]>([])
 const expertiseOptions = ref<string[]>([])
 
 const tagline = ref<string>('')
@@ -537,7 +543,8 @@ const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> 
 
 async function useFetch (): Promise<void> {
   await rentStore.fetchTags()
-  expertiseOptions.value = rentStore.tagNames
+  originalTags.value = [...rentStore.tagNames]
+  expertiseOptions.value = [...rentStore.tagNames]
 
   await rentStore.fetchMyPost()
   const detail = rentStore.myPost
@@ -545,10 +552,16 @@ async function useFetch (): Promise<void> {
     item.value = detail
     tagline.value = detail.tagline || ''
     description.value = detail.description || ''
-    selectedExpertise.value = detail.tags ? detail.tags.map((t) => t.name) : []
+    selectedExpertise.value = detail.tags || []
     price.value = detail.coinRatePerMinute
     responseTime.value = detail.maxDurationMinutes
     isActive.value = detail.isActive
+
+    selectedExpertise.value.forEach((tag: string): void => {
+      if (!expertiseOptions.value.includes(tag)) {
+        expertiseOptions.value.push(tag)
+      }
+    })
 
     initialData.value = {
       tagline: tagline.value,
