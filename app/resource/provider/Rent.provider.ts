@@ -2,6 +2,7 @@ import HttpRequest from '../HttpRequest'
 import type { ICreateRentPostPayload, ICreateTagsRentPayload, IFindAllRentPostsPaginateQuery, IUpdateRentPostPayload } from '~/models/request/RentReq.model'
 import type { TBaseParamsId } from '~/models/request/Request.model'
 import type {
+  ICheckRentPostAlreadyExistsResponse,
   ICreateRentPostResponse,
   ICreateTagsRentResponse,
   IFindAllRentCategoriesResponse,
@@ -17,6 +18,7 @@ export interface IRentProvider {
   findAllRentPostsPaginate (query: IFindAllRentPostsPaginateQuery): Promise<IFindAllRentPostsPaginateResponse>
   findOneRentPostById (id: TBaseParamsId): Promise<IFindOneRentPostResponse>
   createRentPost (payload: ICreateRentPostPayload): Promise<ICreateRentPostResponse>
+  checkRentPostAlreadyExists (): Promise<ICheckRentPostAlreadyExistsResponse>
   createTagsRent (payload: ICreateTagsRentPayload): Promise<ICreateTagsRentResponse>
   findOneMyRentPost (): Promise<IFindOneRentPostResponse>
   updateRentPost (id: TBaseParamsId, payload: IUpdateRentPostPayload): Promise<IFindOneRentPostResponse>
@@ -53,6 +55,12 @@ class RentProvider extends HttpRequest implements IRentProvider {
   public async createRentPost (payload: ICreateRentPostPayload): Promise<ICreateRentPostResponse> {
     this.setUserAuthHeader()
     const response = await this.post(`${this.urlPrefix}`, payload)
+    return response
+  }
+
+  public async checkRentPostAlreadyExists (): Promise<ICheckRentPostAlreadyExistsResponse> {
+    this.setUserAuthHeader()
+    const response = await this.get(`${this.urlPrefix}/me/has-post`)
     return response
   }
 
