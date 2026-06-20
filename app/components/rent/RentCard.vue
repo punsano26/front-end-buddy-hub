@@ -51,9 +51,9 @@
           v-if="item.tags && item.tags.length"
           class="flex flex-wrap gap-2">
           <Tag
-            v-for="tag in item.tags"
-            :key="tag.id"
-            :value="tag.name"
+            v-for="(tag, index) in item.tags"
+            :key="index"
+            :value="tag"
             severity="secondary"
             rounded />
         </div>
@@ -111,8 +111,8 @@
 
 <script lang="ts" setup>
 import RentPostDetailDialog from '~/components/rent/RentPostDetailDialog.vue'
-import type { IFindAllRentPostList } from '~/models/response/RentRes.model'
 import type { TBaseParamsId } from '~/models/request/Request.model'
+import type { IFindAllRentPostList } from '~/models/response/RentRes.model'
 
 const rentStore = useRentStore()
 const { $handleLoading } = useNuxtApp()
