@@ -1,13 +1,14 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import type { IPagination } from '~/models/Global.model'
 import type { ICreateRentPostPayload, IFindAllRentPostsPaginateQuery, IUpdateRentPostPayload } from '~/models/request/RentReq.model'
 import type { TBaseParamsId } from '~/models/request/Request.model'
 import type {
+  ICheckRentPostAlreadyExistsResponse,
   IFindAllRentCategoriesData,
   IFindAllRentPostList,
   IFindAllRentTagsData
 } from '~/models/response/RentRes.model'
-import type { IPagination } from '~/models/Global.model'
 import RentProvider, { type IRentProvider } from '~/resource/provider/Rent.provider'
 
 interface IRentStore {
@@ -17,6 +18,7 @@ interface IRentStore {
   posts: Ref<IFindAllRentPostList[]>
   myPost: Ref<IFindAllRentPostList | undefined>
   selectedPost: Ref<IFindAllRentPostList | null>
+  rentPostAlreadyExists: Ref<ICheckRentPostAlreadyExistsResponse>
   fetchTags: () => Promise<void>
   fetchCategories: () => Promise<void>
   fetchPosts: (query: IFindAllRentPostsPaginateQuery) => Promise<IPagination>
@@ -26,6 +28,7 @@ interface IRentStore {
   updatePost: (id: TBaseParamsId, payload: IUpdateRentPostPayload) => Promise<void>
   deletePost: (id: TBaseParamsId) => Promise<void>
   resetMyPost: () => void
+  checkRentPostAlreadyExists: () => Promise<ICheckRentPostAlreadyExistsResponse>
 }
 
 export const useRentStore = defineStore('Rent', (): IRentStore => {
@@ -37,7 +40,7 @@ export const useRentStore = defineStore('Rent', (): IRentStore => {
   const posts = ref<IFindAllRentPostList[]>([])
   const myPost = ref<IFindAllRentPostList>()
   const selectedPost = ref<IFindAllRentPostList | null>(null)
-
+  const rentPostAlreadyExists = ref<ICheckRentPostAlreadyExistsResponse>({ message: '', data: { hasPost: false } })
   const tagNames = computed((): string[] => tags.value.map((tag: IFindAllRentTagsData): string => tag.name))
 
   // --- Actions ---
@@ -53,6 +56,12 @@ export const useRentStore = defineStore('Rent', (): IRentStore => {
     if (response?.data) {
       categories.value = response.data
     }
+  }
+
+  async function checkRentPostAlreadyExists (): Promise<ICheckRentPostAlreadyExistsResponse> {
+    const response = await rentService.checkRentPostAlreadyExists()
+    rentPostAlreadyExists.value = response || { message: '', data: { hasPost: false } }
+    return rentPostAlreadyExists.value
   }
 
   async function fetchPosts (query: IFindAllRentPostsPaginateQuery): Promise<IPagination> {
@@ -102,6 +111,8 @@ export const useRentStore = defineStore('Rent', (): IRentStore => {
     createPost,
     updatePost,
     deletePost,
+    checkRentPostAlreadyExists,
+    rentPostAlreadyExists,
     resetMyPost
   }
 })
