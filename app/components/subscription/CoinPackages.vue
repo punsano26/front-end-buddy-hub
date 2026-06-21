@@ -127,7 +127,8 @@
           <Button
             label="เติมเลย"
             pt:root:class="w-full mt-auto rounded-2xl bg-gradient-primary hover:opacity-95 text-white font-bold py-2.5 px-4 text-sm transition-all duration-200 active:scale-[0.98] border-none shadow-sm shadow-indigo-500/10 hover:shadow-indigo-500/20"
-            type="button" />
+            type="button"
+            @click="handleSelectPackage(pkg)" />
         </template>
       </Card>
     </div>
@@ -138,9 +139,23 @@
       เหรียญใช้สำหรับเช่าคุยกับ Emotional Supporter, ส่งของขวัญ, และปลดล็อกฟีเจอร์พิเศษ · เหรียญไม่มีหมดอายุ
     </message>
   </div>
+  <ChoosePaymentDialog
+    v-model:visible="paymentDialogVisible"
+    :coins="selectedPackage?.coins"
+    :price="selectedPackage?.price" />
 </template>
 
 <script lang="ts" setup>
+import ChoosePaymentDialog from '~/components/payment/ChoosePaymentDialog.vue'
+
+const paymentDialogVisible = ref(false)
+const selectedPackage = ref<Package | null>(null)
+
+const handleSelectPackage = (pkg: Package): void => {
+  selectedPackage.value = pkg
+  paymentDialogVisible.value = true
+}
+
 interface Package {
   id: number
   coins: number
