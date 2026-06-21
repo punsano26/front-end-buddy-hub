@@ -90,6 +90,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import type { IRentAPostPayload } from '~/models/request/RentReq.model'
 import type { IFindAllRentPostList } from '~/models/response/RentRes.model'
 import type { IFindWalletBalanceData } from '~/models/response/WallRes.model'
 
@@ -103,7 +104,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  confirm: [payload: { duration: number, cost: number }]
+  confirm: [payload: IRentAPostPayload]
 }>()
 
 const selectedOption = ref<{ name: string, value: number } | null>(null)
@@ -163,8 +164,8 @@ function confirmRent (): void {
   if (isInsufficientBalance.value) return
 
   emit('confirm', {
-    duration: minuteInput.value || 15,
-    cost: showValue.value
+    hirePostId: props.item.id,
+    durationMinutes: minuteInput.value || 15
   })
 }
 </script>
