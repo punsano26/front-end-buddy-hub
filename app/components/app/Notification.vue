@@ -102,7 +102,9 @@
           </div>
 
           <div
-            v-if="item.requestStatus === FriendRequestStatusEnum.PENDING"
+            v-if="item.requestStatus === FriendRequestStatusEnum.PENDING
+              || (item.notificationType === NotificationTypeEnum.HIRE_REQUEST
+                && item.hireSessionStatus === RentStatusEnum.PENDING)"
             class="flex items-center gap-1.5 shrink-0 ml-1 mt-1">
             <button
               class="flex h-8 w-8 items-center justify-center rounded-full bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 dark:bg-green-500/10 dark:text-green-400 dark:hover:bg-green-500/20 transition-colors shadow-sm"
@@ -145,6 +147,7 @@ import { ref } from 'vue'
 import dayjs from 'dayjs'
 import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
 import { NotificationTypeEnum } from '~/models/enums/Notification.enum'
+import { RentStatusEnum } from '~/models/enums/Rent.enum'
 import type { IItems } from '~/models/Global.model'
 import type { INotificationList } from '~/models/response/NotificationRes.model'
 import type { IFriendProvider } from '~/resource/provider/Friend.provider'
