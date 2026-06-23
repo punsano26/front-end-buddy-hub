@@ -68,11 +68,9 @@
         <div class="flex items-center gap-3 shrink-0">
           <div class="flex items-center gap-1 border border-slate-200 dark:border-slate-850 bg-white/50 dark:bg-slate-950/50 rounded-lg px-2.5 py-1 text-xs">
             <i class="pi pi-coin text-amber-500" />
-            <span class="font-bold text-slate-700 dark:text-slate-200">นับถอยหลัง 59:58</span>
-            <span class="text-slate-400">/นาที</span>
+            <span class="font-bold text-slate-700 dark:text-slate-200">{{ countdownText }}</span>
+            <span v-if="currentPartner?.sessionStatus === 'active'" class="text-slate-400">/นาที</span>
           </div>
-          
-         
         </div>
       </div>
     </header>
@@ -161,20 +159,49 @@
               </div>
             </div>
           </Transition>
+
+          <!-- Pending Approval Block -->
+          <Transition name="fade">
+            <div v-if="currentPartner.sessionStatus === 'pending'" class="text-center my-6 select-none mx-auto max-w-md px-4">
+              <div class="inline-flex flex-col items-center gap-3 px-6 py-5 rounded-2xl border border-amber-200 bg-amber-50/20 dark:border-amber-950/20 dark:bg-amber-950/10 shadow-sm">
+                <span class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950 text-amber-500 shadow-inner animate-pulse">
+                  <i class="pi pi-clock text-sm" />
+                </span>
+                <span class="text-xs font-bold text-slate-750 dark:text-slate-200">รอการตอบรับ/อนุมัติจากผู้ให้บริการ</span>
+                <p class="text-[11px] text-slate-550 dark:text-slate-400 leading-relaxed max-w-xs">
+                  ส่งคำขอเช่าคุยจำนวน {{ currentPartner.maxDurationMinutes }} นาทีเรียบร้อยแล้ว กรุณารอผู้ให้บริการตอบรับ หรือคลิกตรวจสอบสถานะ / จำลองอนุมัติเพื่อทดสอบ
+                </p>
+                <div class="flex gap-2 w-full mt-2.5 justify-center">
+                  <Button
+                    label="ตรวจสอบสถานะ"
+                    icon="pi pi-refresh"
+                    pt:label:class="font-semibold text-xs text-slate-700 dark:text-slate-200"
+                    pt:root:class="border border-slate-300 dark:border-slate-700 px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition rounded-xl bg-transparent"
+                    @click="checkApprovalStatus" />
+                  <Button
+                    label="อนุมัติคำขอ (จำลอง)"
+                    icon="pi pi-check"
+                    pt:label:class="font-semibold text-xs text-white"
+                    pt:root:class="bg-gradient-primary border-none px-4 py-2 text-white shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition rounded-xl"
+                    @click="simulateApproval" />
+                </div>
+              </div>
+            </div>
+          </Transition>
         </div>
       </div>
 
       <!-- Chat Room Input Container -->
       <div class="chat-room-input-container border-t border-slate-200/80 bg-white/95 px-4 pt-3 dark:border-slate-850 dark:bg-slate-900/95 backdrop-blur-md transition-colors duration-250">
         <div 
-          :class="currentPartner.sessionStatus === 'finished' ? 'opacity-65 cursor-not-allowed bg-slate-100/50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-850' : 'focus-within:border-slate-350 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/10 dark:focus-within:border-slate-750 dark:focus-within:bg-slate-950/60 dark:focus-within:ring-indigo-500/5'"
+          :class="currentPartner?.sessionStatus === 'finished' || currentPartner?.sessionStatus === 'pending' ? 'opacity-65 cursor-not-allowed bg-slate-100/50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-850' : 'focus-within:border-slate-350 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/10 dark:focus-within:border-slate-750 dark:focus-within:bg-slate-950/60 dark:focus-within:ring-indigo-500/5'"
           class="flex min-h-[42px] items-end gap-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 shadow-inner transition-all duration-200 dark:border-slate-800 dark:bg-slate-950/30"
         >
           <!-- Decoration Option (Sticker/Image mockup) -->
           <button
             class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-200/50 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400 active:scale-95 disabled:opacity-50 disabled:hover:bg-transparent"
             type="button"
-            :disabled="currentPartner.sessionStatus === 'finished'"
+            :disabled="currentPartner?.sessionStatus === 'finished' || currentPartner?.sessionStatus === 'pending'"
             @click="showStickerAlert"
           >
             <i class="pi pi-image text-lg" />
@@ -184,8 +211,8 @@
           <div class="flex-1 min-w-0 pb-0.5">
             <textarea
               v-model="userMessageText"
-              :placeholder="currentPartner.sessionStatus === 'finished' ? 'เซสชันสิ้นสุดลงแล้ว...' : 'พิมพ์ข้อความ...'"
-              :disabled="currentPartner.sessionStatus === 'finished'"
+              :placeholder="currentPartner?.sessionStatus === 'finished' ? 'เซสชันสิ้นสุดลงแล้ว...' : currentPartner?.sessionStatus === 'pending' ? 'กำลังรอผู้ให้บริการตอบรับคำขอ...' : 'พิมพ์ข้อความ...'"
+              :disabled="currentPartner?.sessionStatus === 'finished' || currentPartner?.sessionStatus === 'pending'"
               class="chat-input w-full text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
               rows="1"
               @keydown.enter.prevent="handleSendMessage"
@@ -195,11 +222,11 @@
           <!-- Send Button -->
           <button
             :class="
-              userMessageText.trim() && currentPartner.sessionStatus !== 'finished'
+              userMessageText.trim() && currentPartner?.sessionStatus !== 'finished' && currentPartner?.sessionStatus !== 'pending'
                 ? 'bg-gradient-primary text-white shadow-md shadow-indigo-500/15 hover:shadow-indigo-500/25 active:scale-95'
                 : 'bg-slate-200 text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:text-slate-600'
             "
-            :disabled="!userMessageText.trim() || currentPartner.sessionStatus === 'finished'"
+            :disabled="!userMessageText.trim() || currentPartner?.sessionStatus === 'finished' || currentPartner?.sessionStatus === 'pending'"
             class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-180 hover:scale-105 disabled:hover:scale-100"
             type="button"
             @click="handleSendMessage"
@@ -213,8 +240,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
+import { useToast } from 'primevue/usetoast'
+import Button from '~/volt/Button.vue'
 
 definePageMeta({ layout: "chat-rent", title: "แชท" });
 
@@ -224,6 +253,74 @@ const partnerId = computed(() => Number(route.params.id))
 const chatScrollContainer = ref<HTMLElement | null>(null)
 const userMessageText = ref('')
 const isTyping = ref(false)
+const toast = useToast()
+
+const remainingSeconds = ref(0)
+let timerInterval: any = null
+
+const formatTime = (totalSeconds: number): string => {
+  const mins = Math.floor(totalSeconds / 60)
+  const secs = totalSeconds % 60
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+}
+
+const countdownText = computed((): string => {
+  if (!currentPartner.value) return 'รออนุมัติ...'
+  if (currentPartner.value.sessionStatus === 'pending') return 'รออนุมัติ...'
+  if (currentPartner.value.sessionStatus === 'finished') return 'สิ้นสุดเซสชัน'
+  return `นับถอยหลัง ${formatTime(remainingSeconds.value)}`
+})
+
+const startCountdown = (): void => {
+  if (timerInterval) clearInterval(timerInterval)
+  if (!currentPartner.value || currentPartner.value.sessionStatus !== 'active') return
+  
+  remainingSeconds.value = (currentPartner.value.maxDurationMinutes || 60) * 60
+  timerInterval = setInterval((): void => {
+    if (remainingSeconds.value > 0) {
+      remainingSeconds.value--
+    } else {
+      clearInterval(timerInterval)
+      if (currentPartner.value) {
+        currentPartner.value.sessionStatus = 'finished'
+      }
+    }
+  }, 1000)
+}
+
+const simulateApproval = (): void => {
+  if (!currentPartner.value) return
+  currentPartner.value.sessionStatus = 'active'
+  currentPartner.value.lastMessageText = 'ผู้ให้บริการตอบรับคำขอคุยแล้ว'
+  currentPartner.value.lastMessageCreatedAt = new Date()
+  messages.value.push({
+    id: Date.now(),
+    sender: 'partner',
+    text: `🔔 ระบบ: ผู้ให้บริการได้อนุมัติคำขอเช่าคุยแล้วเป็นเวลา ${currentPartner.value.maxDurationMinutes} นาที เริ่มต้นเซสชันคุยของคุณได้เลยค่ะ!`,
+    createdAt: new Date()
+  })
+  void scrollToBottom()
+  
+  toast.add({
+    severity: 'success',
+    summary: 'อนุมัติเรียบร้อย',
+    detail: 'ผู้ให้บริการอนุมัติคำขอเช่าคุยแล้ว',
+    life: 3000
+  })
+}
+
+const checkApprovalStatus = (): void => {
+  toast.add({
+    severity: 'info',
+    summary: 'ตรวจสอบสถานะ',
+    detail: 'กำลังตรวจสอบสถานะกับเซิร์ฟเวอร์...',
+    life: 1500
+  })
+  
+  setTimeout((): void => {
+    simulateApproval()
+  }, 1500)
+}
 
 // Use the shared useState from SidebarChat
 const conversationsRent = useState<any[]>('conversationsRent', (): any[] => [
@@ -336,6 +433,15 @@ const initializeMessages = () => {
     }
   ]
 
+  if (partner.sessionStatus === 'pending') {
+    messages.value.push({
+      id: 105,
+      sender: 'partner',
+      text: `สวัสดีค่ะ ฉันได้รับคำขอเช่าคุยจำนวน ${partner.maxDurationMinutes} นาทีของคุณแล้วนะคะ อยู่ระหว่างเตรียมตัวและพิจารณาอนุมัติคำขอค่ะ สแตนด์บายรอสักครู่นะคะ 💖`,
+      createdAt: new Date()
+    })
+  }
+
   if (partner.sessionStatus === 'finished') {
     messages.value.push({
       id: 104,
@@ -437,8 +543,25 @@ watch(
   { immediate: true }
 )
 
+// Watch sessionStatus or partner ID changes to trigger countdown
+watch(
+  [() => currentPartner.value?.id, () => currentPartner.value?.sessionStatus],
+  (): void => {
+    if (currentPartner.value?.sessionStatus === 'active') {
+      startCountdown()
+    } else {
+      if (timerInterval) clearInterval(timerInterval)
+    }
+  },
+  { immediate: true }
+)
+
 onMounted(() => {
   initializeMessages()
+})
+
+onUnmounted(() => {
+  if (timerInterval) clearInterval(timerInterval)
 })
 </script>
 
