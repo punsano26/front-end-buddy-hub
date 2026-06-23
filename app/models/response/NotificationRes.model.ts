@@ -10,7 +10,7 @@ export interface INotificationList {
   content: string | null
   isRead: boolean
   notificationType: NotificationTypeEnum
-  relatedUserId: number
+  relatedUserId: number | null
   relatedUserProfileImg: string | null
   requestStatus: FriendRequestStatusEnum
   hireSessionId: number
