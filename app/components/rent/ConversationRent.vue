@@ -78,6 +78,15 @@
             <i class="pi pi-lock text-[9px]" />
             <span>ปิดเซสชัน</span>
           </div>
+          <div
+            v-else-if="props.conversation.sessionStatus === 'pending'"
+            class="flex items-center gap-1 text-[10px] text-amber-500 font-bold">
+            <span class="relative flex h-2 w-2 mr-1">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-550" />
+            </span>
+            <span>รออนุมัติ</span>
+          </div>
         </div>
       </div>
     </div>
@@ -102,11 +111,19 @@ const isFinished = computed((): boolean => {
   return props.conversation.sessionStatus === 'finished'
 })
 
+const isPending = computed((): boolean => {
+  return props.conversation.sessionStatus === 'pending'
+})
+
 const cardClass = computed((): string => {
   if (isFinished.value) {
     return isActive.value
       ? 'border-2 border-rose-500 dark:border-rose-500 bg-rose-50/10 dark:bg-rose-950/10 shadow-sm shadow-rose-500/5'
       : 'border border-rose-200 dark:border-rose-900/40 hover:border-rose-300 dark:hover:border-rose-800 bg-rose-50/5 dark:bg-rose-950/5 hover:bg-rose-50/10 dark:hover:bg-rose-950/10'
+  } else if (isPending.value) {
+    return isActive.value
+      ? 'border-2 border-amber-500 dark:border-amber-500 bg-amber-50/10 dark:bg-amber-950/10 shadow-sm shadow-amber-500/10'
+      : 'border border-amber-200 dark:border-amber-900/40 hover:border-amber-300 dark:hover:border-amber-800 bg-amber-50/5 dark:bg-amber-950/5 hover:bg-amber-50/10 dark:hover:bg-amber-950/10 shadow-sm'
   } else {
     return isActive.value
       ? 'border-2 border-blue-500 dark:border-blue-500 bg-blue-50/10 dark:bg-blue-950/10 shadow-sm shadow-blue-500/10'
