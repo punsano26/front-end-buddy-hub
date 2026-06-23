@@ -23,6 +23,7 @@ export interface IRentProvider {
   findOneMyRentPost (): Promise<IFindOneRentPostResponse>
   updateRentPost (id: TBaseParamsId, payload: IUpdateRentPostPayload): Promise<IFindOneRentPostResponse>
   deleteRentPost (id: TBaseParamsId): Promise<IMessageResponse>
+
 }
 
 class RentProvider extends HttpRequest implements IRentProvider {
