@@ -2,25 +2,24 @@
   <Dialog
     v-model:visible="visible"
     class="md:w-200 w-9/10 flex"
-    header="
-เริ่มเซสชันเช่าคุย"
+    header="เริ่มเซสชันเช่าคุย"
     pt:content:class="flex flex-col gap-4"
     modal>
-    <p>เลือกระยะเวลาที่ต้องการคุยกับ <span>Maya Patel</span></p>
+    <p>เลือกระยะเวลาที่ต้องการคุยกับ <span class="font-bold">{{ item?.provider?.nickname || item?.provider?.username }}</span></p>
     <Card>
       <template #content>
         <div class="flex flex-col gap-4">
           <div class="flex items-center gap-4">
             <img
+              :src="item?.provider?.profileImg ? imageBaseUrl + item.provider.profileImg : '/png/upload-profile.png'"
               alt="Profile Image"
-              class="w-12 h-12 rounded-full bg-gray-300"
-              src="/png/upload-profile.png">
+              class="w-12 h-12 rounded-full bg-gray-300">
             <div>
               <p class="font-semibold">
-                Maya Patel
+                {{ item?.provider?.nickname || item?.provider?.username }}
               </p>
               <p class="text-sm text-gray-500">
-                18 เหรียญ/นาที
+                {{ item?.coinRatePerMinute }} เหรียญ/นาที
               </p>
             </div>
           </div>
@@ -32,7 +31,7 @@
       <InputLabelField label="กรอกระยะเวลา (นาที)">
         <InputNumber
           v-model="minuteInput"
-          :max="60"
+          :max="item?.maxDurationMinutes || 60"
           :min="1"
           class="w-full"
           @update:model-value="onMinuteInput" />
@@ -48,7 +47,7 @@
         <div class="flex flex-col gap-4">
           <div class="flex justify-between items-center ">
             <p>ค่าบริการ</p>
-            <span>18 x {{ minuteInput || 0 }} นาที</span>
+            <span>{{ item?.coinRatePerMinute || 0 }} x {{ minuteInput || 0 }} นาที</span>
           </div>
           <div class="flex justify-between items-center ">
             <p class="font-bold">
@@ -57,8 +56,14 @@
             <span class="font-bold">{{ showValue }} เหรียญ</span>
           </div>
           <div class="flex justify-between items-center ">
+            <p>ยอดเงินคงเหลือปัจจุบัน</p>
+            <span>{{ walletBalance?.balance || 0 }} เหรียญ</span>
+          </div>
+          <div class="flex justify-between items-center ">
             <p>ยอดคงเหลือหลังหักค่าบริการ</p>
-            <span>534</span>
+            <span :class="((walletBalance?.balance || 0) - showValue) < 0 ? 'text-rose-500 font-bold' : ''">
+              {{ (walletBalance?.balance || 0) - showValue }} เหรียญ
+            </span>
           </div>
         </div>
       </template>
@@ -72,27 +77,68 @@
         rounded
         @click="visible = false" />
       <Button
-        :label="`ยืนยัน ${showValue} เหรียญ`"
+        :disabled="isInsufficientBalance || !minuteInput"
+        :label="isInsufficientBalance ? 'ยอดเงินไม่เพียงพอ' : `ยืนยัน ${showValue} เหรียญ`"
         pt:label:class="font-semibold"
-        pt:root:class="bg-gradient-primary border-none px-4 py-2 shadow-sm hover:shadow-md hover:scale-105 transition"
+        pt:root:class="bg-gradient-primary border-none px-4 py-2 shadow-sm hover:shadow-md hover:scale-105 transition disabled:opacity-50 disabled:cursor-not-allowed"
         size="small"
         rounded
-        @click="visible = false" />
+        @click="confirmRent" />
     </div>
   </Dialog>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import type { IRentAPostPayload } from '~/models/request/RentReq.model'
+import type { IFindAllRentPostList } from '~/models/response/RentRes.model'
+import type { IFindWalletBalanceData } from '~/models/response/WallRes.model'
 
 const visible = defineModel<boolean>('visible', { default: false })
 const minuteInput = ref<number | null>(null)
+const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
+
+const props = defineProps<{
+  item: IFindAllRentPostList | null
+  walletBalance: IFindWalletBalanceData
+}>()
+
+const emit = defineEmits<{
+  confirm: [payload: IRentAPostPayload]
+}>()
+
 const selectedOption = ref<{ name: string, value: number } | null>(null)
-const options = ref([
-  { name: '15 นาที', value: 15 },
-  { name: '30 นาที', value: 30 },
-  { name: '50 นาที', value: 50 }
-])
+const options = computed((): { name: string, value: number }[] => {
+  const max = props.item?.maxDurationMinutes || 60
+
+  if (max <= 15) {
+    return [
+      { name: `${Math.round(max / 2)} นาที`, value: Math.round(max / 2) },
+      { name: `${max} นาที`, value: max }
+    ]
+  }
+
+  if (max <= 30) {
+    return [
+      { name: '15 นาที', value: 15 },
+      { name: `${max} นาที`, value: max }
+    ]
+  }
+
+  if (max <= 60) {
+    return [
+      { name: '15 นาที', value: 15 },
+      { name: '30 นาที', value: 30 },
+      { name: `${max} นาที`, value: max }
+    ]
+  }
+
+  return [
+    { name: '30 นาที', value: 30 },
+    { name: '60 นาที', value: 60 },
+    { name: `${max} นาที`, value: max }
+  ]
+})
 
 function onSelectOption (option: { name: string, value: number } | null): void {
   if (option) {
@@ -106,10 +152,23 @@ function onMinuteInput (val: number | null): void {
 }
 
 const showValue = computed((): number => {
-  return 18 * (minuteInput.value || 0)
+  return (props.item?.coinRatePerMinute || 0) * (minuteInput.value || 0)
 })
+
+const isInsufficientBalance = computed((): boolean => {
+  return (props.walletBalance?.balance || 0) < showValue.value
+})
+
+function confirmRent (): void {
+  if (!props.item) return
+  if (isInsufficientBalance.value) return
+
+  emit('confirm', {
+    hirePostId: props.item.id,
+    durationMinutes: minuteInput.value || 15
+  })
+}
 </script>
 
 <style scoped>
-
 </style>

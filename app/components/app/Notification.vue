@@ -75,11 +75,11 @@
             aria-label="Open user profile"
             class="shrink-0 rounded-full cursor-pointer focus:outline-none"
             type="button"
-            @click.stop="onClickUserDetail(item.requesterId)">
+            @click.stop="onClickUserDetail(item.relatedUserId)">
             <Avatar
               :alt="item?.userId || 'Notification Avatar'"
               :class="item.isRead ? 'ring-surface-100 dark:ring-surface-800 group-hover:ring-surface-200 dark:group-hover:ring-surface-700' : 'ring-primary-100 dark:ring-primary-900/50'"
-              :image="resolveAvatar(item?.requesterProfileImg)"
+              :image="resolveAvatar(item?.relatedUserProfileImg)"
               class="shrink-0 ring-2 shadow-sm transition-all duration-200"
               pt:image:class="object-cover"
               shape="circle"
@@ -102,18 +102,20 @@
           </div>
 
           <div
-            v-if="item.requestStatus === FriendRequestStatusEnum.PENDING"
+            v-if="item.requestStatus === FriendRequestStatusEnum.PENDING
+              || (item.notificationType === NotificationTypeEnum.HIRE_REQUEST
+                && item.hireSessionStatus === RentStatusEnum.PENDING)"
             class="flex items-center gap-1.5 shrink-0 ml-1 mt-1">
             <button
               class="flex h-8 w-8 items-center justify-center rounded-full bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 dark:bg-green-500/10 dark:text-green-400 dark:hover:bg-green-500/20 transition-colors shadow-sm"
               title="Accept"
-              @click.stop="handleAccept(item.requesterId)">
+              @click.stop="onAcceptNotification(item)">
               <i class="pi pi-check text-sm font-bold" />
             </button>
             <button
               class="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 transition-colors shadow-sm"
               title="Reject"
-              @click.stop="handleReject(item.requesterId)">
+              @click.stop="onRejectNotification(item)">
               <i class="pi pi-times text-sm font-bold" />
             </button>
           </div>
@@ -144,10 +146,13 @@
 import { ref } from 'vue'
 import dayjs from 'dayjs'
 import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
+import { NotificationTypeEnum } from '~/models/enums/Notification.enum'
+import { RentStatusEnum } from '~/models/enums/Rent.enum'
 import type { IItems } from '~/models/Global.model'
 import type { INotificationList } from '~/models/response/NotificationRes.model'
 import type { IFriendProvider } from '~/resource/provider/Friend.provider'
 import FriendProvider from '~/resource/provider/Friend.provider'
+import RentCustomerProvider, { type IRentCustomerProvider } from '~/resource/provider/RentCustomer.provider'
 import { useNotificationStore } from '~/stores/Notification'
 
 const op = ref()
@@ -156,6 +161,7 @@ const toggle = (event: Event): void => {
 }
 const router = useRouter()
 const friendService: IFriendProvider = new FriendProvider()
+const rentCustomerService: IRentCustomerProvider = new RentCustomerProvider()
 const notificationStore = useNotificationStore()
 const { $handleLoading } = useNuxtApp()
 const imageBase = String(import.meta.env.VITE_ENV_BASE_FILE_URL || '').replace(/\/$/, '')
@@ -177,6 +183,22 @@ async function handleReject (requesterId: number | null): Promise<void> {
   if (requesterId === null) return
   await friendService.rejectFriendRequest(requesterId)
   fetch()
+}
+
+function onAcceptNotification (item: INotificationList): void {
+  if (item.notificationType === NotificationTypeEnum.HIRE_REQUEST) {
+    clickAcceptRentSession(item.hireSessionId)
+  } else {
+    void handleAccept(item.relatedUserId)
+  }
+}
+
+function onRejectNotification (item: INotificationList): void {
+  if (item.notificationType === NotificationTypeEnum.HIRE_REQUEST) {
+    clickRejectRentSession(item.hireSessionId)
+  } else {
+    void handleReject(item.relatedUserId)
+  }
 }
 
 function handleMarkAllRead (): void {
@@ -221,6 +243,26 @@ function resolveAvatar (path?: string | null): string {
 function onClickUserDetail (userId?: number | null): void {
   if (!userId || userId <= 0) return
   router.push({ name: 'public-profile-id', params: { id: userId } })
+}
+
+async function onClickAcceptRentSession (sessionId: number): Promise<void> {
+  await rentCustomerService.acceptAHireRequest(sessionId)
+  router.push({ name: 'public-rent-chat-id', params: { id: sessionId } })
+}
+
+async function onClickRejectRentSession (sessionId: number): Promise<void> {
+  await rentCustomerService.rejectAHireRequest(sessionId)
+  fetch()
+}
+
+function clickAcceptRentSession (sessionId?: number | null): void {
+  if (!sessionId) return
+  $handleLoading((): Promise<void> => onClickAcceptRentSession(sessionId))
+}
+
+function clickRejectRentSession (sessionId?: number | null): void {
+  if (!sessionId) return
+  $handleLoading((): Promise<void> => onClickRejectRentSession(sessionId))
 }
 </script>
 

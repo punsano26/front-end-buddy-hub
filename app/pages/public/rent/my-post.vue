@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-2 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10" >
+  <div class="flex flex-col gap-2 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
     <div class="flex items-center">
       <ButtonBack
         :to="{ name: 'public-rent' }"
@@ -22,18 +22,18 @@
             </div>
             <div class="flex flex-col gap-1">
               <div class="flex items-center gap-2">
-                <p class="text-lg font-extrabold tracking-tight text-surface-900 dark:text-white">เพื่อนคุยทั่วไป</p>
-                <Tag value="เปิดใช้งาน" severity="success" />
+                <p class="text-lg font-extrabold tracking-tight text-surface-900 dark:text-white">{{ item?.category?.name }}</p>
+                <Tag :value="isActive ? 'เปิดใช้งาน' : 'ปิดใช้งาน'" :severity="isActive ? 'success' : 'danger'" />
               </div>
               <p class="text-sm text-surface-500 dark:text-surface-400">
-                สร้างเมื่อ 1/6/2569
+                สร้างเมื่อ {{ item?.updatedAt ? dayjs(item.updatedAt).format('DD/MM/YYYY HH:mm') : '' }}
               </p>
             </div>
           </div>
           <div class="flex items-center gap-3 sm:justify-end">
             <i class="pi pi-pencil text-xl text-surface-500 hover:text-surface-900 cursor-pointer" />
-            <span class="font-bold">เปิดใช้งาน</span>
-            <ToggleSwitch pt:slider="bg-green-700!" />
+            <span class="font-bold">{{ isActive ? 'เปิดใช้งาน' : 'ปิดใช้งาน' }}</span>
+            <ToggleSwitch v-model="isActive" pt:slider="bg-green-700!" />
           </div>
         </div>
       </template>
@@ -50,48 +50,92 @@
 
     <Card>
       <template #content>
-          <p class="font-bold">โปรไฟล์</p>
-           <InputLabelField
-              class="col-span-2"
-              label="หัวข้อ"
-              bold
-              required />
-              <InputLabelTextarea
-              class="col-span-2"
-              label="รายละเอียด"
-              bold
-              required />
-              <div class="flex flex-col gap-2">
-                <div class="flex items-center justify-between">
-                  <p class="font-bold">ความเชี่ยวชาญ<span class="text-red-500">*</span><span>(สูงสุด 5)</span></p>
-                  <Badge
-                    :value="selectedExpertise.length + '/5'"
-                    severity="secondary" />
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    v-for="option in expertiseOptions"
-                    :key="option"
-                    :class="[
-                      'px-3 py-1.5 rounded-full border text-xs font-semibold transition-all duration-200',
-                      selectedExpertise.includes(option)
-                        ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm scale-105 cursor-pointer dark:bg-emerald-400 dark:border-emerald-400 dark:text-slate-900'
-                        : selectedExpertise.length >= 5
-                          ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-500'
-                          : 'bg-slate-100 border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-700 cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:text-slate-200'
-                    ]"
-                    type="button"
-                    @click="toggleExpertise(option)">
-                    {{ option }}
-                  </button>
-                </div>
-                <p
-                  v-if="selectedExpertise.length === 0"
-                  class="text-[10px] text-red-500">
-                  * โปรดเลือกอย่างน้อย 1 ความเชี่ยวชาญ
-                </p>
-              </div>
-        </template>
+        <p class="font-bold">โปรไฟล์</p>
+        <InputLabelField
+          v-model="tagline"
+          :rules="formRules.tagline"
+          :show-error="submitted"
+          class="col-span-2"
+          label="หัวข้อ"
+          bold
+          required />
+        <InputLabelTextarea
+          v-model="description"
+          :rules="formRules.description"
+          :show-error="submitted"
+          class="col-span-2"
+          label="รายละเอียด"
+          bold
+          required />
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">ความเชี่ยวชาญและเรื่องที่ถนัด (เลือกได้สูงสุด 5 เรื่อง) <span class="text-red-500">*</span></span>
+            <Badge
+              :severity="selectedExpertise.length > 0 ? 'success' : 'secondary'"
+              :value="selectedExpertise.length + ' / 5'"
+              class="text-[10px] px-2.5 py-0.5 rounded-full font-extrabold bg-gradient-to-r from-sky-400/10 to-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/10" />
+          </div>
+          <div class="flex flex-wrap gap-2 pt-1.5">
+            <button
+              v-for="option in expertiseOptions"
+              :key="option"
+              :class="[
+                'px-3.5 py-2 rounded-full border text-xs font-bold transition-all duration-300 flex items-center gap-1.5 active:scale-95',
+                selectedExpertise.includes(option)
+                  ? 'bg-gradient-primary border-transparent text-white shadow-md shadow-indigo-500/10 scale-[1.03] cursor-pointer'
+                  : selectedExpertise.length >= 5
+                    ? 'bg-slate-50 border-slate-100 text-slate-350 dark:bg-slate-900/30 dark:border-slate-900 dark:text-slate-650 cursor-not-allowed opacity-50'
+                    : 'bg-slate-50/50 border-slate-200/80 text-slate-650 hover:border-indigo-500/30 hover:bg-slate-100 hover:text-indigo-600 dark:bg-slate-950 dark:border-slate-800/80 dark:text-slate-350 dark:hover:border-indigo-500/30 dark:hover:bg-slate-900 cursor-pointer shadow-2xs'
+              ]"
+              type="button"
+              @click="toggleExpertise(option)">
+              <i
+                v-if="selectedExpertise.includes(option) && isOriginalTag(option)"
+                class="pi pi-times text-[9px] text-white animate-scale-up" />
+              {{ option }}
+              <i
+                v-if="!isOriginalTag(option)"
+                :class="[
+                  'pi pi-times-circle text-[12px] ml-1.5 transition-colors cursor-pointer hover:text-rose-200 active:scale-90',
+                  selectedExpertise.includes(option) ? 'text-white/80' : 'text-slate-400 dark:text-slate-500 hover:text-rose-500'
+                ]"
+                @click.stop="removeCustomTag(option)" />
+            </button>
+
+            <!-- Inline Input for custom tag -->
+            <div
+              v-if="isAddingCustomTag"
+              class="flex items-center">
+              <input
+                ref="customTagInputRef"
+                v-model="customTagInput"
+                class="px-3.5 py-1.5 rounded-full border border-indigo-500 text-xs font-bold focus:outline-hidden dark:bg-slate-950 dark:text-white max-w-[120px]"
+                maxlength="20"
+                placeholder="ระบุแท็ก..."
+                type="text"
+                @blur="submitCustomTag"
+                @keydown.enter="submitCustomTag"
+                @keydown.esc="cancelCustomTag" />
+            </div>
+
+            <!-- "+ เพิ่มแท็ก" Mini Button -->
+            <button
+              v-else
+              :disabled="selectedExpertise.length >= 5"
+              class="px-3.5 py-1.5 rounded-full border border-dashed border-indigo-500/60 text-indigo-600 hover:bg-indigo-500/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs font-bold flex items-center gap-1.5 active:scale-95 cursor-pointer dark:text-indigo-400 dark:border-indigo-500/40"
+              type="button"
+              @click="startAddingCustomTag">
+              <i class="pi pi-plus text-[10px]" />
+              เพิ่มแท็ก
+            </button>
+          </div>
+          <p
+            v-if="submitted && selectedExpertise.length === 0"
+            class="text-[10px] text-rose-500 font-bold mt-1.5 flex items-center gap-1">
+            <span>⚠️</span> โปรดเลือกอย่างน้อย 1 ความเชี่ยวชาญ
+          </p>
+        </div>
+      </template>
     </Card>
 
     <Card>
@@ -118,6 +162,9 @@
                   </span>
                 </div>
                 <InputLabelField
+                  :model-value="price !== null ? String(price) : ''"
+                  :rules="formRules.price"
+                  :show-error="submitted"
                   label="เรตต่อนาที (เหรียญ)"
                   required>
                   <div class="relative flex items-center">
@@ -143,7 +190,7 @@
                         'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold border transition-all duration-200 cursor-pointer flex items-center gap-1 hover:scale-105',
                         price === preset
                           ? 'bg-emerald-500 border-emerald-400 text-white shadow-md shadow-emerald-500/20'
-                          : 'bg-white border-slate-200 hover:border-slate-300 dark:bg-slate-900 dark:border-slate-800 dark:hover:border-slate-700 text-slate-600 dark:text-slate-300'
+                          : 'bg-white border-slate-200 hover:border-slate-300 dark:bg-slate-900/30 dark:border-slate-800 dark:hover:border-slate-700 text-slate-600 dark:text-slate-300'
                       ]"
                       type="button"
                       @click="price = preset">
@@ -167,6 +214,9 @@
                   </span>
                 </div>
                 <InputLabelField
+                  :model-value="String(responseTime)"
+                  :rules="formRules.responseTime"
+                  :show-error="submitted"
                   label="เวลาตอบกลับ (นาที)"
                   required>
                   <div class="relative flex items-center">
@@ -190,7 +240,7 @@
                       'px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold border transition-all duration-200 cursor-pointer hover:scale-105',
                       responseTime === rt
                         ? 'bg-indigo-500 border-indigo-400 text-white shadow-md shadow-indigo-500/20'
-                        : 'bg-white border-slate-200 hover:border-slate-300 dark:bg-slate-900 dark:border-slate-800 dark:hover:border-slate-700 text-slate-600 dark:text-slate-300'
+                        : 'bg-white border-slate-200 hover:border-slate-300 dark:bg-slate-900/30 dark:border-slate-800 dark:hover:border-slate-700 text-slate-600 dark:text-slate-300'
                     ]"
                     type="button"
                     @click="responseTime = rt">
@@ -274,38 +324,173 @@
     </Card>
     <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-end">
       <Button
-        disabled
+        :disabled="!hasChanges"
         label="บันทึกการเปลี่ยนแปลง"
         icon="pi pi-save"
-        pt:root:class="w-full sm:w-auto bg-gradient-primary border-none shadow-md hover:shadow-lg hover:scale-[1.02] transition-all px-5 sm:px-8 py-2.5 sm:py-3 rounded-2xl cursor-pointer" />
+        pt:root:class="w-full sm:w-auto bg-gradient-primary border-none shadow-md hover:shadow-lg hover:scale-[1.02] transition-all px-5 sm:px-8 py-2.5 sm:py-3 rounded-2xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none"
+        @click="saveChanges" />
       <Button
         label="ลบโพสต์เช่าคุยนี้"
         icon="pi pi-trash"
-        pt:root:class="w-full sm:w-auto bg-red-500 hover:bg-red-600! border-none shadow-md hover:shadow-lg hover:scale-[1.02] transition-all px-5 sm:px-8 py-2.5 sm:py-3 rounded-2xl cursor-pointer" />
+        pt:root:class="w-full sm:w-auto bg-red-500 hover:bg-red-600! border-none shadow-md hover:shadow-lg hover:scale-[1.02] transition-all px-5 sm:px-8 py-2.5 sm:py-3 rounded-2xl cursor-pointer"
+        @click="deletePost" />
     </div>
+
+    <ConfirmModalDialog
+      v-model:visible="dialogOpenConfirmDeletePost"
+      confirm-button="ใช่, ฉันต้องการลบโพสต์"
+      message="คุณแน่ใจหรือไม่ว่าต้องการลบโพสต์เช่าคุยนี้?"
+      title="ยืนยันการลบโพสต์"
+      @confirm="confirmDeletePost" />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
+import { useToast } from 'primevue/usetoast'
+import type { IFindAllRentPostList } from '~/models/response/RentRes.model'
+import { validate, validateForm } from '~/plugins/Validate'
+import RentProvider, { type IRentProvider } from '~/resource/provider/Rent.provider'
+import { useRentStore } from '~/stores/Rent'
 import Badge from '~/volt/Badge.vue'
 
 definePageMeta({
   title: 'โพสต์เช่าคุยของฉัน',
   backPath: { name: 'public-rent' },
   backPlacement: 'page'
-});
-const expertiseOptions = ref([
-  'เกม', 'ดูหนัง', 'เพลง', 'ท่องเที่ยว', 'อาหาร', 
-  'กาแฟ', 'กีฬา', 'ฟิตเนส', 'แฟชั่น', 'ความงาม', 
-  'ช้อปปิ้ง', 'อนิเมะ', 'การ์ตูน'
-]);
+})
 
-const selectedExpertise = ref<string[]>(['เกม', 'ดูหนัง', 'ท่องเที่ยว', 'อนิเมะ', 'การ์ตูน']);
+const rentStore = useRentStore()
+const rentService: IRentProvider = new RentProvider()
+const { $handleLoading } = useNuxtApp()
+const dayjs = useDayjs()
+const toast = useToast()
+const router = useRouter()
 
+const customTagInputRef = ref<HTMLInputElement | null>(null)
+const isAddingCustomTag = ref<boolean>(false)
+const customTagInput = ref<string>('')
+let isSubmitting = false
+
+function startAddingCustomTag (): void {
+  if (selectedExpertise.value.length >= 5) {
+    toast.add({ severity: 'warn', summary: 'คำเตือน', detail: 'เลือกความเชี่ยวชาญได้ไม่เกิน 5 อย่าง', life: 3000 })
+    return
+  }
+  isAddingCustomTag.value = true
+  nextTick((): void => {
+    customTagInputRef.value?.focus()
+  })
+}
+
+async function submitCustomTag (): Promise<void> {
+  if (isSubmitting) return
+  isSubmitting = true
+  try {
+    const tagName = customTagInput.value.trim()
+    if (!tagName) {
+      cancelCustomTag()
+      return
+    }
+
+    // Check if tag already exists in options
+    const existingOption = expertiseOptions.value.find((opt: string): boolean => opt.toLowerCase() === tagName.toLowerCase())
+    const finalTagName = existingOption || tagName
+
+    // Check if already selected
+    if (selectedExpertise.value.includes(finalTagName)) {
+      toast.add({ severity: 'info', summary: 'ข้อมูล', detail: 'เลือกแท็กนี้อยู่แล้ว', life: 3000 })
+      cancelCustomTag()
+      return
+    }
+
+    // Check cap
+    if (selectedExpertise.value.length >= 5) {
+      toast.add({ severity: 'warn', summary: 'คำเตือน', detail: 'เลือกความเชี่ยวชาญได้ไม่เกิน 5 อย่าง', life: 3000 })
+      cancelCustomTag()
+      return
+    }
+
+    if (!expertiseOptions.value.includes(finalTagName)) {
+      expertiseOptions.value.push(finalTagName)
+    }
+
+    selectedExpertise.value.push(finalTagName)
+
+    toast.add({
+      severity: 'success',
+      summary: 'สำเร็จ',
+      detail: 'เพิ่มแท็กใหม่สำเร็จ',
+      life: 3000
+    })
+
+    cancelCustomTag()
+  } finally {
+    isSubmitting = false
+  }
+}
+
+function cancelCustomTag (): void {
+  isAddingCustomTag.value = false
+  customTagInput.value = ''
+}
+
+function isOriginalTag (option: string): boolean {
+  return originalTags.value.includes(option)
+}
+
+function removeCustomTag (option: string): void {
+  const selIndex = selectedExpertise.value.indexOf(option)
+  if (selIndex !== -1) {
+    selectedExpertise.value.splice(selIndex, 1)
+  }
+  const optIndex = expertiseOptions.value.indexOf(option)
+  if (optIndex !== -1) {
+    expertiseOptions.value.splice(optIndex, 1)
+  }
+}
+
+const originalTags = ref<string[]>([])
+const expertiseOptions = ref<string[]>([])
+
+const tagline = ref<string>('')
+const description = ref<string>('')
+const selectedExpertise = ref<string[]>([])
 const price = ref<number | null>(4)
 const responseTime = ref<number>(15)
+const isActive = ref<boolean>(true)
 const testDuration = ref<number>(30)
+const item = ref<IFindAllRentPostList>()
+const submitted = ref<boolean>(false)
+const dialogOpenConfirmDeletePost = ref<boolean>(false)
+
+const initialData = ref<{
+  tagline: string
+  description: string
+  selectedExpertise: string[]
+  price: number | null
+  responseTime: number
+  isActive: boolean
+} | null>(null)
+
+function arraysEqual (a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false
+  const sortedA = [...a].sort()
+  const sortedB = [...b].sort()
+  return sortedA.every((val, index) => val === sortedB[index])
+}
+
+const hasChanges = computed((): boolean => {
+  if (!initialData.value) return false
+  return (
+    tagline.value !== initialData.value.tagline ||
+    description.value !== initialData.value.description ||
+    price.value !== initialData.value.price ||
+    responseTime.value !== initialData.value.responseTime ||
+    isActive.value !== initialData.value.isActive ||
+    !arraysEqual(selectedExpertise.value, initialData.value.selectedExpertise)
+  )
+})
 
 const priceTier = computed((): { label: string, style: string } => {
   const p = price.value || 0
@@ -325,6 +510,141 @@ const priceAdvice = computed((): string => {
   return 'เรตนี้กำลังดี เข้าถึงง่ายและมีโอกาสได้รับสายแรกเร็วขึ้น'
 })
 
+const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> => ({
+  tagline: [validate.required],
+  description: [validate.required],
+  selectedExpertise: [
+    (val: string[]): boolean | string => val.length > 0 || 'กรุณาเลือกความเชี่ยวชาญอย่างน้อย 1 อย่าง',
+    (val: string[]): boolean | string => val.length <= 5 || 'เลือกความเชี่ยวชาญได้ไม่เกิน 5 อย่าง'
+  ],
+  price: [
+    validate.required,
+    (val: any): boolean | string => {
+      const num = typeof val === 'string' ? Number(val) : val
+      return (num !== null && !isNaN(num) && num >= 1) || 'กรุณากรอกค่าที่มากกว่าหรือเท่ากับ 1'
+    },
+    (val: any): boolean | string => {
+      const num = typeof val === 'string' ? Number(val) : val
+      return (num !== null && !isNaN(num) && num <= 100) || 'กรุณากรอกค่าที่น้อยกว่าหรือเท่ากับ 100'
+    }
+  ],
+  responseTime: [
+    validate.required,
+    (val: any): boolean | string => {
+      const num = typeof val === 'string' ? Number(val) : val
+      return (num !== null && !isNaN(num) && num >= 1) || 'กรุณากรอกค่าที่มากกว่าหรือเท่ากับ 1'
+    },
+    (val: any): boolean | string => {
+      const num = typeof val === 'string' ? Number(val) : val
+      return (num !== null && !isNaN(num) && num <= 240) || 'กรุณากรอกค่าที่น้อยกว่าหรือเท่ากับ 240'
+    }
+  ]
+}))
+
+async function useFetch (): Promise<void> {
+  await rentStore.fetchTags()
+  originalTags.value = [...rentStore.tagNames]
+  expertiseOptions.value = [...rentStore.tagNames]
+
+  await rentStore.fetchMyPost()
+  const detail = rentStore.myPost
+  if (detail) {
+    item.value = detail
+    tagline.value = detail.tagline || ''
+    description.value = detail.description || ''
+    selectedExpertise.value = detail.tags || []
+    price.value = detail.coinRatePerMinute
+    responseTime.value = detail.maxDurationMinutes
+    isActive.value = detail.isActive
+
+    selectedExpertise.value.forEach((tag: string): void => {
+      if (!expertiseOptions.value.includes(tag)) {
+        expertiseOptions.value.push(tag)
+      }
+    })
+
+    initialData.value = {
+      tagline: tagline.value,
+      description: description.value,
+      selectedExpertise: [...selectedExpertise.value],
+      price: price.value,
+      responseTime: responseTime.value,
+      isActive: isActive.value
+    }
+  }
+}
+
+function fetch (): void {
+  $handleLoading(useFetch, {
+    errorCallBack: (): void => {
+      router.push({ name: 'public-rent-create' })
+    }
+  })
+}
+
+async function useUpdatePost (): Promise<void> {
+  if (!item.value) return
+  const payload = {
+    categoryId: item.value.categoryId,
+    tagline: tagline.value,
+    description: description.value,
+    coinRatePerMinute: price.value || 0,
+    maxDurationMinutes: responseTime.value,
+    isActive: isActive.value,
+    tagNames: selectedExpertise.value
+  }
+  await rentStore.updatePost(item.value.id, payload)
+  await useFetch()
+}
+
+function saveChanges (): void {
+  submitted.value = true
+  const formValues = {
+    tagline: tagline.value,
+    description: description.value,
+    selectedExpertise: selectedExpertise.value,
+    price: price.value,
+    responseTime: responseTime.value
+  }
+  if (!validateForm(formValues, formRules.value)) {
+    toast.add({ severity: 'error', summary: 'ผิดพลาด', detail: 'กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง', life: 3000 })
+    return
+  }
+  $handleLoading(useUpdatePost, {
+    toast: {
+      instance: toast,
+      success: {
+        detail: 'บันทึกการเปลี่ยนแปลงสำเร็จ'
+      }
+    }
+  })
+}
+
+async function useDeletePost (): Promise<void> {
+  if (!item.value) return
+  await rentStore.deletePost(item.value.id)
+  router.push({ name: 'public-rent' })
+}
+
+function deletePost (): void {
+  dialogOpenConfirmDeletePost.value = true
+}
+
+function confirmDeletePost (): void {
+  $handleLoading(useDeletePost, {
+    toast: {
+      instance: toast,
+      success: {
+        detail: 'ลบโพสต์เช่าคุยสำเร็จ'
+      }
+    }
+  })
+}
+
+onMounted((): void => {
+  fetch()
+})
+
 function toggleExpertise (option: string): void {
   const index = selectedExpertise.value.indexOf(option)
   if (index !== -1) {
@@ -333,7 +653,6 @@ function toggleExpertise (option: string): void {
     selectedExpertise.value.push(option)
   }
 }
-
 </script>
 
 <style></style>

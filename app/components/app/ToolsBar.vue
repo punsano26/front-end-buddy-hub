@@ -127,6 +127,10 @@
 
       <template #end>
         <div class="flex items-center gap-2 md:gap-3">
+          <CoinBalance
+            v-if="authStore.user.id"
+            class=""
+            @topup="router.push({ name: 'public-vip' })" />
           <div class="hidden md:flex items-center">
             <ToggleSwitchMode class="pt-1" />
           </div>
@@ -327,6 +331,7 @@
 import { computed, ref } from 'vue'
 import ToggleSwitchMode from '../input/ToggleSwitchMode.vue'
 import AvatarProfile from './AvatarProfile.vue'
+import CoinBalance from './CoinBalance.vue'
 import MobileQuickNav from './MobileQuickNav.vue'
 import Notification from './Notification.vue'
 import { useChatStore } from '~/stores/Chat'
@@ -342,6 +347,7 @@ const unreadCount = computed((): number => chatStore.unreadCount)
 const menuOpen = ref(false)
 
 const route = useRoute()
+const router = useRouter()
 
 const isActive = (...pages: string[]): boolean => {
   return pages.includes(String(route.name))

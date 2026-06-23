@@ -133,7 +133,7 @@
         <div class="w-full bg-white/70 dark:bg-slate-900/75 backdrop-blur-xl border border-white/20 dark:border-slate-800/80 rounded-3xl p-4 sm:p-6 lg:p-8 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.04)] dark:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.4)] transition-all duration-500">
           <StepperRent
             v-model="activeStep"
-            :services="rentServices"
+            :services="rentCategories"
             @submit="onFormSubmit" />
         </div>
       </div>
@@ -142,44 +142,108 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { useToast } from 'primevue/usetoast'
 import StepperRent from '~/components/rent/StepperRent.vue'
+import type { ICreateRentPostPayload } from '~/models/request/RentReq.model'
+import type { IFindAllRentCategoriesData } from '~/models/response/RentRes.model'
+import type { IRentProvider } from '~/resource/provider/Rent.provider'
+import RentProvider from '~/resource/provider/Rent.provider'
+import { useRentStore } from '~/stores/Rent'
 import Button from '~/volt/Button.vue'
 
-definePageMeta({ layout: "navbar" });
+definePageMeta({ layout: 'navbar' })
+
+interface RentServiceOption {
+  id: string
+  title: string
+  priceLabel: string
+  description: string
+  icon?: string
+  note?: string
+  noteIcon?: string
+}
+
+interface RentFormSubmitData {
+  service: RentServiceOption | null
+  tagline: string
+  bio: string
+  expertises: string[]
+  price: number | null
+  responseTime: number
+}
 
 const activeStep = ref(1)
 const isSubmitted = ref(false)
-const submittedData = ref<any>(null)
-
+const submittedData = ref<RentFormSubmitData | null>(null)
+const rentCategories = ref<RentServiceOption[]>([])
+const toast = useToast()
 const router = useRouter()
 function navigateToRent (): void {
   router.push({ name: 'public-rent' })
 }
 
-function onFormSubmit (data: any): void {
-  isSubmitted.value = true
-  submittedData.value = data
+function onFormSubmit (data: RentFormSubmitData): void {
+  const payload: ICreateRentPostPayload = {
+    categoryId: Number(data.service?.id || 0),
+    tagline: data.tagline,
+    description: data.bio,
+    coinRatePerMinute: Number(data.price || 0),
+    maxDurationMinutes: Number(data.responseTime || 0),
+    tagNames: data.expertises || []
+  }
+
+  $handleLoading(
+    async (): Promise<void> => {
+      await rentStore.createPost(payload)
+      submittedData.value = data
+      isSubmitted.value = true
+    },
+    {
+      toast: {
+        instance: toast,
+        success: {
+          detail: 'เปิดรับเช่าเพื่อนคุยสำเร็จ'
+        }
+      }
+    }
+  )
 }
 
-const rentServices = [
-  {
-    id: 'casual-friend',
-    title: 'เพื่อนคุยทั่วไป (Casual Friend)',
-    priceLabel: '4-10 เหรียญ/นาที',
-    description: 'บริการเพื่อนคุยทั่วไปสำหรับผู้ที่ต้องการพูดคุยและแชร์ประสบการณ์ชีวิต',
-    icon: 'pi pi-comments'
-  },
-  {
-    id: 'emotional-support',
-    title: 'ที่ปรึกษาทางใจ (Emotional Support)',
-    priceLabel: '12-21 เหรียญ/นาที',
-    description: 'รับฟังและให้คำปรึกษาในเรื่องส่วนตัว เช่น ความเครียด ความสัมพันธ์ หรือปัญหาชีวิตต่างๆ โดยไม่ตัดสินและเป็นความลับ',
-    note: 'ข้อมูลส่วนตัวจะถูกเก็บเป็นความลับและไม่ถูกเปิดเผย',
-    noteIcon: 'pi pi-shield',
-    icon: 'pi pi-heart'
-  }
-]
+const { $handleLoading } = useNuxtApp()
+const rentStore = useRentStore()
+async function getCategoriesRent (): Promise<void> {
+  await $handleLoading(async (): Promise<void> => {
+    await rentStore.fetchCategories()
+    rentCategories.value = rentStore.categories.map((category: IFindAllRentCategoriesData): RentServiceOption => {
+      const name = category.name
+      let icon = 'pi pi-comments'
+      let priceLabel = '4-10 เหรียญ/นาที'
+      let note: string | undefined
+      let noteIcon = 'pi pi-shield'
+
+      if (name.includes('ที่ปรึกษา') || name.toLowerCase().includes('emotional')) {
+        icon = 'pi pi-heart'
+        priceLabel = '12-21 เหรียญ/นาที'
+        note = 'ข้อมูลส่วนตัวจะถูกเก็บเป็นความลับและไม่ถูกเปิดเผย'
+      }
+
+      return {
+        id: category.id.toString(),
+        title: name,
+        priceLabel: priceLabel,
+        description: category.description,
+        icon: icon,
+        note: note,
+        noteIcon: noteIcon
+      }
+    })
+  })
+}
+
+onMounted((): void => {
+  getCategoriesRent()
+})
 </script>
 
 <style>

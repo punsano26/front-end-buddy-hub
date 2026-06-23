@@ -1,6 +1,7 @@
 import { watch } from 'vue'
 import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
 import { MatchEvent } from '~/models/enums/Match.enum'
+import { RentEvent } from '~/models/enums/Rent.enum'
 import type { ICreateMessageData, IFindAllConversationsList, IMessageReadStatus } from '~/models/response/ChatRes.model'
 import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provider'
 import { useAuthStore } from '~/stores/Auth'
@@ -25,6 +26,7 @@ type TWebSocketEvent
     | 'notification_read'
     | 'notification_deleted'
     | MatchEvent
+    | RentEvent
 
 interface IWebSocketPayload {
   event?: TWebSocketEvent | string
@@ -71,6 +73,7 @@ export default defineNuxtPlugin((): any => {
   const friendStore = useFriendStore()
   const matchStore = useMatchStore()
   const chatService: IChatProvider = new ChatProvider()
+  const router = useRouter()
 
   let ws: (WebSocket & { __manualClose?: boolean }) | null = null
   let isSyncingUnreadOnLogin = false
@@ -332,10 +335,53 @@ export default defineNuxtPlugin((): any => {
           break
         }
 
+        case RentEvent.HIRE_REQUESTED:
+        case RentEvent.HIRE_REJECTED:
+        case RentEvent.HIRE_CANCELLED:
         case 'new_notification': {
           void playNotificationSound()
           const notificationStore = useNotificationStore()
           void notificationStore.fetchNotifications()
+          break
+        }
+
+        case RentEvent.HIRE_ACCEPTED: {
+          void playNotificationSound()
+          const notificationStore = useNotificationStore()
+          void notificationStore.fetchNotifications()
+
+          const data = payload.data
+          if (isRecord(data)) {
+            const customerId = toNumber(data.customerId)
+              || toNumber(data.customer_id)
+              || toNumber(data.userId)
+              || toNumber(data.user_id)
+
+            const providerId = toNumber(data.providerId)
+              || toNumber(data.provider_id)
+              || toNumber(data.relatedUserId)
+              || toNumber(data.related_user_id)
+              || (isRecord(data.provider) ? toNumber(data.provider.id) : null)
+              || (isRecord(data.provider) ? toNumber(data.provider.userId) : null)
+              || (isRecord(data.provider) ? toNumber(data.provider.user_id) : null)
+
+            const currentUserId = authStore.user.id
+            const isParticipant = currentUserId > 0 && (
+              currentUserId === customerId
+              || currentUserId === providerId
+            )
+
+            if (isParticipant) {
+              const sessionId = toNumber(data.hireSessionId)
+                || toNumber(data.hire_session_id)
+                || toNumber(data.id)
+                || toNumber(data.sessionId)
+                || toNumber(data.session_id)
+              if (sessionId) {
+                void router.push({ name: 'public-rent-chat-id', params: { id: sessionId } })
+              }
+            }
+          }
           break
         }
 

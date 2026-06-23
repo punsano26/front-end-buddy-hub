@@ -1,5 +1,6 @@
 export enum NotificationTypeEnum {
   FRIEND_REQUEST = 'FRIEND_REQUEST',
   MESSAGE = 'MESSAGE',
-  SYSTEM = 'SYSTEM'
+  SYSTEM = 'SYSTEM',
+  HIRE_REQUEST = 'HIRE_REQUEST'
 }

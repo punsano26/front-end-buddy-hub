@@ -13,10 +13,8 @@
       <!-- Tagline -->
       <InputLabelField
         v-model="tagline"
-        :rules="[
-          (v: string) => v.length <= 50 || 'ข้อมูลต้องยาวไม่เกิน 50 ตัวอักษร'
-        ]"
-        :show-error="tagline.length > 50"
+        :rules="formRules.tagline"
+        :show-error="submitted"
         label="สโลแกนหรือประโยคดึงดูดใจ"
         maxlength="60"
         placeholder="เช่น เพื่อนคุยคู่คิดเรื่องงาน, พื้นที่ปลอดภัย 24 ชม."
@@ -32,10 +30,8 @@
       <!-- Bio -->
       <InputLabelTextarea
         v-model="bio"
-        :rules="[
-          (v: string) => v.length <= 200 || 'ข้อมูลต้องยาวไม่เกิน 200 ตัวอักษร'
-        ]"
-        :show-error="bio.length > 200"
+        :rules="formRules.bio"
+        :show-error="submitted"
         label="แนะนำตัวสั้นๆ"
         maxlength="220"
         placeholder="อธิบายสไตล์การพูดคุย วิธีการรับฟัง หรือประสบการณ์ของคุณ..."
@@ -68,20 +64,54 @@
               selectedExpertises.includes(option)
                 ? 'bg-gradient-primary border-transparent text-white shadow-md shadow-indigo-500/10 scale-[1.03] cursor-pointer'
                 : selectedExpertises.length >= 5
-                  ? 'bg-slate-50 border-slate-100 text-slate-300 dark:bg-slate-900/30 dark:border-slate-900 dark:text-slate-600 cursor-not-allowed opacity-50'
+                  ? 'bg-slate-50 border-slate-100 text-slate-300 dark:bg-slate-900/30 dark:border-slate-900 dark:text-slate-605 cursor-not-allowed opacity-50'
                   : 'bg-slate-50/50 border-slate-200/80 text-slate-650 hover:border-indigo-500/30 hover:bg-slate-100 hover:text-indigo-600 dark:bg-slate-950 dark:border-slate-800/80 dark:text-slate-350 dark:hover:border-indigo-500/30 dark:hover:bg-slate-900 cursor-pointer shadow-2xs'
             ]"
             type="button"
             @click="toggleExpertise(option)">
             <i
-              v-if="selectedExpertises.includes(option)"
-              class="pi pi-check text-[9px] text-white animate-scale-up" />
+              v-if="selectedExpertises.includes(option) && isOriginalTag(option)"
+              class="pi pi-times text-[9px] text-white animate-scale-up" />
             {{ option }}
+            <i
+              v-if="!isOriginalTag(option)"
+              :class="[
+                'pi pi-times-circle text-[12px] ml-1.5 transition-colors cursor-pointer hover:text-rose-200 active:scale-90',
+                selectedExpertises.includes(option) ? 'text-white/80' : 'text-slate-400 dark:text-slate-500 hover:text-rose-500'
+              ]"
+              @click.stop="removeCustomTag(option)" />
+          </button>
+
+          <!-- Inline Input for custom tag -->
+          <div
+            v-if="isAddingCustomTag"
+            class="flex items-center">
+            <input
+              ref="customTagInputRef"
+              v-model="customTagInput"
+              class="px-3.5 py-1.5 rounded-full border border-indigo-500 text-xs font-bold focus:outline-hidden dark:bg-slate-950 dark:text-white max-w-[120px]"
+              maxlength="20"
+              placeholder="ระบุแท็ก..."
+              type="text"
+              @blur="submitCustomTag"
+              @keydown.enter="submitCustomTag"
+              @keydown.esc="cancelCustomTag">
+          </div>
+
+          <!-- "+ เพิ่มแท็ก" Mini Button -->
+          <button
+            v-else
+            :disabled="selectedExpertises.length >= 5"
+            class="px-3.5 py-1.5 rounded-full border border-dashed border-indigo-500/60 text-indigo-600 hover:bg-indigo-500/5 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs font-bold flex items-center gap-1.5 active:scale-95 cursor-pointer dark:text-indigo-400 dark:border-indigo-500/40"
+            type="button"
+            @click="startAddingCustomTag">
+            <i class="pi pi-plus text-[10px]" />
+            เพิ่มแท็ก
           </button>
         </div>
 
         <p
-          v-if="selectedExpertises.length === 0"
+          v-if="submitted && selectedExpertises.length === 0"
           class="text-[10px] text-rose-500 font-bold mt-1.5 flex items-center gap-1">
           <span>⚠️</span> โปรดเลือกอย่างน้อย 1 ความเชี่ยวชาญ
         </p>
@@ -100,19 +130,23 @@
         text
         @click="$emit('prev')" />
       <Button
-        :disabled="!tagline || !bio || tagline.length > 50 || bio.length > 200 || selectedExpertises.length === 0"
         icon="pi pi-arrow-right"
         icon-pos="right"
         label="ขั้นตอนถัดไป"
         pt:root:class="!rounded-xl px-5 py-2.5 bg-gradient-primary border-none text-white shadow-md hover:shadow-lg hover:shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-xs sm:text-sm font-extrabold cursor-pointer"
-        @click="tagline && bio && tagline.length <= 50 && bio.length <= 200 && selectedExpertises.length > 0 && $emit('next')" />
+        @click="nextStep" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed, nextTick, onMounted, ref } from 'vue'
+import { useToast } from 'primevue/usetoast'
 import InputLabelField from '~/components/input/InputLabelField.vue'
 import InputLabelTextarea from '~/components/input/InputLabelTextarea.vue'
+import type { IFindAllRentTagsData } from '~/models/response/RentRes.model'
+import { validate, validateForm } from '~/plugins/Validate'
+import RentProvider, { type IRentProvider } from '~/resource/provider/Rent.provider'
 import Badge from '~/volt/Badge.vue'
 import Button from '~/volt/Button.vue'
 import Divider from '~/volt/Divider.vue'
@@ -121,15 +155,138 @@ const tagline = defineModel<string>('tagline', { default: '' })
 const bio = defineModel<string>('bio', { default: '' })
 const selectedExpertises = defineModel<string[]>('selectedExpertises', { default: (): string[] => [] })
 
-defineEmits<{
+const emit = defineEmits<{
   next: []
   prev: []
 }>()
 
-const expertiseOptions = [
-  'ความรัก', 'ความสัมพันธ์', 'การเลิกรา', 'การเรียน', 'การทำงาน',
-  'ครอบครัว', 'พัฒนาตนเอง', 'ความเครียด', 'คุยแก้เหงา', 'สุขภาพจิต'
-]
+const rentService: IRentProvider = new RentProvider()
+const { $handleLoading } = useNuxtApp()
+const toast = useToast()
+const submitted = ref(false)
+
+const customTagInputRef = ref<HTMLInputElement | null>(null)
+const isAddingCustomTag = ref<boolean>(false)
+const customTagInput = ref<string>('')
+let isSubmitting = false
+
+function startAddingCustomTag (): void {
+  if (selectedExpertises.value.length >= 5) {
+    toast.add({ severity: 'warn', summary: 'คำเตือน', detail: 'เลือกความเชี่ยวชาญได้ไม่เกิน 5 อย่าง', life: 3000 })
+    return
+  }
+  isAddingCustomTag.value = true
+  nextTick((): void => {
+    customTagInputRef.value?.focus()
+  })
+}
+
+async function submitCustomTag (): Promise<void> {
+  if (isSubmitting) return
+  isSubmitting = true
+  try {
+    const tagName = customTagInput.value.trim()
+    if (!tagName) {
+      cancelCustomTag()
+      return
+    }
+
+    // Check if tag already exists in options (case insensitive)
+    const existingOption = expertiseOptions.value.find((opt: string): boolean => opt.toLowerCase() === tagName.toLowerCase())
+    const finalTagName = existingOption || tagName
+
+    // Check if already selected
+    if (selectedExpertises.value.includes(finalTagName)) {
+      toast.add({ severity: 'info', summary: 'ข้อมูล', detail: 'เลือกแท็กนี้อยู่แล้ว', life: 3000 })
+      cancelCustomTag()
+      return
+    }
+
+    // Check cap
+    if (selectedExpertises.value.length >= 5) {
+      toast.add({ severity: 'warn', summary: 'คำเตือน', detail: 'เลือกความเชี่ยวชาญได้ไม่เกิน 5 อย่าง', life: 3000 })
+      cancelCustomTag()
+      return
+    }
+
+    if (!expertiseOptions.value.includes(finalTagName)) {
+      expertiseOptions.value.push(finalTagName)
+    }
+
+    selectedExpertises.value.push(finalTagName)
+
+    toast.add({
+      severity: 'success',
+      summary: 'สำเร็จ',
+      detail: 'เพิ่มแท็กใหม่สำเร็จ',
+      life: 3000
+    })
+
+    cancelCustomTag()
+  } finally {
+    isSubmitting = false
+  }
+}
+
+function cancelCustomTag (): void {
+  isAddingCustomTag.value = false
+  customTagInput.value = ''
+}
+
+function isOriginalTag (option: string): boolean {
+  return originalTags.value.includes(option)
+}
+
+function removeCustomTag (option: string): void {
+  const selIndex = selectedExpertises.value.indexOf(option)
+  if (selIndex !== -1) {
+    selectedExpertises.value.splice(selIndex, 1)
+  }
+  const optIndex = expertiseOptions.value.indexOf(option)
+  if (optIndex !== -1) {
+    expertiseOptions.value.splice(optIndex, 1)
+  }
+}
+
+const form = computed((): { tagline: string, bio: string, selectedExpertises: string[] } => ({
+  tagline: tagline.value,
+  bio: bio.value,
+  selectedExpertises: selectedExpertises.value
+}))
+
+const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> => ({
+  tagline: [
+    validate.required,
+    (v: string): boolean | string => validate.maxLength(v, 50)
+  ],
+  bio: [
+    validate.required,
+    (v: string): boolean | string => validate.maxLength(v, 200)
+  ],
+  selectedExpertises: [
+    (v: string[]): boolean | string => validate.atLeast(v, 1)
+  ]
+}))
+
+const originalTags = ref<string[]>([])
+const expertiseOptions = ref<string[]>([])
+
+async function onGetAllRentTags (): Promise<void> {
+  const response = await rentService.findAllRentTags()
+  if (response && response.data) {
+    const tags = response.data.map((tag: IFindAllRentTagsData): string => tag.name)
+    expertiseOptions.value = [...tags]
+    originalTags.value = [...tags]
+  }
+}
+
+function getAllRentTags (): void {
+  $handleLoading(onGetAllRentTags, {
+    toast: {
+      instance: toast
+    }
+  })
+}
 
 function toggleExpertise (option: string): void {
   const index = selectedExpertises.value.indexOf(option)
@@ -139,4 +296,16 @@ function toggleExpertise (option: string): void {
     selectedExpertises.value.push(option)
   }
 }
+
+function nextStep (): void {
+  submitted.value = true
+  if (!validateForm(form.value, formRules.value)) {
+    return
+  }
+  emit('next')
+}
+
+onMounted((): void => {
+  getAllRentTags()
+})
 </script>

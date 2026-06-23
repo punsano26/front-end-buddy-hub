@@ -93,9 +93,9 @@
               <div class="relative flex items-center w-full group">
                 <InputNumber
                   v-model="responseTime"
-                  :max="240"
+                  :max="60"
                   :min="1"
-                  class="w-full !rounded-xl transition-all duration-300 border-slate-200/80 dark:border-slate-850 hover:border-indigo-500/30 focus:border-indigo-500"
+                  class="w-full rounded-xl! transition-all duration-300 border-slate-200/80 dark:border-slate-850 hover:border-indigo-500/30 focus:border-indigo-500"
                   placeholder="เช่น 15" />
                 <span class="absolute right-4 text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 pointer-events-none">
                   นาที
@@ -246,7 +246,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import InputLabelField from '~/components/input/InputLabelField.vue'
 import Button from '~/volt/Button.vue'
 import Divider from '~/volt/Divider.vue'
@@ -255,8 +255,18 @@ import InputNumber from '~/volt/InputNumber.vue'
 const price = defineModel<number | null>('price', { default: 4 })
 const responseTime = defineModel<number>('responseTime', { default: 15 })
 
+interface RentServiceOption {
+  id: string
+  title: string
+  priceLabel: string
+  description: string
+  icon?: string
+  note?: string
+  noteIcon?: string
+}
+
 const props = defineProps<{
-  selectedServiceId: string | null
+  selectedService: RentServiceOption | null
 }>()
 
 defineEmits<{
@@ -267,12 +277,13 @@ defineEmits<{
 const testDuration = ref<number>(30)
 
 function getRecommendedPresets (): number[] {
-  if (props.selectedServiceId === 'casual-friend') {
-    return [4, 6, 8, 10]
-  } else if (props.selectedServiceId === 'emotional-support') {
+  if (!props.selectedService) return [4, 8, 12, 16, 21]
+
+  const title = props.selectedService.title
+  if (title.includes('ที่ปรึกษา') || title.toLowerCase().includes('emotional')) {
     return [12, 15, 18, 21]
   }
-  return [4, 8, 12, 16, 21]
+  return [4, 6, 8, 10]
 }
 
 const priceTier = computed((): { label: string, style: string } => {
@@ -287,8 +298,13 @@ const priceTier = computed((): { label: string, style: string } => {
 
 const priceAdvice = computed((): string => {
   const p = price.value || 0
-  const isCasual = props.selectedServiceId === 'casual-friend'
-  const isEmotional = props.selectedServiceId === 'emotional-support'
+  if (!props.selectedService) {
+    return 'เลือกตั้งราคาที่สอดคล้องกับหัวข้อเรื่องที่ถนัด ยิ่งเรตเข้าถึงง่ายยิ่งเพิ่มโอกาสได้รับสายแรกเร็วขึ้น!'
+  }
+
+  const title = props.selectedService.title
+  const isEmotional = title.includes('ที่ปรึกษา') || title.toLowerCase().includes('emotional')
+  const isCasual = !isEmotional
 
   if (p === 0) {
     return 'โปรดระบุเรตราคาต่อนาทีที่คุณต้องการเปิดรับสาย'
