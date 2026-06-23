@@ -1,17 +1,20 @@
 import type { FriendRequestStatusEnum } from '../enums/Friend.enum'
 import type { NotificationTypeEnum } from '../enums/Notification.enum'
+import type { RentStatusEnum } from '../enums/Rent.enum'
 import type { IApiResponse, IBasePaginationResponse } from './Response.model'
 
 export interface INotificationList {
   id: number
-  userId: number | null
-  title: string
-  content: string
+  userId: number
+  title: string | null
+  content: string | null
   isRead: boolean
   notificationType: NotificationTypeEnum
-  requesterId: number | null
-  requesterProfileImg: string | null
-  requestStatus: FriendRequestStatusEnum | null
+  relatedUserId: number
+  relatedUserProfileImg: string | null
+  requestStatus: FriendRequestStatusEnum
+  hireSessionId: number
+  hireSessionStatus: RentStatusEnum | null
   createdAt: string
   updatedAt: string
 }
