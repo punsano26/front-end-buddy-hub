@@ -46,21 +46,34 @@
     </div>
   </div>
   <RentModal :item="rentStore.selectedPost" :wallet-balance="myWalletBalance" v-model:visible="rentModalVisible" @confirm="confirmRent" />
+  <SuccessHireModal
+    v-model:visible="successModalVisible"
+    :item="successModalItem"
+    :duration-minutes="successModalDuration"
+    :coin-cost="successModalCost"
+    @chat="goToChatPage" />
 </template>
 
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
 import RentModal from '@/components/rent/RentModal.vue'
+import SuccessHireModal from '@/components/rent/SuccessHireModal.vue'
 import { useToast } from 'primevue/usetoast'
 import type { IRentAPostPayload } from '~/models/request/RentReq.model'
 import type { TBaseParamsId } from '~/models/request/Request.model'
 import type { IFindWalletBalanceData } from '~/models/response/WallRes.model'
+import type { IFindAllRentPostList } from '~/models/response/RentRes.model'
 import RentCustomerProvider, { type IRentCustomerProvider } from '~/resource/provider/RentCustomer.provider'
 import WalletProvider, { type IWalletProvider } from '~/resource/provider/Wallet.provider'
 import { useRentStore } from '~/stores/Rent'
 
 const router = useRouter()
 const rentModalVisible = ref(false)
+const successModalVisible = ref(false)
+const successModalDuration = ref(15)
+const successModalCost = ref(0)
+const successModalItem = ref<IFindAllRentPostList | null>(null)
+
 const { $handleLoading } = useNuxtApp()
 const toast = useToast()
 const myWalletBalance = ref<IFindWalletBalanceData>({ userId: 0, balance: 0 })
@@ -114,6 +127,11 @@ function getMyWalletBalance (): void {
   $handleLoading(onGetMyWalletBalance)
 }
 
+function goToChatPage (): void {
+  if (!successModalItem.value) return
+  router.push({ name: 'public-rent-chat-id', params: { id: successModalItem.value.provider.id } })
+}
+
 async function onConfirmRent (payload: IRentAPostPayload): Promise<void> {
   if (!rentStore.selectedPost) return
   const provider = rentStore.selectedPost.provider
@@ -124,7 +142,7 @@ async function onConfirmRent (payload: IRentAPostPayload): Promise<void> {
 
   const existing = conversationsRent.value?.find((c: any): boolean => c.id === provider.id)
   if (existing) {
-    existing.sessionStatus = 'active'
+    existing.sessionStatus = 'pending'
     existing.maxDurationMinutes = payload.durationMinutes
   } else {
     conversationsRent.value?.unshift({
@@ -137,16 +155,20 @@ async function onConfirmRent (payload: IRentAPostPayload): Promise<void> {
       rating: String(provider.rating?.averageRating || '5.0'),
       rate: String(rentStore.selectedPost.coinRatePerMinute),
       rateHour: String(rentStore.selectedPost.coinRatePerMinute * 60),
-      lastMessageText: 'เริ่มเซสชันเช่าคุยแล้ว',
+      lastMessageText: 'ส่งคำขอเช่าคุยแล้ว รอการตอบรับ...',
       lastMessageCreatedAt: new Date(),
       welcomeMessage: rentStore.selectedPost.description || 'สวัสดีค่ะ ยินดีต้อนรับนะคะ!',
-      sessionStatus: 'active',
+      sessionStatus: 'pending',
       maxDurationMinutes: payload.durationMinutes
     })
   }
 
+  successModalDuration.value = payload.durationMinutes
+  successModalCost.value = payload.durationMinutes * rentStore.selectedPost.coinRatePerMinute
+  successModalItem.value = rentStore.selectedPost
+  
   rentModalVisible.value = false
-  router.push({ name: 'public-rent-chat-id', params: { id: provider.id } })
+  successModalVisible.value = true
 }
 
 function confirmRent (payload: IRentAPostPayload): void {
