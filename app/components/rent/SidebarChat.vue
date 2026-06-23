@@ -22,7 +22,7 @@
       placeholder="ค้นหาชื่อ ความเชี่ยวชาญ..." />
 
     <!-- Scrollable conversation list -->
-    <div class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pr-1 pb-[calc(env(safe-area-inset-bottom)+5rem)] sm:pb-0 scrollbar-thin">
+    <div class="flex-1 min-h-0 md:flex-none md:h-[calc(var(--app-height,100dvh)-230px)] overflow-y-auto overscroll-y-contain pr-1 pb-[calc(env(safe-area-inset-bottom)+5rem)] sm:pb-0 scrollbar-thin">
       <div class="grid gap-2">
         <ConversationRent
           v-for="(conversation, index) in conversationsRent"
