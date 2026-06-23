@@ -1,4 +1,4 @@
-import type { rentStatusEnum } from '../enums/Rent.enum'
+import type { RentStatusEnum } from '../enums/Rent.enum'
 import type { IApiResponse, IBasePaginationResponse } from './Response.model'
 
 export interface IRentAPostData {
@@ -8,7 +8,7 @@ export interface IRentAPostData {
   coinTransactionId: number
   coinPaid: number
   durationMinutes: number
-  status: rentStatusEnum
+  status: RentStatusEnum
   acceptedAt: string | null
   startedAt: string | null
   expiresAt: string | null
