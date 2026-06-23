@@ -2,13 +2,13 @@ import type { chatEnum } from '../enums/Chat.enum'
 import type { IBasePaginationRequest, IPartnerIdRequest, TBaseParamsId } from './Request.model'
 
 export interface ICreateMessagePayload {
-  receiverId: number
+  receiverId?: number
   messageType: chatEnum
   messageText: string
 }
 
 export interface IUpdateMessagePayload {
-  messageId: TBaseParamsId
+  messageId?: TBaseParamsId
   messageText: string
 }
 
