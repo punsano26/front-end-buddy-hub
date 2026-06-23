@@ -1,4 +1,5 @@
-import type { RentStatusEnum } from '../enums/Rent.enum'
+import type { chatEnum } from '../enums/Chat.enum'
+import type { AttachmentsTypeEnum, RentStatusEnum } from '../enums/Rent.enum'
 import type { IApiResponse, IBasePaginationResponse } from './Response.model'
 
 export interface IRentAPostData {
@@ -18,7 +19,6 @@ export interface IRentAPostData {
   updatedAt: string
   customer: ICustomer
   provider: IProvider
-  rating: IRating
   hirePost: IHirePost
 }
 
@@ -89,6 +89,34 @@ export interface ICheckRentPostAlreadyExistsData {
   hasPost: boolean
 }
 
+export interface IFindAllConversationSessionsList {
+
+}
+
+export interface IFindOneSessionsMessagesList {
+  id: number
+  senderId: number
+  receiverId: number
+  hireSessionId: number
+  messageType: chatEnum
+  messageText: string
+  isRead: boolean
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+  attachments: IMessageAttachment[]
+}
+
+export interface IMessageAttachment {
+  id: number | null
+  attachmentType: AttachmentsTypeEnum | null
+  url: string | null
+  name: string | null
+  size: number | null
+  mimeType: string | null
+}
+
+export type ICreateSessionMessageResponse = IApiResponse<IFindOneSessionsMessagesList>
 export type ICheckRentPostAlreadyExistsResponse = IApiResponse<ICheckRentPostAlreadyExistsData>
 export type ICreateTagsRentResponse = IApiResponse<ICreateTagsRentData[]>
 export type IFindAllRentTagsResponse = IApiResponse<IFindAllRentTagsData[]>
@@ -96,5 +124,8 @@ export type IFindAllRentCategoriesResponse = IApiResponse<IFindAllRentCategories
 export type IFindOneRentPostResponse = IApiResponse<IFindAllRentPostList>
 export type ICreateRentPostResponse = IApiResponse<IFindAllRentPostList>
 export interface IFindAllRentPostsPaginateResponse extends IBasePaginationResponse<IFindAllRentPostList> {}
+export interface IFindAllConversationSessionsPaginateResponse extends IBasePaginationResponse<IRentAPostData> {}
+export interface IFindOneSessionsMessagesPaginateResponse extends IBasePaginationResponse<IFindOneSessionsMessagesList> {}
+
 
 export type IRentAPostResponse = IApiResponse<IRentAPostData>
