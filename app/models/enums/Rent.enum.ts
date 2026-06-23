@@ -6,6 +6,13 @@ export enum RentStatusEnum {
   COMPLETED = 'COMPLETED'
 }
 
+export enum AttachmentsTypeEnum {
+  IMAGE = 'IMAGE',
+  VIDEO = 'VIDEO',
+  GIF = 'GIF',
+  FILE = 'FILE'
+}
+
 export enum RentEvent {
   HIRE_REQUESTED = 'hire_requested',
   HIRE_ACCEPTED = 'hire_accepted',
