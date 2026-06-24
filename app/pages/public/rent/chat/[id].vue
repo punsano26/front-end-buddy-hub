@@ -22,7 +22,7 @@
 
             <div class="relative shrink-0">
               <img
-                src="/png/upload-profile.png"
+                :src="item.customer.profileImg || '/png/upload-profile.png'"
                 alt="Profile Image"
                 class="w-10 h-10 rounded-xl object-cover border border-slate-200/60 dark:border-slate-800 shadow-sm"
                 :class="currentPartner.sessionStatus === 'finished' ? 'opacity-60 grayscale-[35%]' : ''"
@@ -34,11 +34,11 @@
                 <i class="pi pi-times" />
               </span>
               <span
-                v-else-if="currentPartner.status === 'online'"
+                v-else-if="item?.customer.isOnline === true"
                 class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900"
               />
               <span
-                v-else-if="currentPartner.status === 'idle'"
+                v-else-if="item?.customer.isOnline === false"
                 class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-amber-500 dark:border-slate-900"
               />
             </div>
@@ -47,13 +47,13 @@
             <div class="min-w-0 leading-tight">
               <div class="flex items-center gap-1.5">
                 <p class="font-bold text-slate-850 dark:text-slate-50 text-sm md:text-base truncate">
-                  {{ currentPartner.nickname }}
+                  {{ item?.customer.nickname || item?.customer.username }}
                 </p>
                
               </div>
               
               <p
-                v-if="currentPartner.sessionStatus === 'finished'"
+                v-if="item.status === RentStatusEnum.COMPLETED"
                 class="text-[11px] font-semibold text-rose-500 flex items-center gap-1.5 mt-0.5"
               >
                 <span class="h-1.5 w-1.5 bg-rose-500 rounded-full" />
@@ -248,6 +248,10 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { useToast } from 'primevue/usetoast'
+import { RentStatusEnum } from '~/models/enums/Rent.enum'
+import type { IRentAPostData } from '~/models/response/RentRes.model'
+import type { IRentCustomerProvider } from '~/resource/provider/RentCustomer.provider'
+import RentCustomerProvider from '~/resource/provider/RentCustomer.provider'
 import Button from '~/volt/Button.vue'
 
 definePageMeta({ layout: "chat-rent", title: "แชท" });
@@ -259,7 +263,10 @@ const chatScrollContainer = ref<HTMLElement | null>(null)
 const userMessageText = ref('')
 const isTyping = ref(false)
 const toast = useToast()
-
+const item = ref<IRentAPostData>()
+const rentCustomerProvider: IRentCustomerProvider = new RentCustomerProvider()
+const { pagination, extractPagination } = usePagination()
+const { $handleLoading } = useNuxtApp()
 const remainingSeconds = ref(0)
 let timerInterval: any = null
 
@@ -327,6 +334,23 @@ const checkApprovalStatus = (): void => {
   }, 1500)
 }
 
+async function useFetch (): Promise<void> {
+  const response = await rentCustomerProvider.findOneConversationSessionById({
+    id: partnerId.value,
+    page: pagination.value.page,
+    limit: pagination.value.limit
+  })
+
+  item.value = response.data || []
+  pagination.value = extractPagination(response?.pagination)
+}
+function fetch (): void {
+  $handleLoading(useFetch)
+}
+
+onMounted((): void => {
+  fetch()
+})
 // Use the shared useState from SidebarChat
 const conversationsRent = useState<any[]>('conversationsRent', (): any[] => [
   {
