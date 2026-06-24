@@ -37,6 +37,7 @@ export const useUserStore = defineStore('User', {
         bannerImg: data.bannerImg ?? null,
         username: data.username ?? '',
         nickname: data.nickname ?? '',
+        email: data.email ?? '',
         description: data.description ?? '',
         createdAt: data.createdAt ?? '',
         age: data.age ?? 0,
