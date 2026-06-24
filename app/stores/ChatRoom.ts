@@ -215,7 +215,7 @@ export const useChatRoomStore = defineStore('ChatRoom', {
       const optimisticMessage: IChatMessageItem = {
         id: tempMessageId,
         senderId: options.currentUserId,
-        receiverId: payload.receiverId,
+        receiverId: options.receiverId,
         messageType: payload.messageType,
         messageText: payload.messageText,
         createdAt: now,
