@@ -450,6 +450,10 @@ export default defineNuxtPlugin((): any => {
 
     chatStore.setActiveUserId(userId)
     void syncUnreadCountOnLogin()
+
+    if (!ws || ws.readyState === WebSocket.CLOSED) {
+      connect()
+    }
   }, { immediate: true })
 
   return {
