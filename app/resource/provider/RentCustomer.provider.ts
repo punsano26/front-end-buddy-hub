@@ -21,6 +21,8 @@ export interface IRentCustomerProvider {
   updateSessionMessage (payload: IUpdateMessagePayload, messageId: TBaseParamsId, sessionId: TBaseParamsId): Promise<ICreateSessionMessageResponse>
   deleteSessionMessage (messageId: TBaseParamsId, sessionId: TBaseParamsId): Promise<ICreateSessionMessageResponse>
   markMessagesAsRead (id: TBaseParamsId): Promise<IMessageReadStatus>
+  requestSessionCompletion (id: TBaseParamsId): Promise<IRentAPostResponse>
+  confirmSessionCompletion (id: TBaseParamsId): Promise<IRentAPostResponse>
 }
 
 class RentCustomerProvider extends HttpRequest implements IRentCustomerProvider {
@@ -83,6 +85,20 @@ class RentCustomerProvider extends HttpRequest implements IRentCustomerProvider 
   public async markMessagesAsRead (id: TBaseParamsId): Promise<IMessageReadStatus> {
     this.setUserAuthHeader()
     const response = await this.patch(`${this.urlPrefix}/sessions/${id}/messages/read`, {})
+    return response
+  }
+
+  // (either side)
+  public async requestSessionCompletion (id: TBaseParamsId): Promise<IRentAPostResponse> {
+    this.setUserAuthHeader()
+    const response = await this.post(`${this.urlPrefix}/sessions/${id}/request-complete`, {})
+    return response
+  }
+
+  // (the other side)
+  public async confirmSessionCompletion (id: TBaseParamsId): Promise<IRentAPostResponse> {
+    this.setUserAuthHeader()
+    const response = await this.post(`${this.urlPrefix}/sessions/${id}/confirm-complete`, {})
     return response
   }
 }
