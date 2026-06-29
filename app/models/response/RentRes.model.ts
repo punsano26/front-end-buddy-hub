@@ -37,7 +37,10 @@ export interface ICustomer {
 export interface IHirePost {
   id: number
   tagline: string
+  coinRatePerMinute?: number
+  maxDurationMinutes?: number
 }
+
 
 export interface IFindAllRentTagsData {
   id: number
