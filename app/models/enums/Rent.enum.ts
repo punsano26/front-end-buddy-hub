@@ -5,7 +5,8 @@ export enum RentStatusEnum {
   REJECTED = 'REJECTED',
   CANCELLED = 'CANCELLED',
   COMPLETED = 'COMPLETED',
-  COMPLETING = 'COMPLETING'
+  COMPLETING = 'COMPLETING',
+  EXPIRED = 'EXPIRED'
 }
 
 export enum AttachmentsTypeEnum {
