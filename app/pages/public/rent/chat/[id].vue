@@ -34,6 +34,7 @@ import { useToast } from 'primevue/usetoast'
 import RentChatHeader from '~/components/rent/RentChatHeader.vue'
 import RentChatMessagesList from '~/components/rent/RentChatMessagesList.vue'
 import RentChatInput from '~/components/rent/RentChatInput.vue'
+import { RentStatusEnum } from '~/models/enums/Rent.enum'
 import { useAuthStore } from '~/stores/Auth'
 import { useRentChatStore } from '~/stores/RentChat'
 
@@ -164,5 +165,19 @@ watch(
     }
   },
   { immediate: true }
+)
+
+// Watch session status to navigate when completed
+watch(
+  (): string | undefined => store.item?.status,
+  (newStatus: string | undefined, oldStatus: string | undefined): void => {
+    if (
+      newStatus === RentStatusEnum.COMPLETED
+      && oldStatus
+      && oldStatus !== RentStatusEnum.COMPLETED
+    ) {
+      void navigateTo({ name: 'public-rent-chat' })
+    }
+  }
 )
 </script>
