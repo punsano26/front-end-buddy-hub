@@ -4,7 +4,8 @@ export enum RentStatusEnum {
   ACCEPTED = 'ACCEPTED',
   REJECTED = 'REJECTED',
   CANCELLED = 'CANCELLED',
-  COMPLETED = 'COMPLETED'
+  COMPLETED = 'COMPLETED',
+  COMPLETING = 'COMPLETING'
 }
 
 export enum AttachmentsTypeEnum {
@@ -25,6 +26,8 @@ export enum RentSessionsEvent {
   SESSION_STARTED = 'session_started',
   SESSION_EXPIRED = 'session_expired',
   SESSION_COMPLETED = 'session_completed',
+  SESSION_COMPLETING = 'session_completing',
+  SESSION_COMPLETING_EXPIRED = 'session_completing_expired',
   SERVICE_NEW_MESSAGE = 'service_new_message',
   SERVICE_MESSAGE_UPDATED = 'service_message_updated',
   SERVICE_MESSAGE_DELETED = 'service_message_deleted',
