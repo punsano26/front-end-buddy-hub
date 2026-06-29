@@ -1,6 +1,6 @@
 import HttpRequest from '../HttpRequest'
 import type { ICreateMessagePayload, IUpdateMessagePayload } from '~/models/request/ChatReq.model'
-import type { IFindAllConversationSessionsPaginateQuery, IFindOneSessionsMessagesPaginateQuery, IRentAPostPayload } from '~/models/request/RentReq.model'
+import type { IFindAllConversationSessionsPaginateQuery, IFindOneSessionsMessagesPaginateQuery, IRentAPostPayload, IExtendSessionPayload } from '~/models/request/RentReq.model'
 import type { TBaseParamsId } from '~/models/request/Request.model'
 import type { IMessageReadStatus } from '~/models/response/ChatRes.model'
 import type {
@@ -27,6 +27,7 @@ export interface IRentCustomerProvider {
   confirmSessionCompletion (id: TBaseParamsId): Promise<IRentAPostResponse>
   findRealtimeSessionMessages (id: TBaseParamsId): Promise<IFindRealtimeSessionMessagesResponse>
   checkIfSessionIsExpired (id: TBaseParamsId): Promise<ICheckIfSessionIsExpiredResponse>
+  extendSession (id: TBaseParamsId, payload: IExtendSessionPayload): Promise<IRentAPostResponse>
 }
 
 class RentCustomerProvider extends HttpRequest implements IRentCustomerProvider {
@@ -115,6 +116,12 @@ class RentCustomerProvider extends HttpRequest implements IRentCustomerProvider 
   checkIfSessionIsExpired (id: TBaseParamsId): Promise<any> {
     this.setUserAuthHeader()
     const response = this.get(`${this.urlPrefix}/sessions/${id}/expiry-check`)
+    return response
+  }
+
+  public async extendSession (id: TBaseParamsId, payload: IExtendSessionPayload): Promise<IRentAPostResponse> {
+    this.setUserAuthHeader()
+    const response = await this.post(`${this.urlPrefix}/sessions/${id}/extend`, payload)
     return response
   }
 }
