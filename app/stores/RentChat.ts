@@ -81,7 +81,7 @@ export const useRentChatStore = defineStore('RentChat', (): IRentChatStore => {
   watch(
     (): boolean => isExpired.value, (val: boolean): void => {
       if (val && item.value && item.value.status === RentStatusEnum.ACTIVE) {
-        item.value.status = RentStatusEnum.COMPLETED
+        item.value.status = RentStatusEnum.EXPIRED
       }
     }
   )
@@ -127,7 +127,7 @@ export const useRentChatStore = defineStore('RentChat', (): IRentChatStore => {
       profileImg: p?.profileImg ? imageBaseUrl + p.profileImg : '/png/upload-profile.png',
       status: p?.isOnline ? 'online' : 'offline',
       sessionStatus: statusStr,
-      maxDurationMinutes: item.value.durationMinutes,
+      maxDurationMinutes: item.value.hirePost?.maxDurationMinutes ?? 0,
       welcomeMessage: item.value.hirePost?.tagline || ''
     }
   })
