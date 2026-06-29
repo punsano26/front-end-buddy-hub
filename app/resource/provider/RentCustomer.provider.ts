@@ -4,9 +4,11 @@ import type { IFindAllConversationSessionsPaginateQuery, IFindOneSessionsMessage
 import type { TBaseParamsId } from '~/models/request/Request.model'
 import type { IMessageReadStatus } from '~/models/response/ChatRes.model'
 import type {
+  ICheckIfSessionIsExpiredResponse,
   ICreateSessionMessageResponse,
   IFindAllConversationSessionsPaginateResponse,
   IFindOneSessionsMessagesPaginateResponse,
+  IFindRealtimeSessionMessagesResponse,
   IRentAPostResponse
 } from '~/models/response/RentRes.model'
 
@@ -23,6 +25,8 @@ export interface IRentCustomerProvider {
   markMessagesAsRead (id: TBaseParamsId): Promise<IMessageReadStatus>
   requestSessionCompletion (id: TBaseParamsId): Promise<IRentAPostResponse>
   confirmSessionCompletion (id: TBaseParamsId): Promise<IRentAPostResponse>
+  findRealtimeSessionMessages (id: TBaseParamsId): Promise<IFindRealtimeSessionMessagesResponse>
+  checkIfSessionIsExpired (id: TBaseParamsId): Promise<ICheckIfSessionIsExpiredResponse>
 }
 
 class RentCustomerProvider extends HttpRequest implements IRentCustomerProvider {
@@ -99,6 +103,18 @@ class RentCustomerProvider extends HttpRequest implements IRentCustomerProvider 
   public async confirmSessionCompletion (id: TBaseParamsId): Promise<IRentAPostResponse> {
     this.setUserAuthHeader()
     const response = await this.post(`${this.urlPrefix}/sessions/${id}/confirm-complete`, {})
+    return response
+  }
+
+  findRealtimeSessionMessages (id: TBaseParamsId): Promise<any> {
+    this.setUserAuthHeader()
+    const response = this.get(`${this.urlPrefix}/sessions/${id}/timer`)
+    return response
+  }
+
+  checkIfSessionIsExpired (id: TBaseParamsId): Promise<any> {
+    this.setUserAuthHeader()
+    const response = this.get(`${this.urlPrefix}/sessions/${id}/expiry-check`)
     return response
   }
 }

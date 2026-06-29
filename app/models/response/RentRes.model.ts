@@ -120,6 +120,22 @@ export interface IMessageAttachment {
   mimeType: string | null
 }
 
+export interface IFindRealtimeSessionMessagesData {
+  sessionId: number
+  sessionExpiresAt: Date | null
+  sessionRemainingSeconds: number
+  completingExpiresAt: Date | null
+  completingRemainingSeconds: number
+}
+
+export interface ICheckIfSessionIsExpiredData {
+  sessionId: number
+  expired: boolean
+  status: RentStatusEnum
+}
+
+export type IFindRealtimeSessionMessagesResponse = IApiResponse<IFindRealtimeSessionMessagesData>
+export type ICheckIfSessionIsExpiredResponse = IApiResponse<ICheckIfSessionIsExpiredData>
 export type ICreateSessionMessageResponse = IApiResponse<IFindOneSessionsMessagesList>
 export type ICheckRentPostAlreadyExistsResponse = IApiResponse<ICheckRentPostAlreadyExistsData>
 export type ICreateTagsRentResponse = IApiResponse<ICreateTagsRentData[]>
