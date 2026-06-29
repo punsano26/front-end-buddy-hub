@@ -10,69 +10,102 @@ export interface IUseSessionTimer {
   syncWithServer: () => Promise<void>
 }
 
+interface ActiveTimer {
+  remainingSeconds: Ref<number>
+  completingSeconds: Ref<number>
+  isExpired: Ref<boolean>
+  hasError: Ref<boolean>
+  timerInterval: any
+  socketSyncInterval: any
+  currentSocket: WebSocket | null
+  wsListener: ((event: MessageEvent) => void) | null
+  refCount: number
+}
+
 export function useSessionTimer (sessionId: number): IUseSessionTimer {
   const rentProvider = new RentCustomerProvider()
   const { $ws } = useNuxtApp()
+  const nuxtApp = useNuxtApp()
 
-  const remainingSeconds = ref<number>(0)
-  const completingSeconds = ref<number>(0)
-  const isExpired = ref<boolean>(false)
-  const isWarning = computed((): boolean => remainingSeconds.value < 60 && remainingSeconds.value > 0)
-  const hasError = ref<boolean>(false)
+  // Ensure the global timers map exists on the Nuxt app instance to avoid cross-request leakage
+  if (!(nuxtApp as any)._sessionTimers) {
+    ;(nuxtApp as any)._sessionTimers = new Map<number, ActiveTimer>()
+  }
+  const timersMap = (nuxtApp as any)._sessionTimers as Map<number, ActiveTimer>
 
-  let timerInterval: any = null
-  let socketSyncInterval: any = null
-  const currentSocket = ref<WebSocket | null>(null)
-  const wsListener = ref<((event: MessageEvent) => void) | null>(null)
+  let timerState: ActiveTimer
+
+  if (timersMap.has(sessionId)) {
+    timerState = timersMap.get(sessionId)!
+    timerState.refCount++
+  } else {
+    const remainingSeconds = useState<number>(`session-timer-remaining-${sessionId}`, (): number => 0)
+    const completingSeconds = useState<number>(`session-timer-completing-${sessionId}`, (): number => 0)
+    const isExpired = useState<boolean>(`session-timer-expired-${sessionId}`, (): boolean => false)
+    const hasError = ref<boolean>(false)
+
+    timerState = {
+      remainingSeconds,
+      completingSeconds,
+      isExpired,
+      hasError,
+      timerInterval: null,
+      socketSyncInterval: null,
+      currentSocket: null,
+      wsListener: null,
+      refCount: 1
+    }
+    timersMap.set(sessionId, timerState)
+  }
 
   async function syncWithServer (): Promise<void> {
     try {
       const response = await rentProvider.findRealtimeSessionMessages(sessionId)
       if (response?.data) {
-        remainingSeconds.value = response.data.sessionRemainingSeconds ?? 0
-        completingSeconds.value = response.data.completingRemainingSeconds ?? 0
-        isExpired.value = remainingSeconds.value <= 0
-        hasError.value = false
+        timerState.remainingSeconds.value = response.data.sessionRemainingSeconds ?? 0
+        timerState.completingSeconds.value = response.data.completingRemainingSeconds ?? 0
+        timerState.isExpired.value = timerState.remainingSeconds.value <= 0
+        timerState.hasError.value = false
       } else {
-        hasError.value = true
+        timerState.hasError.value = true
       }
     } catch (error) {
-      hasError.value = true
+      timerState.hasError.value = true
       console.error('Failed to sync session timer with server:', error)
     }
   }
 
   function startCountdown (): void {
     stopCountdown()
-    timerInterval = setInterval((): void => {
-      if (remainingSeconds.value > 0) {
-        remainingSeconds.value--
-        if (remainingSeconds.value <= 0) {
-          isExpired.value = true
+    timerState.timerInterval = setInterval((): void => {
+      if (timerState.remainingSeconds.value > 0) {
+        timerState.remainingSeconds.value--
+        if (timerState.remainingSeconds.value <= 0) {
+          timerState.isExpired.value = true
         }
       } else {
-        isExpired.value = true
+        timerState.isExpired.value = true
       }
 
-      if (completingSeconds.value > 0) {
-        completingSeconds.value--
+      if (timerState.completingSeconds.value > 0) {
+        timerState.completingSeconds.value--
       }
     }, 1000)
   }
 
   function stopCountdown (): void {
-    if (timerInterval) {
-      clearInterval(timerInterval)
-      timerInterval = null
+    if (timerState.timerInterval) {
+      clearInterval(timerState.timerInterval)
+      timerState.timerInterval = null
     }
   }
 
   function removeSocketListener (): void {
-    if (currentSocket.value && wsListener.value) {
-      currentSocket.value.removeEventListener('message', wsListener.value)
+    if (timerState.currentSocket && timerState.wsListener) {
+      timerState.currentSocket.removeEventListener('message', timerState.wsListener)
     }
-    currentSocket.value = null
-    wsListener.value = null
+    timerState.currentSocket = null
+    timerState.wsListener = null
   }
 
   function setupSocketListener (): void {
@@ -82,7 +115,7 @@ export function useSessionTimer (sessionId: number): IUseSessionTimer {
       return
     }
 
-    if (currentSocket.value === socket && wsListener.value) return
+    if (timerState.currentSocket === socket && timerState.wsListener) return
 
     removeSocketListener()
 
@@ -112,36 +145,36 @@ export function useSessionTimer (sessionId: number): IUseSessionTimer {
         case 'session_timer_sync': {
           if (data) {
             if (typeof data.sessionRemainingSeconds === 'number') {
-              remainingSeconds.value = data.sessionRemainingSeconds
+              timerState.remainingSeconds.value = data.sessionRemainingSeconds
             }
-            isExpired.value = remainingSeconds.value <= 0
+            timerState.isExpired.value = timerState.remainingSeconds.value <= 0
           }
           break
         }
         case 'session_started': {
           if (data) {
             if (typeof data.sessionRemainingSeconds === 'number') {
-              remainingSeconds.value = data.sessionRemainingSeconds
+              timerState.remainingSeconds.value = data.sessionRemainingSeconds
             } else if (data.expiresAt) {
               const expiryTime = new Date(data.expiresAt).getTime()
-              remainingSeconds.value = Math.max(0, Math.floor((expiryTime - Date.now()) / 1000))
+              timerState.remainingSeconds.value = Math.max(0, Math.floor((expiryTime - Date.now()) / 1000))
             }
-            isExpired.value = remainingSeconds.value <= 0
+            timerState.isExpired.value = timerState.remainingSeconds.value <= 0
             startCountdown()
           }
           break
         }
         case 'session_expired': {
-          remainingSeconds.value = 0
-          isExpired.value = true
+          timerState.remainingSeconds.value = 0
+          timerState.isExpired.value = true
           stopCountdown()
           break
         }
         case 'session_expiry_status': {
           if (data) {
             if (data.expired) {
-              remainingSeconds.value = 0
-              isExpired.value = true
+              timerState.remainingSeconds.value = 0
+              timerState.isExpired.value = true
               stopCountdown()
             }
           }
@@ -154,43 +187,51 @@ export function useSessionTimer (sessionId: number): IUseSessionTimer {
     }
 
     socket.addEventListener('message', onMessage)
-    currentSocket.value = socket
-    wsListener.value = onMessage
+    timerState.currentSocket = socket
+    timerState.wsListener = onMessage
   }
 
   function startSocketSync (intervalMs: number = 1000): void {
     stopSocketSync()
     setupSocketListener()
-    socketSyncInterval = setInterval((): void => {
+    timerState.socketSyncInterval = setInterval((): void => {
       setupSocketListener()
     }, intervalMs)
   }
 
   function stopSocketSync (): void {
-    if (socketSyncInterval) {
-      clearInterval(socketSyncInterval)
-      socketSyncInterval = null
+    if (timerState.socketSyncInterval) {
+      clearInterval(timerState.socketSyncInterval)
+      timerState.socketSyncInterval = null
     }
   }
 
   onMounted(async (): Promise<void> => {
-    await syncWithServer()
-    startCountdown()
-    startSocketSync()
+    if (!timerState.timerInterval) {
+      await syncWithServer()
+      startCountdown()
+      startSocketSync()
+    }
   })
 
   onBeforeUnmount((): void => {
-    stopCountdown()
-    stopSocketSync()
-    removeSocketListener()
+    timerState.refCount--
+    if (timerState.refCount <= 0) {
+      stopCountdown()
+      stopSocketSync()
+      removeSocketListener()
+      timersMap.delete(sessionId)
+    }
   })
 
+  const isWarning = computed((): boolean => timerState.remainingSeconds.value < 60 && timerState.remainingSeconds.value > 0)
+
   return {
-    remainingSeconds,
-    completingSeconds,
-    isExpired,
+    remainingSeconds: timerState.remainingSeconds,
+    completingSeconds: timerState.completingSeconds,
+    isExpired: timerState.isExpired,
     isWarning,
-    hasError,
+    hasError: timerState.hasError,
     syncWithServer
   }
 }
