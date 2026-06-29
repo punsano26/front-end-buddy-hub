@@ -20,6 +20,10 @@ export interface IRentAPostData {
   customer: ICustomer
   provider: IProvider
   hirePost: IHirePost
+  requestCompleteBy?: number | null
+  requestCompletedBy?: number | null
+  completionRequestedBy?: number | null
+  isCompleting?: boolean | null
 }
 
 export interface ICustomer {
