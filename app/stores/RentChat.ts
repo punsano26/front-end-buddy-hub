@@ -1,10 +1,11 @@
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
 import { defineStore } from 'pinia'
 import { chatEnum } from '~/models/enums/Chat.enum'
 import { RentStatusEnum } from '~/models/enums/Rent.enum'
 import type { ICustomer, IFindOneSessionsMessagesList, IProvider, IRentAPostData } from '~/models/response/RentRes.model'
 import RentCustomerProvider from '~/resource/provider/RentCustomer.provider'
+import { useHireTimer } from '~/composables/useHireTimer'
 
 export interface IRentAPostDataWithStatus extends IRentAPostData {
   sessionStatus?: string
@@ -34,6 +35,8 @@ export interface IRentMessageItem {
 export interface IRentChatStore {
   messages: Ref<IRentMessageItem[]>
   item: Ref<IRentAPostData | undefined>
+  isCompleting: Ref<boolean>
+  requestCompleteBy: Ref<number | null>
   remainingSeconds: Ref<number>
   editingMessageId: Ref<number | null>
   activeMenuMessageId: Ref<number | null>
@@ -65,14 +68,23 @@ export const useRentChatStore = defineStore('RentChat', (): IRentChatStore => {
   // --- State ---
   const messages = ref<IRentMessageItem[]>([])
   const item = ref<IRentAPostData | undefined>(undefined)
-  const remainingSeconds = ref<number>(0)
+  const isCompleting = ref<boolean>(false)
+  const requestCompleteBy = ref<number | null>(null)
+  const { remainingSeconds, formattedTime, isExpired } = useHireTimer(item)
   const editingMessageId = ref<number | null>(null)
   const activeMenuMessageId = ref<number | null>(null)
   const isTyping = ref<boolean>(false)
   const isMarkingRead = ref<boolean>(false)
 
-  let timerInterval: any = null
   const conversationsRent = useState<IRentAPostDataWithStatus[]>('conversationsRent', (): IRentAPostDataWithStatus[] => [])
+
+  watch(
+    (): boolean => isExpired.value, (val: boolean): void => {
+      if (val && item.value && item.value.status === RentStatusEnum.ACTIVE) {
+        item.value.status = RentStatusEnum.COMPLETED
+      }
+    }
+  )
 
   // --- Getters / Computed ---
   const partner = computed((): ICustomer | IProvider | null => {
@@ -125,31 +137,37 @@ export const useRentChatStore = defineStore('RentChat', (): IRentChatStore => {
     if (currentPartner.value.sessionStatus === 'pending') return 'รออนุมัติ...'
     if (currentPartner.value.sessionStatus === 'finished') return 'สิ้นสุดเซสชัน'
 
-    const mins = Math.floor(remainingSeconds.value / 60)
-    const secs = remainingSeconds.value % 60
-    const timeFormatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
-    return `นับถอยหลัง ${timeFormatted}`
+    return `นับถอยหลัง ${formattedTime.value}`
   })
 
   // --- Actions ---
   function clear (): void {
     messages.value = []
     item.value = undefined
+    isCompleting.value = false
+    requestCompleteBy.value = null
     remainingSeconds.value = 0
     editingMessageId.value = null
     activeMenuMessageId.value = null
     isTyping.value = false
     isMarkingRead.value = false
-    if (timerInterval) {
-      clearInterval(timerInterval)
-      timerInterval = null
-    }
   }
 
   async function fetchSession (sessionId: number): Promise<void> {
     const response = await rentCustomerProvider.findOneConversationSessionById(sessionId)
     if (response.data) {
       item.value = response.data
+      isCompleting.value = response.data.status === RentStatusEnum.COMPLETING
+        || !!(
+          response.data.requestCompleteBy
+          || response.data.requestCompletedBy
+          || response.data.completionRequestedBy
+          || response.data.isCompleting
+        )
+      requestCompleteBy.value = response.data.requestCompleteBy
+        || response.data.requestCompletedBy
+        || response.data.completionRequestedBy
+        || null
       const idx = conversationsRent.value.findIndex((p: IRentAPostDataWithStatus): boolean => p.id === response.data.id)
       const isFinishedVal = response.data.status === RentStatusEnum.COMPLETED
         || response.data.status === RentStatusEnum.CANCELLED
@@ -272,27 +290,11 @@ export const useRentChatStore = defineStore('RentChat', (): IRentChatStore => {
   }
 
   function startCountdown (): void {
-    if (timerInterval) clearInterval(timerInterval)
-    if (!currentPartner.value || currentPartner.value.sessionStatus !== 'active') return
-
-    remainingSeconds.value = (currentPartner.value.maxDurationMinutes || 60) * 60
-    timerInterval = setInterval((): void => {
-      if (remainingSeconds.value > 0) {
-        remainingSeconds.value--
-      } else {
-        clearInterval(timerInterval)
-        if (item.value) {
-          item.value.status = RentStatusEnum.COMPLETED
-        }
-      }
-    }, 1000)
+    // Timer is managed reactively via useHireTimer using item.value.expiresAt
   }
 
   function stopCountdown (): void {
-    if (timerInterval) {
-      clearInterval(timerInterval)
-      timerInterval = null
-    }
+    // Timer is managed reactively via useHireTimer using item.value.expiresAt
   }
 
   function setTyping (value: boolean): void {
@@ -315,6 +317,25 @@ export const useRentChatStore = defineStore('RentChat', (): IRentChatStore => {
       return
     }
     if (!payload || !payload.event) return
+
+    console.log('RentChat WS Event:', payload.event, payload)
+
+    const getSessionId = (data: any, root: any): number | null => {
+      if (data) {
+        if (typeof data === 'number') return data
+        if (typeof data === 'string') {
+          const num = Number(data)
+          return isNaN(num) ? null : num
+        }
+        const val = data.hireSessionId || data.hire_session_id || data.id || data.sessionId || data.session_id
+        if (val) return Number(val)
+      }
+      if (root) {
+        const val = root.hireSessionId || root.hire_session_id || root.id || root.sessionId || root.session_id
+        if (val) return Number(val)
+      }
+      return null
+    }
 
     if (payload.event === 'service_new_message') {
       const data = payload.data
@@ -361,12 +382,40 @@ export const useRentChatStore = defineStore('RentChat', (): IRentChatStore => {
         }
         return m
       })
+    } else if (
+      payload.event === 'session_started'
+      || payload.event === 'session_expired'
+      || payload.event === 'session_completing'
+      || payload.event === 'session_completed'
+      || payload.event === 'session_completing_expired'
+    ) {
+      const incomingSessionId = getSessionId(payload.data, payload)
+      if (incomingSessionId === sessionId) {
+        if (payload.event === 'session_completing') {
+          isCompleting.value = true
+          const reqUserId = payload.data?.requestCompleteBy
+            || payload.data?.requestCompletedBy
+            || payload.data?.completionRequestedBy
+            || payload.data?.requestedBy
+            || payload.data?.userId
+            || payload.data?.user_id
+          if (reqUserId) {
+            requestCompleteBy.value = Number(reqUserId)
+          }
+        } else if (payload.event === 'session_completed' || payload.event === 'session_completing_expired') {
+          isCompleting.value = false
+          requestCompleteBy.value = null
+        }
+        void fetchSession(sessionId)
+      }
     }
   }
 
   return {
     messages,
     item,
+    isCompleting,
+    requestCompleteBy,
     remainingSeconds,
     editingMessageId,
     activeMenuMessageId,
