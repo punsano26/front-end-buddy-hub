@@ -397,7 +397,7 @@ async function sendMessage(messageText: string, messageType: chatEnum = form.val
 
   const isSuccess = await chatRoomStore.submitMessage({
     messageText,
-    receiverId: form.value.receiverId,
+    receiverId: id.value,
     messageType,
     currentUserId: authStore.user.id,
     isEditingMessage: isEditingMessage.value,
@@ -425,7 +425,7 @@ async function sendMediaMessage(message: string | ICreateMessageData): Promise<v
 
   await chatRoomStore.submitMessage({
     messageText: message,
-    receiverId: form.value.receiverId,
+    receiverId: id.value,
     messageType: chatEnum.MEDIA,
     currentUserId: authStore.user.id,
     onMessagesUpdated: scrollToBottom,

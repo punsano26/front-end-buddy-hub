@@ -322,7 +322,7 @@ function sendAFriendSessionRequest (): void {
 }
 
 watch(sessionId, (newId) => {
-  if (newId) {
+  if (import.meta.client && newId) {
     getAllSessionMessages()
   }
 }, { immediate: true })

@@ -32,4 +32,18 @@ export interface IFindRentPostsFilters {
 
 }
 
+export interface IFindAllConversationSessionsFilters {
+
+}
+
+export interface IFindOneSessionsMessagesFilters {
+
+}
+
 export interface IFindAllRentPostsPaginateQuery extends IBasePaginationRequest, IFindRentPostsFilters {}
+export interface IFindAllConversationSessionsPaginateQuery extends IBasePaginationRequest, IFindAllConversationSessionsFilters {}
+export interface IFindOneSessionsMessagesPaginateQuery extends IBasePaginationRequest, IFindOneSessionsMessagesFilters {}
+
+export interface IExtendSessionPayload {
+  additionalMinutes: number
+}

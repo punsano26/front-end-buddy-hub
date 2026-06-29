@@ -11,7 +11,7 @@
           <div class="relative shrink-0 mt-0.5">
             <img
               :class="isFinished ? 'opacity-60 grayscale-[35%]' : ''"
-              :src="props.conversation.profileImg || '/png/upload-profile.png'"
+              :src="partnerProfileImg"
               alt="Profile image"
               class="w-12 h-12 rounded-xl object-cover ring-2 ring-slate-100 dark:ring-slate-800">
             <span
@@ -20,11 +20,8 @@
               <i class="pi pi-times" />
             </span>
             <span
-              v-else-if="props.conversation.status === 'online'"
+              v-else-if="partner?.isOnline"
               class="absolute -bottom-1 -right-1 block h-3.5 w-3.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
-            <span
-              v-else-if="props.conversation.status === 'idle'"
-              class="absolute -bottom-1 -right-1 block h-3.5 w-3.5 rounded-full bg-amber-500 ring-2 ring-white dark:ring-slate-900" />
           </div>
 
           <!-- Mid Section: Name, Tag, Ratings, Time -->
@@ -33,10 +30,10 @@
               <span
                 :class="isFinished ? 'text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-100'"
                 class="font-bold text-sm truncate">
-                {{ props.conversation.nickname }}
+                {{ partnerName }}
               </span>
               <span class="text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap shrink-0">
-                {{ dayjs(props.conversation.lastMessageCreatedAt).format('hh:mm A') }}
+                {{ lastMessageTime }}
               </span>
             </div>
 
@@ -44,17 +41,15 @@
               <div class="flex items-center gap-2">
                 <div class="flex items-center gap-0.5 text-[10px] text-amber-500 font-semibold">
                   <i class="pi pi-star-fill text-[9px]" />
-                  <span>{{ props.conversation.rating }}</span>
+                  <span>{{ partnerRating }}</span>
                 </div>
-
               </div>
-
             </div>
 
             <p
               :class="isFinished ? 'text-slate-400 dark:text-slate-500 italic' : 'text-slate-500 dark:text-slate-400'"
               class="text-xs truncate">
-              {{ props.conversation.lastMessageText }}
+              {{ lastMessageText }}
             </p>
           </div>
         </div>
@@ -68,7 +63,7 @@
             <span
               :class="isFinished ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-700 dark:text-slate-300'"
               class="font-medium">
-              {{ props.conversation.rate }}
+              {{ hireRate }}
             </span>
             <span class="text-slate-400">/นาที</span>
           </div>
@@ -79,7 +74,7 @@
             <span>ปิดเซสชัน</span>
           </div>
           <div
-            v-else-if="props.conversation.sessionStatus === 'pending'"
+            v-else-if="isPending"
             class="flex items-center gap-1 text-[10px] text-amber-500 font-bold">
             <span class="relative flex h-2 w-2 mr-1">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -96,23 +91,84 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import dayjs from 'dayjs'
+import { RentStatusEnum } from '~/models/enums/Rent.enum'
+import type { ICustomer, IProvider, IRentAPostData } from '~/models/response/RentRes.model'
+import { useAuthStore } from '~/stores/Auth'
 
 const props = defineProps<{
-  conversation: any
+  conversation: IRentAPostData
 }>()
 
 const route = useRoute()
+const authStore = useAuthStore()
+const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
 
 const isActive = computed((): boolean => {
   return Number(route.params.id) === props.conversation.id
 })
 
 const isFinished = computed((): boolean => {
-  return props.conversation.sessionStatus === 'finished'
+  return props.conversation.status === RentStatusEnum.COMPLETED
+    || props.conversation.status === RentStatusEnum.CANCELLED
+    || props.conversation.status === RentStatusEnum.REJECTED
 })
 
 const isPending = computed((): boolean => {
-  return props.conversation.sessionStatus === 'pending'
+  return props.conversation.status === RentStatusEnum.PENDING
+})
+
+const partner = computed((): ICustomer | IProvider | null => {
+  if (authStore.user.id === props.conversation.customerId) {
+    return props.conversation.provider
+  }
+  return props.conversation.customer
+})
+
+const partnerName = computed((): string => {
+  return partner.value?.nickname || partner.value?.username || ''
+})
+
+const partnerProfileImg = computed((): string => {
+  return partner.value?.profileImg ? imageBaseUrl + partner.value.profileImg : '/png/upload-profile.png'
+})
+
+const partnerRating = computed((): string => {
+  const rating = partner.value && 'rating' in partner.value ? partner.value.rating?.averageRating : null
+  return rating ? Number(rating).toFixed(1) : '0.0'
+})
+
+const lastMessageText = computed((): string => {
+  if ((props.conversation as any).lastMessageText) {
+    return (props.conversation as any).lastMessageText
+  }
+  if (isPending.value) {
+    return 'ส่งคำขอเช่าคุยแล้ว รอการตอบรับ...'
+  }
+  if (isFinished.value) {
+    return 'ปิดเซสชันการเช่าคุยเรียบร้อยแล้ว'
+  }
+  return 'เริ่มคุยสนทนาได้เลย'
+})
+
+const lastMessageTime = computed((): string => {
+  const dateVal = (props.conversation as any).lastMessageCreatedAt
+    || (props.conversation as any).lastMessageTextCreatedAt
+    || props.conversation.updatedAt
+    || props.conversation.createdAt
+  return dayjs(dateVal).format('hh:mm A')
+})
+
+const hireRate = computed((): number => {
+  if (typeof (props.conversation as any).coinRatePerMinute === 'number') {
+    return (props.conversation as any).coinRatePerMinute
+  }
+  if (typeof (props.conversation as any).rate === 'number' || typeof (props.conversation as any).rate === 'string') {
+    return Number((props.conversation as any).rate)
+  }
+  if (props.conversation.coinPaid && props.conversation.durationMinutes) {
+    return Math.round(props.conversation.coinPaid / props.conversation.durationMinutes)
+  }
+  return 0
 })
 
 const cardClass = computed((): string => {

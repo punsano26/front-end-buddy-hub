@@ -22,11 +22,11 @@
       placeholder="ค้นหาชื่อ ความเชี่ยวชาญ..." />
 
     <!-- Scrollable conversation list -->
-    <div class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pr-1 pb-[calc(env(safe-area-inset-bottom)+5rem)] sm:pb-0 scrollbar-thin">
+    <div class="flex-1 min-h-0 md:flex-none md:h-[calc(var(--app-height,100dvh)-230px)] overflow-y-auto overscroll-y-contain pr-1 pb-[calc(env(safe-area-inset-bottom)+5rem)] sm:pb-0 scrollbar-thin">
       <div class="grid gap-2">
         <ConversationRent
-          v-for="conversation in conversationsRent"
-          :key="conversation.id"
+          v-for="(conversation, index) in conversationsRent"
+          :key="`conversation-${index}`"
           :conversation="conversation" />
       </div>
       <p
@@ -40,75 +40,35 @@
 
 <script lang="ts" setup>
 import ConversationRent from '~/components/rent/ConversationRent.vue'
+import type { IRentAPostData } from '~/models/response/RentRes.model'
+import type { IRentCustomerProvider } from '~/resource/provider/RentCustomer.provider'
+import RentCustomerProvider from '~/resource/provider/RentCustomer.provider'
 
 const router = useRouter()
+const { pagination, extractPagination } = usePagination()
+const { $handleLoading } = useNuxtApp()
+const conversationsRent = useState<IRentAPostData[]>('conversationsRent', (): IRentAPostData[] => [])
 
-// Rich mockup data representing various rent partners, shared via Nuxt useState
-const conversationsRent = useState<any[]>('conversationsRent', (): any[] => [
-  {
-    id: 1,
-    nickname: 'น้องนุ่น (Smile Partner)',
-    username: 'noon_smile',
-    profileImg: null,
-    status: 'online',
-    category: 'ผู้รับฟังที่ดี',
-    rating: '4.9',
-    rate: '30',
-    rateHour: '120',
-    lastMessageText: 'ยินดีรับฟังทุกเรื่องเลยค่ะ สบายใจขึ้นไหมคะ?',
-    lastMessageCreatedAt: new Date(Date.now() - 1000 * 60 * 5), // 5 mins ago
-    welcomeMessage: 'สวัสดีค่ะพี่ ยินดีต้อนรับนะคะ! วันนี้มีเรื่องอะไรไม่สบายใจ หรืออยากเล่าให้ฟังเป็นพิเศษไหมคะ? นุ่นพร้อมฟังและอยู่เคียงข้างพี่เสมอค่ะ',
-    sessionStatus: 'active',
-    maxDurationMinutes: 180
-  },
-  {
-    id: 2,
-    nickname: 'พี่นัท (Life Coach)',
-    username: 'nut_coach',
-    profileImg: null,
-    status: 'online',
-    category: 'ที่ปรึกษา',
-    rating: '5.0',
-    rate: '30',
-    rateHour: '150',
-    lastMessageText: 'เรื่องงานลองจัดสรรเวลาแบบใหม่ดูนะครับ',
-    lastMessageCreatedAt: new Date(Date.now() - 1000 * 60 * 30), // 30 mins ago
-    welcomeMessage: 'สวัสดีครับ! ยินดีที่ได้คุยกันนะ วันนี้อยากปรึกษาเรื่องอะไรเป็นพิเศษครับ? ไม่ว่าจะเป็นเรื่องงาน ความคิด หรือทิศทางชีวิต พี่พร้อมช่วยซัพพอร์ตครับ',
-    sessionStatus: 'active',
-    maxDurationMinutes: 120
-  },
-  {
-    id: 3,
-    nickname: 'เจ**ส์',
-    username: 'เจ**ส์',
-    profileImg: null,
-    status: 'idle',
-    category: 'เพื่อนเล่นเกม',
-    rating: '4.8',
-    rate: '40',
-    rateHour: '100',
-    lastMessageText: 'คืนนี้มาลงแรงค์กันต่อไหมคะ เดี๋ยวซัพพอร์ตให้เอง!',
-    lastMessageCreatedAt: new Date(Date.now() - 1000 * 60 * 120),
-    welcomeMessage: 'หวัดดีค่า! พร้อมตี้หรือยังคะ? คืนนี้จะเล่นเกมอะไรดี ลุยไปด้วยกันนะ เดี๋ยวหนูแบกเอง (หรือให้พี่แบกดีนะ ฮ่าๆ)',
-    sessionStatus: 'finished',
-    maxDurationMinutes: 240
-  },
-  {
-    id: 4,
-    nickname: 'เจ**ส์',
-    username: 'เจ**ส์',
-    profileImg: null,
-    status: 'online',
-    rating: '4.9',
-    rate: '60',
-    rateHour: '130',
-    lastMessageText: 'ร้านกาแฟเปิดใหม่แถวอารีย์บรรยากาศดีมากครับ',
-    lastMessageCreatedAt: new Date(Date.now() - 1000 * 60 * 360),
-    welcomeMessage: 'สวัสดีครับพี่! วันนี้อยากหาเพื่อนคุยสไตล์เที่ยวชิลๆ หรือแชร์ร้านคาเฟ่ลับๆ ดีครับ? มีพิกัดเจ๋งๆ แนะนำเพียบเลย!',
-    sessionStatus: 'active',
-    maxDurationMinutes: 180
-  }
-])
+
+const rentCustomerProvider: IRentCustomerProvider = new RentCustomerProvider()
+
+async function useFetch (): Promise<void> {
+  const response = await rentCustomerProvider.findAllConversationSessionsPaginate({
+    page: pagination.value.page,
+    limit: pagination.value.limit
+  })
+
+  conversationsRent.value = response.data || []
+  pagination.value = extractPagination(response?.pagination)
+}
+
+function fetch (): void {
+  $handleLoading(useFetch)
+}
+
+onMounted((): void => {
+  fetch()
+})
 </script>
 
 <script lang="ts">

@@ -24,4 +24,6 @@ export interface IForgotPasswordData {
 
 export type ICheckAuthResponse = IApiResponse<ICheckAuthData>
 export type IAuthLoginResponse = IApiTokenResponse<IAuthLoginData>
-export type IForgotPasswordResponse = IApiResponse<IForgotPasswordData>
+export interface IForgotPasswordResponse extends IApiResponse<IForgotPasswordData> {
+  resetPasswordToken: string
+}

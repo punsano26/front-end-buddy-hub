@@ -1,4 +1,5 @@
-import type { RentStatusEnum } from '../enums/Rent.enum'
+import type { chatEnum } from '../enums/Chat.enum'
+import type { AttachmentsTypeEnum, RentStatusEnum } from '../enums/Rent.enum'
 import type { IApiResponse, IBasePaginationResponse } from './Response.model'
 
 export interface IRentAPostData {
@@ -18,8 +19,11 @@ export interface IRentAPostData {
   updatedAt: string
   customer: ICustomer
   provider: IProvider
-  rating: IRating
   hirePost: IHirePost
+  requestCompleteBy?: number | null
+  requestCompletedBy?: number | null
+  completionRequestedBy?: number | null
+  isCompleting?: boolean | null
 }
 
 export interface ICustomer {
@@ -33,7 +37,10 @@ export interface ICustomer {
 export interface IHirePost {
   id: number
   tagline: string
+  coinRatePerMinute?: number
+  maxDurationMinutes?: number
 }
+
 
 export interface IFindAllRentTagsData {
   id: number
@@ -89,6 +96,50 @@ export interface ICheckRentPostAlreadyExistsData {
   hasPost: boolean
 }
 
+export interface IFindAllConversationSessionsList {
+
+}
+
+export interface IFindOneSessionsMessagesList {
+  id: number
+  senderId: number
+  receiverId: number
+  hireSessionId: number
+  messageType: chatEnum
+  messageText: string
+  isRead: boolean
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+  attachments: IMessageAttachment[]
+}
+
+export interface IMessageAttachment {
+  id: number | null
+  attachmentType: AttachmentsTypeEnum | null
+  url: string | null
+  name: string | null
+  size: number | null
+  mimeType: string | null
+}
+
+export interface IFindRealtimeSessionMessagesData {
+  sessionId: number
+  sessionExpiresAt: Date | null
+  sessionRemainingSeconds: number
+  completingExpiresAt: Date | null
+  completingRemainingSeconds: number
+}
+
+export interface ICheckIfSessionIsExpiredData {
+  sessionId: number
+  expired: boolean
+  status: RentStatusEnum
+}
+
+export type IFindRealtimeSessionMessagesResponse = IApiResponse<IFindRealtimeSessionMessagesData>
+export type ICheckIfSessionIsExpiredResponse = IApiResponse<ICheckIfSessionIsExpiredData>
+export type ICreateSessionMessageResponse = IApiResponse<IFindOneSessionsMessagesList>
 export type ICheckRentPostAlreadyExistsResponse = IApiResponse<ICheckRentPostAlreadyExistsData>
 export type ICreateTagsRentResponse = IApiResponse<ICreateTagsRentData[]>
 export type IFindAllRentTagsResponse = IApiResponse<IFindAllRentTagsData[]>
@@ -96,5 +147,8 @@ export type IFindAllRentCategoriesResponse = IApiResponse<IFindAllRentCategories
 export type IFindOneRentPostResponse = IApiResponse<IFindAllRentPostList>
 export type ICreateRentPostResponse = IApiResponse<IFindAllRentPostList>
 export interface IFindAllRentPostsPaginateResponse extends IBasePaginationResponse<IFindAllRentPostList> {}
+export interface IFindAllConversationSessionsPaginateResponse extends IBasePaginationResponse<IRentAPostData> {}
+export interface IFindOneSessionsMessagesPaginateResponse extends IBasePaginationResponse<IFindOneSessionsMessagesList> {}
+
 
 export type IRentAPostResponse = IApiResponse<IRentAPostData>
