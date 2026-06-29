@@ -43,13 +43,19 @@
               <span class="bg-rose-550 h-2 rounded-full w-2" />
               เซสชันสิ้นสุดแล้ว
             </p>
+            <p
+              v-else-if="store.item?.status === RentStatusEnum.EXPIRED"
+              class="flex items-center gap-2 font-semibold mt-1 text-[11px] text-amber-500">
+              <span class="bg-amber-500 h-2 rounded-full w-2" />
+              หมดเวลาแล้ว
+            </p>
           </div>
         </div>
 
         <!-- Mobile Countdown / price rate overlay -->
         <div class="flex md:hidden items-center gap-3 shrink-0">
           <SessionTimer
-            v-if="store.currentPartner?.sessionStatus === 'active' && id"
+            v-if="(store.currentPartner?.sessionStatus === 'active' || store.item?.status === RentStatusEnum.EXPIRED) && id"
             :session-id="Number(id)" />
           <div
             v-else
@@ -62,13 +68,21 @@
 
       <!-- Action Buttons Row (shown below on mobile, inline on desktop) -->
       <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+        <!-- Extend Session Button -->
+        <ExtendSessionButton
+          v-if="canExtend"
+          :coin-rate-per-minute="store.item?.hirePost?.coinRatePerMinute ?? 0"
+          :current-duration="store.item?.durationMinutes ?? 0"
+          :max-duration="store.currentPartner?.maxDurationMinutes ?? 0"
+          :session-id="Number(id)" />
+
         <!-- Request Session Completion Button -->
         <Button
-          v-if="store.item?.status === RentStatusEnum.ACTIVE && !store.isCompleting"
+          v-if="canComplete"
           icon="pi pi-sign-out"
           label="ออกจากห้องสนทนา"
           pt:label:class="font-semibold text-xs"
-          pt:root:class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-3.5 py-1.5 rounded-xl shadow-sm transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 dark:border-rose-900/40 dark:text-rose-400 w-full md:w-auto"
+          pt:root:class="bg-rose-550/10 hover:bg-rose-550/20 text-rose-600 border border-rose-550/20 px-3.5 py-1.5 rounded-xl shadow-sm transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 dark:border-rose-900/40 dark:text-rose-400 w-full md:w-auto"
           @click="requestSessionCompletion" />
 
         <!-- Completing State Rendering -->
@@ -104,7 +118,7 @@
       <!-- Desktop Countdown / price rate overlay -->
       <div class="hidden md:flex items-center gap-3 shrink-0">
         <SessionTimer
-          v-if="store.currentPartner?.sessionStatus === 'active' && id"
+          v-if="(store.currentPartner?.sessionStatus === 'active' || store.item?.status === RentStatusEnum.EXPIRED) && id"
           :session-id="Number(id)" />
         <div
           v-else
@@ -119,6 +133,7 @@
 
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
+import ExtendSessionButton from '~/components/rent/ExtendSessionButton.vue'
 import SessionTimer from '~/components/rent/SessionTimer.vue'
 import { RentStatusEnum } from '~/models/enums/Rent.enum'
 import type { TBaseParamsId } from '~/models/request/Request.model'
@@ -137,6 +152,22 @@ const id = computed((): TBaseParamsId => store.item?.id)
 const isRequester = computed((): boolean => {
   const reqId = store.item?.completionRequestedBy || store.requestCompleteBy || store.item?.requestCompleteBy || store.item?.requestCompletedBy
   return Number(reqId) === authStore.user.id
+})
+
+const canExtend = computed((): boolean => {
+  const status = store.item?.status
+  if (!status) return false
+  const isExtendableStatus
+    = status === RentStatusEnum.ACTIVE
+      || status === RentStatusEnum.EXPIRED
+      || status === RentStatusEnum.ACCEPTED
+      || status === RentStatusEnum.COMPLETING
+  return isExtendableStatus && !store.isCompleting
+})
+
+const canComplete = computed((): boolean => {
+  const status = store.item?.status
+  return (status === RentStatusEnum.ACTIVE || status === RentStatusEnum.EXPIRED) && !store.isCompleting
 })
 
 async function onRequestSessionCompletion (): Promise<void> {
