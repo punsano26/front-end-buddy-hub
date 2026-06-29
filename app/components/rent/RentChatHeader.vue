@@ -48,12 +48,14 @@
 
         <!-- Mobile Countdown / price rate overlay -->
         <div class="flex md:hidden items-center gap-3 shrink-0">
-          <div class="bg-white/50 border border-slate-200 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs dark:bg-slate-950/50 dark:border-slate-850">
+          <SessionTimer
+            v-if="store.currentPartner?.sessionStatus === 'active' && id"
+            :session-id="Number(id)" />
+          <div
+            v-else
+            class="bg-white/50 border border-slate-200 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs dark:bg-slate-950/50 dark:border-slate-850">
             <i class="pi pi-coin text-amber-500" />
             <span class="font-bold text-slate-700 dark:text-slate-200">{{ store.countdownText }}</span>
-            <span
-              v-if="store.currentPartner?.sessionStatus === 'active'"
-              class="text-slate-400">/นาที</span>
           </div>
         </div>
       </div>
@@ -101,12 +103,14 @@
 
       <!-- Desktop Countdown / price rate overlay -->
       <div class="hidden md:flex items-center gap-3 shrink-0">
-        <div class="bg-white/50 border border-slate-200 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs dark:bg-slate-950/50 dark:border-slate-850">
+        <SessionTimer
+          v-if="store.currentPartner?.sessionStatus === 'active' && id"
+          :session-id="Number(id)" />
+        <div
+          v-else
+          class="bg-white/50 border border-slate-200 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs dark:bg-slate-950/50 dark:border-slate-850">
           <i class="pi pi-coin text-amber-500" />
           <span class="font-bold text-slate-700 dark:text-slate-200">{{ store.countdownText }}</span>
-          <span
-            v-if="store.currentPartner?.sessionStatus === 'active'"
-            class="text-slate-400">/นาที</span>
         </div>
       </div>
     </div>
@@ -115,6 +119,7 @@
 
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
+import SessionTimer from '~/components/rent/SessionTimer.vue'
 import { RentStatusEnum } from '~/models/enums/Rent.enum'
 import type { TBaseParamsId } from '~/models/request/Request.model'
 import type { IRentCustomerProvider } from '~/resource/provider/RentCustomer.provider'
