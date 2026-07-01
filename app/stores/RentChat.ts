@@ -6,6 +6,7 @@ import { RentStatusEnum } from '~/models/enums/Rent.enum'
 import type { ICustomer, IFindOneSessionsMessagesList, IProvider, IRentAPostData } from '~/models/response/RentRes.model'
 import RentCustomerProvider from '~/resource/provider/RentCustomer.provider'
 import { useHireTimer } from '~/composables/useHireTimer'
+import { useAuthStore } from '~/stores/Auth'
 
 export interface IRentAPostDataWithStatus extends IRentAPostData {
   sessionStatus?: string
@@ -89,7 +90,8 @@ export const useRentChatStore = defineStore('RentChat', (): IRentChatStore => {
   // --- Getters / Computed ---
   const partner = computed((): ICustomer | IProvider | null => {
     if (item.value) {
-      return item.value.customerId === item.value.customer?.id
+      const authStore = useAuthStore()
+      return authStore.user.id === item.value.customerId
         ? item.value.provider
         : item.value.customer
     }
@@ -216,6 +218,7 @@ export const useRentChatStore = defineStore('RentChat', (): IRentChatStore => {
   }
 
   async function fetchMessages (sessionId: number, paginationVal: any): Promise<void> {
+    const authStore = useAuthStore()
     const response = await rentCustomerProvider.findOneSessionMessagesPaginate({
       page: paginationVal.page,
       limit: paginationVal.limit
@@ -225,7 +228,7 @@ export const useRentChatStore = defineStore('RentChat', (): IRentChatStore => {
       const rawMessages: IFindOneSessionsMessagesList[] = response.data
       messages.value = rawMessages.map((m: IFindOneSessionsMessagesList): IRentMessageItem => ({
         id: m.id,
-        sender: m.senderId === item.value?.customerId ? 'self' : 'partner',
+        sender: m.senderId === authStore.user.id ? 'self' : 'partner',
         text: m.messageText,
         createdAt: new Date(m.createdAt),
         isRead: m.isRead
