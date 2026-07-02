@@ -150,7 +150,24 @@ import type { IFindAllRentCategoriesData } from '~/models/response/RentRes.model
 import { useRentStore } from '~/stores/Rent'
 import Button from '~/volt/Button.vue'
 
-definePageMeta({ layout: 'navbar' })
+definePageMeta({
+  layout: 'navbar',
+  middleware: [
+    async (): Promise<any> => {
+      if (import.meta.server) return
+
+      const rentStore = useRentStore()
+      try {
+        const response = await rentStore.checkRentPostAlreadyExists()
+        if (response?.data?.hasPost) {
+          return navigateTo('/public/rent/my-post')
+        }
+      } catch {
+        // Proceed to create page if check fails
+      }
+    }
+  ]
+})
 
 interface RentServiceOption {
   id: string
@@ -212,8 +229,7 @@ const { $handleLoading } = useNuxtApp()
 const rentStore = useRentStore()
 onMounted((): void => {
   $handleLoading(async (): Promise<void> => {
-    const response = await rentStore.checkRentPostAlreadyExists()
-    if (response?.data?.hasPost) {
+    if (rentStore.rentPostAlreadyExists?.data?.hasPost) {
       router.replace({ name: 'public-rent-my-post' })
       return
     }

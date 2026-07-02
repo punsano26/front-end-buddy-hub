@@ -360,7 +360,22 @@ import Badge from '~/volt/Badge.vue'
 definePageMeta({
   title: 'โพสต์เช่าคุยของฉัน',
   backPath: { name: 'public-rent' },
-  backPlacement: 'page'
+  backPlacement: 'page',
+  middleware: [
+    async (): Promise<any> => {
+      if (import.meta.server) return
+
+      const rentStore = useRentStore()
+      try {
+        const response = await rentStore.checkRentPostAlreadyExists()
+        if (!response?.data?.hasPost) {
+          return navigateTo('/public/rent/create')
+        }
+      } catch {
+        return navigateTo('/public/rent/create')
+      }
+    }
+  ]
 })
 
 const rentStore = useRentStore()
