@@ -38,7 +38,7 @@ export const validate: IValidate = {
   },
   textEnglish: (val: string): boolean | string => {
     if (!val) return true
-    return (/^[a-zA-Z\s]+$/).test(String(val)) || 'กรุณากรอกเป็นภาษาอังกฤษเท่านั้น'
+    return (/^[a-zA-Z0-9\s]+$/).test(String(val)) || 'กรุณากรอกเป็นภาษาอังกฤษเท่านั้น'
   },
   email: (val: any): boolean | string => emailRegex.test(val) || 'รูปแบบอีเมลไม่ถูกต้อง',
   emailOptional: (val: any): boolean | string => !val || emailRegex.test(val) || 'รูปแบบอีเมลไม่ถูกต้อง',
