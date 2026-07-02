@@ -33,7 +33,10 @@
           <div class="flex items-center gap-3 sm:justify-end">
             <i class="pi pi-pencil text-xl text-surface-500 hover:text-surface-900 cursor-pointer" />
             <span class="font-bold">{{ isActive ? 'เปิดใช้งาน' : 'ปิดใช้งาน' }}</span>
-            <ToggleSwitch v-model="isActive" pt:slider="bg-green-700!" />
+            <ToggleSwitch
+              v-model="isActive"
+              :pt:slider="isActive ? 'bg-green-700! dark:bg-green-600!' : 'bg-gray-400! dark:bg-gray-600!'"
+              :pt:handle="isActive ? 'bg-white! dark:bg-slate-900!' : 'bg-white! dark:bg-slate-300!'" />
           </div>
         </div>
       </template>
