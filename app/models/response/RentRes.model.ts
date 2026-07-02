@@ -137,6 +137,26 @@ export interface ICheckIfSessionIsExpiredData {
   status: RentStatusEnum
 }
 
+export interface ICreateAReviewData {
+  id: number
+  hireSessionId: number
+  reviewedUserId: number
+  reviewerId: number
+  rating: number
+  comment: string
+  createdAt: string
+  updatedAt: string
+  reviewer: IReviewer
+}
+
+export interface IReviewer {
+  id: number
+  username: string
+  nickname: string | null
+  profileImg: string | null
+}
+
+export type ICreateAReviewResponse = IApiResponse<ICreateAReviewData>
 export type IFindRealtimeSessionMessagesResponse = IApiResponse<IFindRealtimeSessionMessagesData>
 export type ICheckIfSessionIsExpiredResponse = IApiResponse<ICheckIfSessionIsExpiredData>
 export type ICreateSessionMessageResponse = IApiResponse<IFindOneSessionsMessagesList>

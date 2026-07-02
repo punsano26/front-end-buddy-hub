@@ -1,5 +1,12 @@
 import type { IBasePaginationRequest } from './Request.model'
 
+export interface ICreateAReviewPayload {
+  hireSessionId: number
+  reviewedUserId: number
+  rating: number
+  comment: string
+}
+
 export interface IRentAPostPayload {
   hirePostId: number
   durationMinutes: number
