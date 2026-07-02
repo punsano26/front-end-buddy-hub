@@ -1,8 +1,15 @@
 import HttpRequest from '../HttpRequest'
-import type { ICreateRentPostPayload, ICreateTagsRentPayload, IFindAllRentPostsPaginateQuery, IUpdateRentPostPayload } from '~/models/request/RentReq.model'
+import type {
+  ICreateAReviewPayload,
+  ICreateRentPostPayload,
+  ICreateTagsRentPayload,
+  IFindAllRentPostsPaginateQuery,
+  IUpdateRentPostPayload
+} from '~/models/request/RentReq.model'
 import type { TBaseParamsId } from '~/models/request/Request.model'
 import type {
   ICheckRentPostAlreadyExistsResponse,
+  ICreateAReviewResponse,
   ICreateRentPostResponse,
   ICreateTagsRentResponse,
   IFindAllRentCategoriesResponse,
@@ -23,7 +30,7 @@ export interface IRentProvider {
   findOneMyRentPost (): Promise<IFindOneRentPostResponse>
   updateRentPost (id: TBaseParamsId, payload: IUpdateRentPostPayload): Promise<IFindOneRentPostResponse>
   deleteRentPost (id: TBaseParamsId): Promise<IMessageResponse>
-
+  createAReview (payload: ICreateAReviewPayload): Promise<ICreateAReviewResponse>
 }
 
 class RentProvider extends HttpRequest implements IRentProvider {
@@ -86,6 +93,12 @@ class RentProvider extends HttpRequest implements IRentProvider {
   public async deleteRentPost (id: TBaseParamsId): Promise<IMessageResponse> {
     this.setUserAuthHeader()
     const response = await this.delete(`${this.urlPrefix}/${id}`)
+    return response
+  }
+
+  public async createAReview (payload: ICreateAReviewPayload): Promise<ICreateAReviewResponse> {
+    this.setUserAuthHeader()
+    const response = await this.post(`${this.urlPrefix}/reviews`, payload)
     return response
   }
 }
