@@ -183,7 +183,11 @@ function requestSessionCompletion (): void {
 }
 async function onConfirmSessionCompletion (): Promise<void> {
   await rentCustomerService.confirmSessionCompletion(Number(id.value))
-  await navigateTo({ name: 'public-rent-chat' })
+  if (store.item && authStore.user.id === store.item.customerId) {
+    await navigateTo({ name: 'public-rent-review', query: { sessionId: id.value } })
+  } else {
+    await navigateTo({ name: 'public-rent-chat' })
+  }
 }
 
 function confirmSessionCompletion (): void {
