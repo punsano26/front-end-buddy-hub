@@ -408,6 +408,9 @@ export const useRentChatStore = defineStore('RentChat', (): IRentChatStore => {
         } else if (payload.event === 'session_completed' || payload.event === 'session_completing_expired') {
           isCompleting.value = false
           requestCompleteBy.value = null
+          if (payload.event === 'session_completed' && item.value) {
+            item.value.status = RentStatusEnum.COMPLETED
+          }
         }
         void fetchSession(sessionId)
       }
