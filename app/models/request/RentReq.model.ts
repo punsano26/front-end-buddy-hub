@@ -36,7 +36,10 @@ export interface IUpdateRentPostPayload {
 }
 
 export interface IFindRentPostsFilters {
-
+  categoryId?: number
+  tag?: string
+  isActive?: boolean
+  isOnline?: boolean
 }
 
 export interface IFindAllConversationSessionsFilters {

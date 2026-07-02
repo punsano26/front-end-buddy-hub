@@ -147,8 +147,6 @@ import { useToast } from 'primevue/usetoast'
 import StepperRent from '~/components/rent/StepperRent.vue'
 import type { ICreateRentPostPayload } from '~/models/request/RentReq.model'
 import type { IFindAllRentCategoriesData } from '~/models/response/RentRes.model'
-import type { IRentProvider } from '~/resource/provider/Rent.provider'
-import RentProvider from '~/resource/provider/Rent.provider'
 import { useRentStore } from '~/stores/Rent'
 import Button from '~/volt/Button.vue'
 
@@ -212,8 +210,13 @@ function onFormSubmit (data: RentFormSubmitData): void {
 
 const { $handleLoading } = useNuxtApp()
 const rentStore = useRentStore()
-async function getCategoriesRent (): Promise<void> {
-  await $handleLoading(async (): Promise<void> => {
+onMounted((): void => {
+  $handleLoading(async (): Promise<void> => {
+    const response = await rentStore.checkRentPostAlreadyExists()
+    if (response?.data?.hasPost) {
+      router.replace({ name: 'public-rent-my-post' })
+      return
+    }
     await rentStore.fetchCategories()
     rentCategories.value = rentStore.categories.map((category: IFindAllRentCategoriesData): RentServiceOption => {
       const name = category.name
@@ -239,10 +242,6 @@ async function getCategoriesRent (): Promise<void> {
       }
     })
   })
-}
-
-onMounted((): void => {
-  getCategoriesRent()
 })
 </script>
 
