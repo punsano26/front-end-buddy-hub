@@ -1,4 +1,12 @@
 import type { IBasePaginationRequest } from './Request.model'
+import type { StatusActiveEnum } from '../enums/Rent.enum'
+
+export interface ICreateAReviewPayload {
+  hireSessionId: number
+  reviewedUserId: number
+  rating: number
+  comment: string
+}
 
 export interface IRentAPostPayload {
   hirePostId: number
@@ -29,7 +37,10 @@ export interface IUpdateRentPostPayload {
 }
 
 export interface IFindRentPostsFilters {
-
+  categoryId?: number
+  tag?: string
+  isActive?: boolean
+  isOnline?: StatusActiveEnum
 }
 
 export interface IFindAllConversationSessionsFilters {

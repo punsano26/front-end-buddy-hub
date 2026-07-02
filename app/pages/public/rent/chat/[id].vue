@@ -176,7 +176,11 @@ watch(
       && oldStatus
       && oldStatus !== RentStatusEnum.COMPLETED
     ) {
-      void navigateTo({ name: 'public-rent-chat' })
+      if (store.item && authStore.user.id === store.item.customerId) {
+        void navigateTo({ name: 'public-rent-review', query: { sessionId: id.value } })
+      } else {
+        void navigateTo({ name: 'public-rent-chat' })
+      }
     }
   }
 )

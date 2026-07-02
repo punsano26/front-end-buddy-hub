@@ -34,3 +34,10 @@ export enum RentSessionsEvent {
   SERVICE_MESSAGE_DELETED = 'service_message_deleted',
   SERVICE_MESSAGE_READ = 'service_message_read'
 }
+
+
+export enum StatusActiveEnum {
+  ALL = 'all',
+  ONLINE = 'online',
+  OFFLINE = 'offline'
+}

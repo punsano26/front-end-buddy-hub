@@ -31,18 +31,29 @@
       </div>
     </div>
     <div class="grid grid-cols-1 gap-1 sm:grid-cols-[1fr_auto] sm:items-center">
-      <InputSearch placeholder="ค้นหาชื่อ ความเชี่ยวชาญ..." class="w-full" />
+      <InputSearch
+        class="w-full"
+        v-model="search"
+        placeholder="ค้นหาชื่อ ความเชี่ยวชาญ..."
+        @search="onSearch()" />
       <SelectInput
         placeholder="เรตติ้งสูงสุด"
-        pt:root:class="w-full sm:w-48 shadow-sm"
-      />
+        pt:root:class="w-full sm:w-48 shadow-sm" />
     </div>
     <div class="flex justify-start">
-      <RentFilter/>
+      <RentFilter
+        v-model:categoryId="categoryId"
+        @change="onFilterChange()" />
     </div>
 
     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
       <RentCard v-for="(item, index) in rentStore.posts" :key="index" :item="item" @rent="selectRentPost(item.id)" />
+    </div>
+
+    <div class="flex justify-center mt-6">
+      <Paginate
+        v-model="pagination"
+        @page="fetch()" />
     </div>
   </div>
   <RentModal :item="rentStore.selectedPost" :wallet-balance="myWalletBalance" v-model:visible="rentModalVisible" @confirm="confirmRent" />
@@ -56,13 +67,15 @@
 
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
+import Paginate from '~/components/user/Paginate.vue'
 import RentModal from '@/components/rent/RentModal.vue'
 import SuccessHireModal from '@/components/rent/SuccessHireModal.vue'
 import { useToast } from 'primevue/usetoast'
+import { StatusActiveEnum } from '~/models/enums/Rent.enum'
 import type { IRentAPostPayload } from '~/models/request/RentReq.model'
 import type { TBaseParamsId } from '~/models/request/Request.model'
-import type { IFindWalletBalanceData } from '~/models/response/WallRes.model'
 import type { IFindAllRentPostList } from '~/models/response/RentRes.model'
+import type { IFindWalletBalanceData } from '~/models/response/WallRes.model'
 import RentCustomerProvider, { type IRentCustomerProvider } from '~/resource/provider/RentCustomer.provider'
 import WalletProvider, { type IWalletProvider } from '~/resource/provider/Wallet.provider'
 import { useRentStore } from '~/stores/Rent'
@@ -77,16 +90,24 @@ const successModalItem = ref<IFindAllRentPostList | null>(null)
 const { $handleLoading } = useNuxtApp()
 const toast = useToast()
 const myWalletBalance = ref<IFindWalletBalanceData>({ userId: 0, balance: 0 })
-const { pagination, extractPagination } = usePagination()
+const {search, pagination, extractPagination } = usePagination()
 const rentStore = useRentStore()
 const walletService: IWalletProvider = new WalletProvider()
 const rentCustomerService: IRentCustomerProvider = new RentCustomerProvider()
 const conversationsRent = useState<any[]>('conversationsRent', (): any[] => [])
 
+const categoryId = ref<number>()
+const status = ref<StatusActiveEnum>(StatusActiveEnum.ONLINE)
+
 async function useFetch (): Promise<void> {
   const paginationResult = await rentStore.fetchPosts({
     page: pagination.value.page,
-    limit: pagination.value.limit
+    limit: pagination.value.limit,
+    search: search.value,
+    tag: search.value,
+    isActive: true,
+    isOnline: status.value,
+    categoryId: categoryId.value
   })
   pagination.value = extractPagination(paginationResult)
   await rentStore.checkRentPostAlreadyExists()
@@ -104,6 +125,17 @@ async function onSelectedRentPost (id: TBaseParamsId): Promise<void> {
 function selectRentPost (id: TBaseParamsId): void {
   $handleLoading(() => onSelectedRentPost(id))
 }
+
+function onSearch (): void {
+  pagination.value.page = 1
+  fetch()
+}
+
+function onFilterChange (): void {
+  pagination.value.page = 1
+  fetch()
+}
+
 
 async function onCheckRentPostAlreadyExists (): Promise<void> {
   const response = await rentStore.checkRentPostAlreadyExists()
@@ -183,6 +215,7 @@ function confirmRent (payload: IRentAPostPayload): void {
 onMounted((): void => {
   fetch()
   getMyWalletBalance()
+  rentStore.fetchCategories()
 })
 </script>
 
