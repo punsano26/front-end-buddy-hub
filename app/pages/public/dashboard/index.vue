@@ -166,17 +166,36 @@
         </template>
       </Card>
     </div>
-   <SetBankerDialog  />
+   <PaymentSetBankerDialog v-model:visible="visible" />
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref } from 'vue'
+import type { IFindAllRentStatisticsData } from '~/models/response/DasboardRes.model'
+import type { IDashboardProvider } from '~/resource/provider/Dashboard.provider'
+import DashboardProvider from '~/resource/provider/Dashboard.provider'
 
+const DashBoardService: IDashboardProvider = new DashboardProvider()
+const item = ref<IFindAllRentStatisticsData>()
+const { $handleLoading } = useNuxtApp()
 const visible = ref(false);
 definePageMeta({
   layout: 'navbar',
   title: 'แดชบอร์ดรายได้'
+})
+
+async function onFetch (): Promise<void> {
+  const response = await DashBoardService.findAllRentStatistics()
+  item.value = response.data
+}
+
+function fetch (): void {
+  $handleLoading(onFetch)
+}
+
+onMounted((): void => {
+  fetch()
 })
 </script>
 
