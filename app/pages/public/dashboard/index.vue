@@ -107,7 +107,7 @@
                 <i class="pi pi-wallet text-2xl"></i>
                 <p>บัญชีรับเงิน</p>
                </div>
-               <Button outlined label="ผูกบัญชี" icon="pi pi-plus" />
+               <Button @click="visible = true" outlined label="ผูกบัญชี" icon="pi pi-plus" />
               </div>
               <div>
                 <p>ธ.กสิกรไทย</p>
@@ -166,13 +166,14 @@
         </template>
       </Card>
     </div>
-   
+   <SetBankerDialog  />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { B } from 'vue-router/dist/router-CWoNjPRp.mjs'
+import { ref } from 'vue'
 
+const visible = ref(false);
 definePageMeta({
   layout: 'navbar',
   title: 'แดชบอร์ดรายได้'
