@@ -1,46 +1,39 @@
 <template>
   <div class="flex flex-col gap-4">
     <!-- Header with tab selectors -->
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex flex-col">
-        <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">
-          สถิติรายได้สะสม
+    <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-0.5">
+        <h3 class="text-base font-bold text-surface-900 dark:text-surface-0">
+          แนวโน้มรายได้
         </h3>
-        <div class="flex items-baseline gap-2 mt-1">
-          <span class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            {{ totalEarnings.toLocaleString() }}
-          </span>
-          <span class="text-sm font-medium text-slate-500 dark:text-slate-400">
-            เหรียญ
-          </span>
-        </div>
+        <p class="text-xs text-surface-500 dark:text-surface-400">
+          {{ currentTab === 'weekly' ? '7 วันล่าสุด' : '30 วันล่าสุด' }}
+        </p>
       </div>
 
       <!-- Tab Buttons -->
-      <div
-        v-if="!trends || trends.length === 0"
-        class="flex items-center gap-1 self-start bg-slate-100 dark:bg-slate-800 p-1 rounded-full text-xs font-semibold sm:self-center">
+      <div class="flex items-center gap-1 bg-surface-100 dark:bg-surface-800/80 p-1 rounded-xl text-xs font-semibold">
         <button
           :class="[
             currentTab === 'weekly'
-              ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+              ? 'bg-surface-0 dark:bg-[#18181b] text-surface-900 dark:text-surface-0 shadow-xs'
+              : 'text-surface-500 dark:text-surface-400 hover:text-surface-900 dark:hover:text-surface-100'
           ]"
-          class="cursor-pointer px-3 py-1.5 rounded-full transition-all duration-250"
+          class="cursor-pointer px-3.5 py-1.5 rounded-lg transition-all duration-200"
           type="button"
           @click="toggleTab('weekly')">
-          รายสัปดาห์
+          7 วัน
         </button>
         <button
           :class="[
             currentTab === 'monthly'
-              ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+              ? 'bg-surface-0 dark:bg-[#18181b] text-surface-900 dark:text-surface-0 shadow-xs'
+              : 'text-surface-500 dark:text-surface-400 hover:text-surface-900 dark:hover:text-surface-100'
           ]"
-          class="cursor-pointer px-3 py-1.5 rounded-full transition-all duration-250"
+          class="cursor-pointer px-3.5 py-1.5 rounded-lg transition-all duration-200"
           type="button"
           @click="toggleTab('monthly')">
-          รายเดือน
+          30 วัน
         </button>
       </div>
     </div>
@@ -70,80 +63,64 @@ let ChartJS: typeof import('chart.js').Chart | null = null
 let chart: InstanceType<typeof import('chart.js').Chart> | null = null
 let observer: MutationObserver | null = null
 
-// Mock Data
-const weeklySeries: {
-  name: string
-  data: number[]
-}[] = [
-  {
-    name: 'รายได้ (เหรียญ)',
-    data: [1200, 3500, 2800, 4200, 3100, 5600, 4800]
-  }
-]
+// Mock Data matching the mockup curve
+const weeklySeries = [450, 460, 380, 950, 380, 950, 1180]
+const monthlySeries = [8400, 12800, 9100, 14500, 18200, 17835]
 
-const monthlySeries: {
-  name: string
-  data: number[]
-}[] = [
-  {
-    name: 'รายได้ (เหรียญ)',
-    data: [15400, 22800, 19100, 24500, 28200, 31600]
-  }
-]
+const formatDayName = (dateStr: string): string => {
+  const day = dayjs(dateStr).format('dddd')
+  if (day === 'วันพฤหัสบดี') return 'พฤหัส'
+  return day.replace(/^วัน/, '')
+}
 
 const chartData = computed((): { labels: string[], data: number[] } => {
   if (props.trends && props.trends.length > 0) {
+    const limit = currentTab.value === 'weekly' ? 7 : 30
+    const sliced = props.trends.slice(-limit)
     return {
-      labels: props.trends.map((t: IRevenueTrend): string => {
+      labels: sliced.map((t: IRevenueTrend): string => {
         try {
+          if (currentTab.value === 'weekly') {
+            return formatDayName(t.date)
+          }
           return dayjs(t.date).format('DD/MM')
         } catch {
           return t.date
         }
       }),
-      data: props.trends.map((t: IRevenueTrend): number => t.revenue)
+      data: sliced.map((t: IRevenueTrend): number => t.revenue)
     }
   }
 
   const categories = currentTab.value === 'weekly'
-    ? ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์']
+    ? ['เสาร์', 'อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์']
     : ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.']
 
-  const data = currentTab.value === 'weekly'
-    ? (weeklySeries[0]?.data ?? [])
-    : (monthlySeries[0]?.data ?? [])
+  const data = currentTab.value === 'weekly' ? weeklySeries : monthlySeries
 
   return { labels: categories, data }
 })
 
-const totalEarnings = computed((): number => {
-  if (props.trends && props.trends.length > 0) {
-    return props.trends.reduce((acc: number, curr: IRevenueTrend): number => acc + curr.revenue, 0)
-  }
-  const data = currentTab.value === 'weekly' ? (weeklySeries[0]?.data ?? []) : (monthlySeries[0]?.data ?? [])
-  return data.reduce((acc: number, curr: number): number => acc + curr, 0)
-})
-
 const getChartConfig = (): ChartConfiguration => {
-  const textColor = isDark.value ? '#94a3b8' : '#64748b'
-  const gridColor = isDark.value ? '#334155' : '#e2e8f0'
+  const textColor = isDark.value ? '#a1a1aa' : '#71717a'
+  const gridColor = isDark.value ? 'rgba(39, 39, 42, 0.4)' : 'rgba(228, 228, 231, 0.6)'
   const categories = chartData.value.labels
   const data = chartData.value.data
 
-  // Create gradients if ctx is available
-  let lineGradient: any = '#6366f1'
-  let areaGradient: any = 'rgba(99, 102, 241, 0.1)'
+  let lineGradient: any = '#10b981'
+  let areaGradient: any = 'rgba(16, 185, 129, 0.05)'
 
   if (canvasRef.value) {
     const ctx = canvasRef.value.getContext('2d')
     if (ctx) {
       lineGradient = ctx.createLinearGradient(0, 0, canvasRef.value.width, 0)
-      lineGradient.addColorStop(0, '#6366f1')
-      lineGradient.addColorStop(1, '#8b5cf6')
+      lineGradient.addColorStop(0, '#10b981')
+      lineGradient.addColorStop(0.5, '#34d399')
+      lineGradient.addColorStop(1, '#059669')
 
       areaGradient = ctx.createLinearGradient(0, 0, 0, 320)
-      areaGradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)')
-      areaGradient.addColorStop(1, 'rgba(139, 92, 246, 0.01)')
+      areaGradient.addColorStop(0, 'rgba(16, 185, 129, 0.25)')
+      areaGradient.addColorStop(1, 'rgba(16, 185, 129, 0.00)')
     }
   }
 
@@ -160,12 +137,12 @@ const getChartConfig = (): ChartConfiguration => {
           borderColor: lineGradient,
           borderWidth: 3,
           tension: 0.4,
-          pointBackgroundColor: '#6366f1',
-          pointBorderColor: isDark.value ? '#1e293b' : '#ffffff',
+          pointBackgroundColor: '#10b981',
+          pointBorderColor: isDark.value ? '#18181b' : '#ffffff',
           pointBorderWidth: 2,
           pointRadius: 4,
           pointHoverRadius: 6,
-          pointHoverBackgroundColor: '#6366f1',
+          pointHoverBackgroundColor: '#10b981',
           pointHoverBorderColor: '#ffffff',
           pointHoverBorderWidth: 2
         }
@@ -179,10 +156,10 @@ const getChartConfig = (): ChartConfiguration => {
           display: false
         },
         tooltip: {
-          backgroundColor: isDark.value ? '#1e293b' : '#ffffff',
-          titleColor: isDark.value ? '#f1f5f9' : '#0f172a',
-          bodyColor: isDark.value ? '#f1f5f9' : '#0f172a',
-          borderColor: isDark.value ? '#334155' : '#e2e8f0',
+          backgroundColor: isDark.value ? '#18181b' : '#ffffff',
+          titleColor: isDark.value ? '#ffffff' : '#18181b',
+          bodyColor: isDark.value ? '#ffffff' : '#18181b',
+          borderColor: isDark.value ? '#27272a' : '#e4e4e7',
           borderWidth: 1,
           padding: 10,
           titleFont: {
@@ -283,7 +260,6 @@ onMounted(async (): Promise<void> => {
     })
   }
 
-  // Dynamically import chart.js to avoid SSR issues (Canvas API is browser-only)
   const { Chart, registerables } = await import('chart.js')
   Chart.register(...registerables)
   ChartJS = Chart
