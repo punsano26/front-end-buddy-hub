@@ -1,65 +1,117 @@
 <template>
   <Dialog
     v-model:visible="visible"
-    class="sm:w-100 w-9/10"
+    class="sm:w-110 w-[95%]"
     header="ผูกบัญชีธนาคาร"
     modal>
-    <div class="flex flex-col gap-4">
-      <InputLabelField
-        label="ธาคาร">
-        <Select
-          :options="bankOptionsMock"
-          class="rounded-xl w-full"
-          option-label="label"
-          option-value="value"
-          placeholder="เลือกธนาคาร" />
-      </InputLabelField>
-      <InputLabelField
-        label="เลขบัญชีธนาคาร">
-        <InputNumber
-          class="w-full rounded-xl"
-          placeholder="กรอกเลขบัญชีธนาคารของคุณ" />
-      </InputLabelField>
-      <InputLabelField
-        label="ชื่อบัญชีธนาคาร"
-        placeholder="กรอกชื่อบัญชีธนาคารของคุณ" />
-      <div class="flex gap-2 justify-end">
+    <div class="flex flex-col gap-4 pt-2">
+      <p class="text-xs text-surface-500 dark:text-surface-400">
+        โปรดเลือกธนาคารและกรอกข้อมูลบัญชีเพื่อใช้สำหรับการรับเงินจากการให้บริการ
+      </p>
+
+      <div class="flex flex-col gap-3.5">
+        <!-- Bank Dropdown Selection -->
+        <InputLabelField
+          label="ธนาคาร">
+          <Select
+            v-model="selectedBank"
+            :options="bankOptionsMock"
+            class="rounded-xl w-full"
+            option-label="label"
+            option-value="value"
+            placeholder="เลือกธนาคารผู้ให้บริการ" />
+        </InputLabelField>
+
+        <!-- Bank Account Number -->
+        <InputLabelField
+          v-model="accountNumber"
+          label="เลขบัญชีธนาคาร"
+          maxlength="15"
+          placeholder="กรอกเลขบัญชีธนาคารของคุณ"
+          type="text"
+          @input="onAccountNumberInput" />
+
+        <!-- Bank Account Name -->
+        <InputLabelField
+          v-model="accountName"
+          label="ชื่อบัญชีธนาคาร"
+          placeholder="กรอกชื่อบัญชีธนาคารของคุณ"
+          type="text" />
+      </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <template #footer>
+      <div class="flex justify-end gap-2.5 w-full mt-2">
         <CancelButton
           text="ยกเลิก"
           @click="visible = false" />
-        <ConfirmButton text="ยืนยัน" />
+        <ConfirmButton
+          :disabled="!isValid"
+          text="บันทึกข้อมูล"
+          @click="handleSave" />
       </div>
-    </div>
+    </template>
   </Dialog>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useToast } from 'primevue/usetoast'
 import type { IBaseOptions } from '~/models/Global.model'
 
 const visible = defineModel<boolean>('visible', { default: false })
+const toast = useToast()
+
+const selectedBank = ref<string | null>(null)
+const accountNumber = ref<string>('')
+const accountName = ref<string>('')
+
 const bankOptionsMock = ref<IBaseOptions[]>([
   {
-    label: 'ธนาคารกรุงเทพ',
-    value: 'bank1'
+    label: 'ธนาคารกสิกรไทย (KBANK)',
+    value: 'KBANK'
   },
   {
-    label: 'ธนาคารแห่งประเทศไทย',
-    value: 'bank2'
+    label: 'ธนาคารไทยพาณิชย์ (SCB)',
+    value: 'SCB'
   },
   {
-    label: 'ธนาคารกสิกรไทย',
-    value: 'bank3'
+    label: 'ธนาคารกรุงเทพ (BBL)',
+    value: 'BBL'
   },
   {
-    label: 'ธนาคารไทยพาณิชย์',
-    value: 'bank4'
+    label: 'ธนาคารกรุงไทย (KTB)',
+    value: 'KTB'
   },
   {
-    label: 'ธนาคารกรุงไทย',
-    value: 'bank5'
+    label: 'ธนาคารกรุงศรีอยุธยา (BAY)',
+    value: 'BAY'
+  },
+  {
+    label: 'ธนาคารออมสิน (GSB)',
+    value: 'GSB'
   }
 ])
+
+const isValid = computed((): boolean => {
+  return !!selectedBank.value && accountNumber.value.length >= 10 && accountName.value.trim().length > 0
+})
+
+const onAccountNumberInput = (event: Event): void => {
+  const target = event.target as HTMLInputElement
+  accountNumber.value = target.value.replace(/\D/g, '')
+}
+
+const handleSave = (): void => {
+  toast.add({
+    severity: 'success',
+    summary: 'ผูกบัญชีธนาคารสำเร็จ',
+    detail: 'ข้อมูลบัญชีธนาคารของคุณได้รับการบันทึกเรียบร้อยแล้ว',
+    life: 3000
+  })
+  visible.value = false
+}
 </script>
 
 <style>
