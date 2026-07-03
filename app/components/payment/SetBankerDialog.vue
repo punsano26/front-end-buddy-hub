@@ -23,6 +23,12 @@
       <InputLabelField
         label="ชื่อบัญชีธนาคาร"
         placeholder="กรอกชื่อบัญชีธนาคารของคุณ" />
+      <div class="flex gap-2 justify-end">
+        <CancelButton
+          text="ยกเลิก"
+          @click="visible = false" />
+        <ConfirmButton text="ยืนยัน" />
+      </div>
     </div>
   </Dialog>
 </template>
@@ -31,7 +37,7 @@
 import { ref } from 'vue'
 import type { IBaseOptions } from '~/models/Global.model'
 
-const visible = ref(false)
+const visible = defineModel<boolean>('visible', { default: false })
 const bankOptionsMock = ref<IBaseOptions[]>([
   {
     label: 'ธนาคารกรุงเทพ',
