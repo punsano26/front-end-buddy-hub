@@ -21,7 +21,7 @@
 
             <div class="flex flex-col">
               <h2 class="text-sm font-semibold">รายได้วันนี้</h2>
-              <p class="text-2xl font-bold">0</p>
+              <p class="text-2xl font-bold">{{ stats?.todayRevenue ?? 0 }}</p>
               <p class="text-xs text-slate-300">เหรียญ</p>
             </div>
             <i class="pi pi-wallet text-4xl"></i>
@@ -34,7 +34,7 @@
 
             <div class="flex flex-col">
               <h2 class="text-sm font-semibold">รายได้รวม</h2>
-              <p class="text-2xl font-bold">18,855</p>
+              <p class="text-2xl font-bold">{{ stats?.totalRevenue?.toLocaleString() ?? 0 }}</p>
               <p class="text-xs text-slate-300">เหรียญสะสมทั้งหมด</p>
             </div>
             <i class="pi pi-wallet text-4xl"></i>
@@ -47,8 +47,8 @@
 
             <div class="flex flex-col">
               <h2 class="text-sm font-semibold">นาทีที่ให้บริการ</h2>
-              <p class="text-2xl font-bold">3,285</p>
-              <p class="text-xs text-slate-300">55 ชั่วโมง</p>
+              <p class="text-2xl font-bold">{{ stats?.serviceDurationMinutes?.toLocaleString() ?? 0 }}</p>
+              <p class="text-xs text-slate-300">{{ formatDuration(stats?.serviceDurationMinutes ?? 0) }}</p>
             </div>
             <i class="pi pi-wallet text-4xl"></i>
           </div>
@@ -60,8 +60,8 @@
 
             <div class="flex flex-col">
               <h2 class="text-sm font-semibold">คะแนนเฉลี่ย</h2>
-              <p class="text-2xl font-bold">4.80</p>
-              <p class="text-xs text-slate-300">32 รีวิว</p>
+              <p class="text-2xl font-bold">{{ stats?.averageRating?.toFixed(2) ?? '0.00' }}</p>
+              <p class="text-xs text-slate-300">{{ stats?.reviewCount ?? 0 }} รีวิว</p>
             </div>
             <i class="pi pi-wallet text-4xl"></i>
           </div>
@@ -75,7 +75,7 @@
           <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">สถิติรายได้สะสม</h2>
           <p class="text-sm text-slate-500 dark:text-slate-400">ภาพรวมรายได้ของคุณในช่วงเวลาที่เลือก</p>
           <ClientOnly>
-            <PaymentEarningsChart />
+            <PaymentEarningsChart :trends="stats?.revenueTrends ?? []" />
           </ClientOnly>
         </div>
       </template>
@@ -171,31 +171,38 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import type { IFindAllRentStatisticsData } from '~/models/response/DasboardRes.model'
-import type { IDashboardProvider } from '~/resource/provider/Dashboard.provider'
 import DashboardProvider from '~/resource/provider/Dashboard.provider'
 
-const DashBoardService: IDashboardProvider = new DashboardProvider()
-const item = ref<IFindAllRentStatisticsData>()
+const visible = ref<boolean>(false)
+const dashboardService = new DashboardProvider()
 const { $handleLoading } = useNuxtApp()
-const visible = ref(false);
-definePageMeta({
-  layout: 'navbar',
-  title: 'แดชบอร์ดรายได้'
-})
+const stats = ref<IFindAllRentStatisticsData | null>(null)
+const isLoading = ref<boolean>(false)
 
-async function onFetch (): Promise<void> {
-  const response = await DashBoardService.findAllRentStatistics()
-  item.value = response.data
+const fetchStats = (): void => {
+  $handleLoading(
+    async (): Promise<void> => {
+      const response = await dashboardService.findAllRentStatistics()
+      stats.value = response?.data ?? null
+    },
+    { loadingUnit: isLoading }
+  )
 }
 
-function fetch (): void {
-  $handleLoading(onFetch)
+const formatDuration = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60)
+  return `${hours} ชั่วโมง`
 }
 
 onMounted((): void => {
-  fetch()
+  fetchStats()
+})
+
+definePageMeta({
+  layout: 'navbar',
+  title: 'แดชบอร์ดรายได้'
 })
 </script>
 

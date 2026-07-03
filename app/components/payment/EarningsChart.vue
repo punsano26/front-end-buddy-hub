@@ -17,7 +17,9 @@
       </div>
 
       <!-- Tab Buttons -->
-      <div class="flex items-center gap-1 self-start bg-slate-100 dark:bg-slate-800 p-1 rounded-full text-xs font-semibold sm:self-center">
+      <div
+        v-if="!trends || trends.length === 0"
+        class="flex items-center gap-1 self-start bg-slate-100 dark:bg-slate-800 p-1 rounded-full text-xs font-semibold sm:self-center">
         <button
           :class="[
             currentTab === 'weekly'
@@ -54,6 +56,12 @@
 <script lang="ts" setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { ChartConfiguration } from 'chart.js'
+import dayjs from 'dayjs'
+import type { IRevenueTrend } from '~/models/response/DasboardRes.model'
+
+const props = defineProps<{
+  trends?: IRevenueTrend[]
+}>()
 
 const currentTab = ref<'weekly' | 'monthly'>('weekly')
 const isDark = ref<boolean>(false)
@@ -83,14 +91,20 @@ const monthlySeries: {
   }
 ]
 
-const totalEarnings = computed((): number => {
-  const data = currentTab.value === 'weekly' ? (weeklySeries[0]?.data ?? []) : (monthlySeries[0]?.data ?? [])
-  return data.reduce((acc: number, curr: number): number => acc + curr, 0)
-})
+const chartData = computed((): { labels: string[], data: number[] } => {
+  if (props.trends && props.trends.length > 0) {
+    return {
+      labels: props.trends.map((t: IRevenueTrend): string => {
+        try {
+          return dayjs(t.date).format('DD/MM')
+        } catch {
+          return t.date
+        }
+      }),
+      data: props.trends.map((t: IRevenueTrend): number => t.revenue)
+    }
+  }
 
-const getChartConfig = (): ChartConfiguration => {
-  const textColor = isDark.value ? '#94a3b8' : '#64748b'
-  const gridColor = isDark.value ? '#334155' : '#e2e8f0'
   const categories = currentTab.value === 'weekly'
     ? ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์']
     : ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.']
@@ -98,6 +112,23 @@ const getChartConfig = (): ChartConfiguration => {
   const data = currentTab.value === 'weekly'
     ? (weeklySeries[0]?.data ?? [])
     : (monthlySeries[0]?.data ?? [])
+
+  return { labels: categories, data }
+})
+
+const totalEarnings = computed((): number => {
+  if (props.trends && props.trends.length > 0) {
+    return props.trends.reduce((acc: number, curr: IRevenueTrend): number => acc + curr.revenue, 0)
+  }
+  const data = currentTab.value === 'weekly' ? (weeklySeries[0]?.data ?? []) : (monthlySeries[0]?.data ?? [])
+  return data.reduce((acc: number, curr: number): number => acc + curr, 0)
+})
+
+const getChartConfig = (): ChartConfiguration => {
+  const textColor = isDark.value ? '#94a3b8' : '#64748b'
+  const gridColor = isDark.value ? '#334155' : '#e2e8f0'
+  const categories = chartData.value.labels
+  const data = chartData.value.data
 
   // Create gradients if ctx is available
   let lineGradient: any = '#6366f1'
@@ -228,9 +259,9 @@ const updateChart = (): void => {
   }
 }
 
-watch([isDark, currentTab], (): void => {
+watch([isDark, currentTab, (): IRevenueTrend[] | undefined => props.trends], (): void => {
   updateChart()
-})
+}, { deep: true })
 
 const checkDarkMode = (): void => {
   isDark.value = document.documentElement.classList.contains('app-dark')
