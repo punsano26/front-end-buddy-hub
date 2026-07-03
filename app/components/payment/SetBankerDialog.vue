@@ -56,11 +56,12 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import type { IBaseOptions } from '~/models/Global.model'
 
 const visible = defineModel<boolean>('visible', { default: false })
+const bankInfo = defineModel<{ bankName: string, accountNumber: string, accountName: string } | null>('bankInfo', { default: null })
 const toast = useToast()
 
 const selectedBank = ref<string | null>(null)
@@ -94,6 +95,23 @@ const bankOptionsMock = ref<IBaseOptions[]>([
   }
 ])
 
+watch(visible, (newVal: boolean): void => {
+  if (newVal) {
+    if (bankInfo.value) {
+      const matched = bankOptionsMock.value.find(
+        (b: IBaseOptions): boolean => b.label === bankInfo.value?.bankName || b.value === bankInfo.value?.bankName
+      )
+      selectedBank.value = matched ? matched.value : null
+      accountNumber.value = bankInfo.value.accountNumber
+      accountName.value = bankInfo.value.accountName
+    } else {
+      selectedBank.value = null
+      accountNumber.value = ''
+      accountName.value = ''
+    }
+  }
+})
+
 const isValid = computed((): boolean => {
   return !!selectedBank.value && accountNumber.value.length >= 10 && accountName.value.trim().length > 0
 })
@@ -104,6 +122,12 @@ const onAccountNumberInput = (event: Event): void => {
 }
 
 const handleSave = (): void => {
+  const matched = bankOptionsMock.value.find((b: IBaseOptions): boolean => b.value === selectedBank.value)
+  bankInfo.value = {
+    bankName: matched ? matched.label.split(' (')[0] ?? matched.label : selectedBank.value ?? '',
+    accountNumber: accountNumber.value,
+    accountName: accountName.value
+  }
   toast.add({
     severity: 'success',
     summary: 'ผูกบัญชีธนาคารสำเร็จ',
