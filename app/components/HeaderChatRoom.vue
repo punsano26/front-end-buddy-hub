@@ -41,13 +41,27 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-1.5 shrink-0">
+      <div class="flex items-center gap-2 shrink-0">
+        <i
+          v-if="user?.isOnline"
+          class="pi pi-phone text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 transition-colors cursor-pointer"
+          @click="clickCall" />
+        <Message
+          v-if="CallStatusEnum.ACCEPTED"
+          icon="pi pi-phone"
+          severity="info">
+          อยู่ระหว่างการโทร
+        </Message>
         <DotMenu
           :items="labelMenu"
           class="transition-colors text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100" />
       </div>
 
       <ReportModalDialog v-model:visible="isReportDialogVisible" />
+      <ConfirmCallDialog
+        v-model:visible="isConfirmCallDialogVisible"
+        @accept="clickAcceptCall"
+        @reject="clickRejectCall" />
     </div>
   </header>
 </template>
@@ -56,8 +70,10 @@
 import 'dayjs/locale/th'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import { CallStatusEnum } from '~/models/enums/Call.enum'
 import type { IItems } from '~/models/Global.model'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
+import CallProvider, { type ICallProvider } from '~/resource/provider/Call.provider'
 import type { IUserProvider } from '~/resource/provider/User.provider'
 import UserProvider from '~/resource/provider/User.provider'
 
@@ -65,12 +81,27 @@ dayjs.extend(relativeTime)
 dayjs.locale('th')
 
 const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
-
+const router = useRouter()
 const items = ref<IFindOneCurrentUserData[]>([])
 const user = computed((): IFindOneCurrentUserData | undefined => items.value[0])
 const { $handleLoading } = useNuxtApp()
 const id = computed((): number => Number(useRoute().params.id))
 const userService: IUserProvider = new UserProvider()
+const callsService: ICallProvider = new CallProvider()
+const isReportDialogVisible = ref(false)
+const isConfirmCallDialogVisible = ref(false)
+const labelMenu = computed((): IItems[] => {
+  return [
+    {
+      label: 'รายงานผู้ใช้',
+      icon: 'pi pi-flag',
+      command: (): void => {
+        isReportDialogVisible.value = true
+      }
+    }
+  ]
+})
+
 async function useFetchDetails (): Promise<void> {
   const response = await userService.findOneUserById(id.value)
   items.value = response?.data ? [response.data] : []
@@ -83,18 +114,42 @@ function fetch (): void {
 onMounted((): void => {
   fetch()
 })
-const isReportDialogVisible = ref(false)
-const labelMenu = computed((): IItems[] => {
-  return [
-    {
-      label: 'รายงานผู้ใช้',
-      icon: 'pi pi-flag',
-      command: (): void => {
-        isReportDialogVisible.value = true
-      }
-    }
-  ]
-})
+
+async function onClickCall (): Promise<void> {
+  if (!user.value) return
+  const response = await callsService.InitiateCall(user.value.id)
+  if (response?.data) {
+    router.resolve({ name: 'call' })
+  }
+}
+
+function clickCall (): void {
+  $handleLoading(onClickCall)
+}
+
+async function onAcceptCall (): Promise<void> {
+  if (!user.value) return
+  const response = await callsService.AcceptIncomingCall(user.value.id)
+  if (response?.data) {
+    router.resolve({ name: 'call' })
+  }
+}
+
+function clickAcceptCall (): void {
+  $handleLoading(onAcceptCall)
+}
+
+async function onRejectCall (): Promise<void> {
+  if (!user.value) return
+  const response = await callsService.RejectIncomingCall(user.value.id)
+  if (response?.data) {
+    router.resolve({ name: 'call' })
+  }
+}
+
+function clickRejectCall (): void {
+  $handleLoading(onRejectCall)
+}
 </script>
 
 <style scoped>
