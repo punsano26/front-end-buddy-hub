@@ -100,11 +100,15 @@ const categoryId = ref<number>()
 const status = ref<StatusActiveEnum>(StatusActiveEnum.ONLINE)
 
 async function useFetch (): Promise<void> {
+  const isTagSearch = search.value.startsWith('#')
+  const searchQuery = isTagSearch ? undefined : search.value
+  const tagQuery = isTagSearch ? search.value.slice(1) : undefined
+
   const paginationResult = await rentStore.fetchPosts({
     page: pagination.value.page,
     limit: pagination.value.limit,
-    search: search.value,
-    tag: search.value,
+    search: searchQuery,
+    tag: tagQuery,
     isActive: true,
     isOnline: status.value,
     categoryId: categoryId.value
