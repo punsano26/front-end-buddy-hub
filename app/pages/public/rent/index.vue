@@ -37,8 +37,13 @@
         placeholder="ค้นหาชื่อ ความเชี่ยวชาญ..."
         @search="onSearch()" />
       <SelectInput
-        placeholder="เรตติ้งสูงสุด"
-        pt:root:class="w-full sm:w-48 shadow-sm" />
+        v-model="sortAverageRating"
+        :options="sortOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="เลือกการจัดเรียง"
+        pt:root:class="w-full sm:w-48 shadow-sm"
+        @change="onFilterChange()" />
     </div>
     <div class="flex justify-start">
       <RentFilter
@@ -67,11 +72,11 @@
 
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
-import Paginate from '~/components/user/Paginate.vue'
 import RentModal from '@/components/rent/RentModal.vue'
 import SuccessHireModal from '@/components/rent/SuccessHireModal.vue'
 import { useToast } from 'primevue/usetoast'
-import { StatusActiveEnum } from '~/models/enums/Rent.enum'
+import Paginate from '~/components/user/Paginate.vue'
+import { ISortAverageRatingEnum, StatusActiveEnum } from '~/models/enums/Rent.enum'
 import type { IRentAPostPayload } from '~/models/request/RentReq.model'
 import type { TBaseParamsId } from '~/models/request/Request.model'
 import type { IFindAllRentPostList } from '~/models/response/RentRes.model'
@@ -98,6 +103,12 @@ const conversationsRent = useState<any[]>('conversationsRent', (): any[] => [])
 
 const categoryId = ref<number>()
 const status = ref<StatusActiveEnum>(StatusActiveEnum.ONLINE)
+const sortAverageRating = ref<ISortAverageRatingEnum | undefined>(ISortAverageRatingEnum.HIGHEST)
+
+const sortOptions = [
+  { label: 'เรตติ้งสูงสุด', value: ISortAverageRatingEnum.HIGHEST },
+  { label: 'เรตติ้งต่ำสุด', value: ISortAverageRatingEnum.LOWEST }
+]
 
 async function useFetch (): Promise<void> {
   const isTagSearch = search.value.startsWith('#')
@@ -111,7 +122,8 @@ async function useFetch (): Promise<void> {
     tag: tagQuery,
     isActive: true,
     isOnline: status.value,
-    categoryId: categoryId.value
+    categoryId: categoryId.value,
+    sortAverageRating: sortAverageRating.value
   })
   pagination.value = extractPagination(paginationResult)
   await rentStore.checkRentPostAlreadyExists()
