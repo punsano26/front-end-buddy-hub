@@ -1,5 +1,5 @@
+import type { ISortAverageRatingEnum, StatusActiveEnum } from '../enums/Rent.enum'
 import type { IBasePaginationRequest } from './Request.model'
-import type { StatusActiveEnum } from '../enums/Rent.enum'
 
 export interface ICreateAReviewPayload {
   hireSessionId: number
@@ -41,6 +41,7 @@ export interface IFindRentPostsFilters {
   tag?: string
   isActive?: boolean
   isOnline?: StatusActiveEnum
+  sortAverageRating?: ISortAverageRatingEnum
 }
 
 export interface IFindAllConversationSessionsFilters {

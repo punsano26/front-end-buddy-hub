@@ -36,6 +36,11 @@ export enum RentSessionsEvent {
 }
 
 
+export enum ISortAverageRatingEnum {
+  HIGHEST = 'highest',
+  LOWEST = 'lowest'
+}
+
 export enum StatusActiveEnum {
   ALL = 'all',
   ONLINE = 'online',

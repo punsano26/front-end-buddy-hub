@@ -2,7 +2,7 @@
   <Button
     :label="text"
     :variant="variant"
-    class="bg-white">
+    class="bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700">
     <template #icon>
       <slot name="icon" />
     </template>

@@ -51,6 +51,11 @@ const items = ref<IMenuItem[]>([
     command: goProfile
   },
   {
+    label: 'แดชบอร์ดรายได้',
+    icon: 'pi pi-chart-bar',
+    command: goDashboard
+  },
+  {
     label: 'จัดการ VIP',
     icon: 'pi pi-crown',
     command: goVip
@@ -64,6 +69,10 @@ const items = ref<IMenuItem[]>([
 
 function onLogout (): void {
   router.push({ name: 'auth-logout' })
+}
+
+function goDashboard (): void {
+  router.push({ name: 'public-dashboard' })
 }
 
 function goVip (): void {
