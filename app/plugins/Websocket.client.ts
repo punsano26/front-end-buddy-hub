@@ -10,6 +10,8 @@ import { useFriendStore } from '~/stores/Friend'
 import { useMatchStore } from '~/stores/Match'
 import { useNotificationStore } from '~/stores/Notification'
 import { useUserStore } from '~/stores/User'
+import { CallEvent, CallStatusEnum } from '~/models/enums/Call.enum'
+import { useCallStore } from '~/stores/Call'
 
 type TWebSocketEvent
   = 'users:list'
@@ -27,6 +29,7 @@ type TWebSocketEvent
     | 'notification_deleted'
     | MatchEvent
     | RentEvent
+    | CallEvent
 
 interface IWebSocketPayload {
   event?: TWebSocketEvent | string
@@ -72,6 +75,7 @@ export default defineNuxtPlugin((): any => {
   const chatStore = useChatStore()
   const friendStore = useFriendStore()
   const matchStore = useMatchStore()
+  const callStore = useCallStore()
   const chatService: IChatProvider = new ChatProvider()
   const router = useRouter()
 
@@ -395,6 +399,34 @@ export default defineNuxtPlugin((): any => {
           break
         }
 
+        case CallEvent.CALL_INCOMING: {
+          const callData = payload.data as any
+          callStore.setIncomingCallData(callData)
+          callStore.setCallStatus(CallStatusEnum.RINGING)
+          break
+        }
+
+        case CallEvent.CALL_ACCEPTED: {
+          callStore.setCallStatus(CallStatusEnum.ACCEPTED)
+          break
+        }
+
+        case CallEvent.CALL_REJECTED: {
+          callStore.setCallStatus(CallStatusEnum.ENDED)
+          break
+        }
+
+        case CallEvent.CALL_ENDED: {
+          callStore.setCallStatus(CallStatusEnum.ENDED)
+          break
+        }
+
+        case CallEvent.CALL_MISSED: {
+          callStore.setCallStatus(CallStatusEnum.MISSED)
+          break
+        }
+
+
         case 'notification_read':
         case 'notification_deleted': {
           // Notifications are consumed by the notification components/pages directly.
@@ -437,6 +469,7 @@ export default defineNuxtPlugin((): any => {
       chatStore.setActiveUserId(null)
       friendStore.resetRealtime()
       matchStore.resetRealtime()
+      callStore.resetCallState()
     }
   }, { immediate: true })
 
