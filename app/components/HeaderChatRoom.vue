@@ -1,68 +1,93 @@
 <template>
   <header
-    class="relative w-full shrink-0 border-b border-slate-200/80 bg-white/90 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-900/90 pt-[calc(env(safe-area-inset-top)+0.6rem)] pb-3 px-4 md:px-6 transition-colors duration-250">
-    <!-- Brand subtle accent border bottom line -->
-    <div class="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-primary opacity-60" />
+    class="relative w-full shrink-0 border-b border-slate-200/80 bg-white/90 dark:bg-slate-900/90 dark:border-slate-800/80 backdrop-blur-md transition-colors duration-200">
+    <div class="absolute inset-x-0 bottom-0 h-px bg-gradient-primary opacity-60" />
 
-    <div class="flex items-center justify-between gap-3 mx-auto max-w-7xl">
-      <div class="flex items-center gap-3 min-w-0">
+    <div
+      class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
+      <!-- Left -->
+      <div class="flex items-center gap-4 min-w-0">
         <ButtonBack
           :to="{ name: 'public-chat' }"
-          class="shrink-0 transition-transform active:scale-95 text-slate-600 dark:text-slate-300"
+          class="h-10 w-10 shrink-0 rounded-xl text-slate-600 dark:text-slate-300 transition active:scale-95"
           icon="mdi:arrow-left" />
 
         <NuxtLink
           :to="{ name: 'public-profile-id', params: { id: user?.id } }"
-          class="relative shrink-0 transition-transform duration-200 hover:scale-105 active:scale-95">
+          class="relative shrink-0">
+
           <img
             :src="user?.profileImg ? imageBaseUrl + user.profileImg : '/png/upload-profile.png'"
-            alt="Profile Image"
-            class="w-10 h-10 rounded-xl object-cover border border-slate-200/60 dark:border-slate-800 shadow-sm">
+            alt="profile"
+            class="h-11 w-11 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shadow-sm">
+
           <span
             v-if="user?.isOnline"
-            class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500 dark:border-slate-900" />
+            class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 bg-green-500" />
+
         </NuxtLink>
 
-        <div class="min-w-0 leading-tight">
-          <p class="font-bold text-slate-850 dark:text-slate-50 text-sm md:text-base truncate">
+        <div class="min-w-0">
+          <h2
+            class="truncate font-semibold text-[15px] text-slate-800 dark:text-slate-100">
             {{ user?.nickname || user?.username }}
-          </p>
-          <p
+          </h2>
+
+          <div
             v-if="user?.isOnline"
-            class="text-[11px] font-semibold text-green-500 flex items-center gap-1.5 mt-0.5">
-            <span class="h-1.5 w-1.5 bg-green-500 rounded-full animate-pulse" />
+            class="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-green-500">
+            <span class="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
             Online
-          </p>
-          <p
+          </div>
+
+          <div
             v-else
-            class="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+            class="mt-0.5 truncate text-xs text-slate-500">
             ใช้งานเมื่อ {{ dayjs(user?.lastOnlineAt).fromNow() }}
-          </p>
+          </div>
         </div>
       </div>
 
+      <!-- Right -->
       <div class="flex items-center gap-2 shrink-0">
-        <i
-          v-if="user?.isOnline"
-          class="pi pi-phone text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 transition-colors cursor-pointer"
-          @click="clickCall" />
-        <Message
-          v-if="CallStatusEnum.ACCEPTED"
-          icon="pi pi-phone"
-          severity="info">
-          อยู่ระหว่างการโทร
-        </Message>
+        <button
+          v-if="user?.isOnline
+            && currentCallStatus !== CallStatusEnum.ACCEPTED
+            && currentCallStatus !== CallStatusEnum.RINGING"
+          class="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 active:scale-95 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+          type="button"
+          @click="clickCall">
+          <i class="pi pi-phone text-lg" />
+        </button>
+
+        <div
+          v-if="currentCallStatus === CallStatusEnum.ACCEPTED
+            || currentCallStatus === CallStatusEnum.RINGING"
+          class="flex h-10 items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 text-xs font-medium text-blue-600 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-400">
+          <i class="pi pi-phone" />
+
+          <span>
+            {{
+              currentCallStatus === CallStatusEnum.RINGING
+                ? 'กำลังต่อสาย...'
+                : 'อยู่ระหว่างการโทร'
+            }}
+          </span>
+        </div>
+
         <DotMenu
           :items="labelMenu"
-          class="transition-colors text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100" />
+          class="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 active:scale-95 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white" />
       </div>
-
-      <ReportModalDialog v-model:visible="isReportDialogVisible" />
-      <ConfirmCallDialog
-        v-model:visible="isConfirmCallDialogVisible"
-        @accept="clickAcceptCall"
-        @reject="clickRejectCall" />
     </div>
+
+    <ReportModalDialog v-model:visible="isReportDialogVisible" />
+
+    <ConfirmCallDialog
+      v-model:visible="isConfirmCallDialogVisible"
+      :value="incomingCallData"
+      @accept="clickAcceptCall"
+      @reject="clickRejectCall" />
   </header>
 </template>
 
@@ -72,24 +97,30 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { CallStatusEnum } from '~/models/enums/Call.enum'
 import type { IItems } from '~/models/Global.model'
+import type { IInitiateCallData } from '~/models/response/CallRes.model'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
-import CallProvider, { type ICallProvider } from '~/resource/provider/Call.provider'
 import type { IUserProvider } from '~/resource/provider/User.provider'
 import UserProvider from '~/resource/provider/User.provider'
+import { useCallStore } from '~/stores/Call'
+import { storeToRefs } from 'pinia'
 
 dayjs.extend(relativeTime)
 dayjs.locale('th')
 
-const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
+// ─── Composables & Providers ───────────────────────────────────────────────────
 const router = useRouter()
-const items = ref<IFindOneCurrentUserData[]>([])
-const user = computed((): IFindOneCurrentUserData | undefined => items.value[0])
 const { $handleLoading } = useNuxtApp()
-const id = computed((): number => Number(useRoute().params.id))
 const userService: IUserProvider = new UserProvider()
-const callsService: ICallProvider = new CallProvider()
+const callStore = useCallStore()
+
+// ─── State Refs ────────────────────────────────────────────────────────────────
+const items = ref<IFindOneCurrentUserData[]>([])
+const id = computed((): number => Number(useRoute().params.id))
+const user = computed((): IFindOneCurrentUserData | undefined => items.value[0])
+const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
+
+// UI state
 const isReportDialogVisible = ref(false)
-const isConfirmCallDialogVisible = ref(false)
 const labelMenu = computed((): IItems[] => {
   return [
     {
@@ -102,6 +133,19 @@ const labelMenu = computed((): IItems[] => {
   ]
 })
 
+// Call state
+const isConfirmCallDialogVisible = ref(false)
+const { callStatus: currentCallStatus, incomingCallData } = storeToRefs(callStore)
+
+watch(incomingCallData, (newVal: IInitiateCallData | null): void => {
+  isConfirmCallDialogVisible.value = newVal !== null
+})
+// ─── Lifecycle Hooks ──────────────────────────────────────────────────────────
+onMounted((): void => {
+  fetch()
+})
+
+// ─── Fetch Data ────────────────────────────────────────────────────────────────
 async function useFetchDetails (): Promise<void> {
   const response = await userService.findOneUserById(id.value)
   items.value = response?.data ? [response.data] : []
@@ -111,15 +155,15 @@ function fetch (): void {
   $handleLoading(useFetchDetails)
 }
 
-onMounted((): void => {
-  fetch()
-})
-
+// ─── Call Actions ──────────────────────────────────────────────────────────────
 async function onClickCall (): Promise<void> {
   if (!user.value) return
-  const response = await callsService.InitiateCall(user.value.id)
-  if (response?.data) {
-    router.resolve({ name: 'call' })
+  await callStore.initiateCall(user.value.id)
+  if (callStore.callData) {
+    void router.push({
+      name: 'call',
+      query: { callData: encodeURIComponent(JSON.stringify(callStore.callData)) }
+    })
   }
 }
 
@@ -128,10 +172,13 @@ function clickCall (): void {
 }
 
 async function onAcceptCall (): Promise<void> {
-  if (!user.value) return
-  const response = await callsService.AcceptIncomingCall(user.value.id)
-  if (response?.data) {
-    router.resolve({ name: 'call' })
+  if (!incomingCallData.value) return
+  await callStore.acceptIncomingCall(incomingCallData.value.id)
+  if (callStore.callData) {
+    void router.push({
+      name: 'call',
+      query: { callData: encodeURIComponent(JSON.stringify(callStore.callData)) }
+    })
   }
 }
 
@@ -140,11 +187,8 @@ function clickAcceptCall (): void {
 }
 
 async function onRejectCall (): Promise<void> {
-  if (!user.value) return
-  const response = await callsService.RejectIncomingCall(user.value.id)
-  if (response?.data) {
-    router.resolve({ name: 'call' })
-  }
+  if (!incomingCallData.value) return
+  await callStore.rejectIncomingCall(incomingCallData.value.id)
 }
 
 function clickRejectCall (): void {
