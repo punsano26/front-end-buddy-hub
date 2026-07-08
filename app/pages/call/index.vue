@@ -23,15 +23,15 @@
       aria-hidden="true"
       class="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center">
       <div
-        v-if="callStatus === 'RINGING'"
+        v-if="callStatus === CallStatusEnum.RINGING"
         class="absolute h-80 w-80 rounded-full border border-white/8 animate-ping"
         style="animation-duration: 2.4s" />
       <div
-        v-if="callStatus === 'RINGING'"
+        v-if="callStatus === CallStatusEnum.RINGING"
         class="absolute h-60 w-60 rounded-full border border-white/10 animate-ping"
         style="animation-duration: 1.9s; animation-delay: 0.5s" />
       <div
-        v-if="callStatus === 'RINGING'"
+        v-if="callStatus === CallStatusEnum.RINGING"
         class="absolute h-44 w-44 rounded-full border border-white/15 animate-ping"
         style="animation-duration: 1.4s; animation-delay: 0.9s" />
     </div>
@@ -70,7 +70,7 @@
         <div
           :class="[
             'absolute rounded-full transition-all duration-700',
-            callStatus === 'ACCEPTED'
+            callStatus === CallStatusEnum.ACCEPTED
               ? 'h-52 w-52 bg-gradient-to-br from-teal-400/30 via-indigo-400/20 to-violet-500/30 animate-pulse'
               : 'h-52 w-52 bg-white/5'
           ]"
@@ -95,7 +95,7 @@
 
         <!-- Online dot (ACCEPTED) -->
         <span
-          v-if="callStatus === 'ACCEPTED'"
+          v-if="callStatus === CallStatusEnum.ACCEPTED"
           class="absolute bottom-2.5 right-2.5 z-20 h-5 w-5 rounded-full border-[3px] border-slate-950 bg-emerald-400 shadow animate-pulse"
           style="animation-duration: 2s" />
       </div>
@@ -115,10 +115,10 @@
         :class="statusPillClass"
         class="flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold backdrop-blur-md transition-all duration-500 select-none">
         <span
-          v-if="callStatus === 'RINGING'"
+          v-if="callStatus === CallStatusEnum.RINGING"
           class="h-2 w-2 animate-pulse rounded-full bg-amber-300" />
         <span
-          v-else-if="callStatus === 'ACCEPTED'"
+          v-else-if="callStatus === CallStatusEnum.ACCEPTED"
           class="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
         <span
           v-else
@@ -129,7 +129,7 @@
       <!-- Duration timer -->
       <Transition name="fade-up">
         <p
-          v-if="callStatus === 'ACCEPTED'"
+          v-if="callStatus === CallStatusEnum.ACCEPTED"
           class="font-mono text-3xl font-bold tracking-[0.2em] text-white drop-shadow-lg select-none">
           {{ formattedDuration }}
         </p>
@@ -240,8 +240,11 @@
 </template>
 
 <script setup lang="ts">
+import { CallStatusEnum } from '~/models/enums/Call.enum'
 import type { IInitiateCallData } from '~/models/response/CallRes.model'
 import { useAuthStore } from '~/stores/Auth'
+import { useCallStore } from '~/stores/Call'
+import { storeToRefs } from 'pinia'
 
 definePageMeta({ layout: 'fullscreen' })
 
@@ -250,44 +253,35 @@ useHead({
   meta: [{ name: 'description', content: 'หน้าโทรด้วยเสียง BuddyHub Voice Call' }]
 })
 
-type TCallStatus = 'RINGING' | 'ACCEPTED' | 'ENDED' | 'MISSED'
-
 // ─── Env / store ──────────────────────────────────────────────────────────────
 const authStore = useAuthStore()
+const callStore = useCallStore()
+const { callStatus, callData } = storeToRefs(callStore)
 const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
 
 // ─── Route: callData comes as a JSON query param ──────────────────────────────
 const route = useRoute()
-
-const callData = computed((): IInitiateCallData | null => {
-  try {
-    const raw = route.query.callData as string | undefined
-    if (!raw) return null
-    return JSON.parse(decodeURIComponent(raw)) as IInitiateCallData
-  } catch {
-    return null
-  }
-})
-
-// ─── Call status ──────────────────────────────────────────────────────────────
-const callStatus = ref<TCallStatus>('RINGING')
+const router = useRouter()
+const { $handleLoading } = useNuxtApp()
 
 const statusText = computed((): string => {
-  const map: Record<TCallStatus, string> = {
-    RINGING: 'กำลังโทรออก…',
-    ACCEPTED: 'กำลังสนทนา',
-    ENDED: 'สายหมด',
-    MISSED: 'ไม่รับสาย'
+  if (!callStatus.value) return ''
+  const map: Record<CallStatusEnum, string> = {
+    [CallStatusEnum.RINGING]: 'กำลังโทรออก…',
+    [CallStatusEnum.ACCEPTED]: 'กำลังสนทนา',
+    [CallStatusEnum.ENDED]: 'สายหมด',
+    [CallStatusEnum.MISSED]: 'ไม่รับสาย'
   }
   return map[callStatus.value]
 })
 
 const statusPillClass = computed((): string => {
-  const map: Record<TCallStatus, string> = {
-    RINGING: 'border-amber-400/30 bg-amber-400/15 text-amber-200',
-    ACCEPTED: 'border-emerald-400/30 bg-emerald-400/15 text-emerald-200',
-    ENDED: 'border-white/10 bg-white/10 text-white/50',
-    MISSED: 'border-red-400/30 bg-red-400/15 text-red-300'
+  if (!callStatus.value) return ''
+  const map: Record<CallStatusEnum, string> = {
+    [CallStatusEnum.RINGING]: 'border-amber-400/30 bg-amber-400/15 text-amber-200',
+    [CallStatusEnum.ACCEPTED]: 'border-emerald-400/30 bg-emerald-400/15 text-emerald-200',
+    [CallStatusEnum.ENDED]: 'border-white/10 bg-white/10 text-white/50',
+    [CallStatusEnum.MISSED]: 'border-red-400/30 bg-red-400/15 text-red-300'
   }
   return map[callStatus.value]
 })
@@ -374,32 +368,54 @@ function stopTimer (): void {
 }
 
 // ─── End call ─────────────────────────────────────────────────────────────────
-const router = useRouter()
-
 function handleEndCall (): void {
-  stopTimer()
-  callStatus.value = 'ENDED'
-  setTimeout((): void => {
-    router.back()
-  }, 900)
+  $handleLoading((): Promise<void> => callStore.endCall(callData.value?.id ?? 0))
 }
+
+// ─── Watcher ──────────────────────────────────────────────────────────────────
+watch(callStatus, (newStatus: CallStatusEnum | null): void => {
+  if (newStatus === CallStatusEnum.ACCEPTED) {
+    startTimer()
+  } else if (
+    newStatus === CallStatusEnum.ENDED
+    || newStatus === CallStatusEnum.MISSED
+  ) {
+    stopTimer()
+    setTimeout((): void => {
+      router.back()
+    }, 1000)
+  }
+})
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted((): void => {
   if (!callData.value) {
+    try {
+      const raw = route.query.callData as string | undefined
+      if (raw) {
+        const parsed = JSON.parse(decodeURIComponent(raw)) as IInitiateCallData
+        callStore.setCallData(parsed)
+        if (parsed.status === 'ACCEPTED') {
+          callStore.setCallStatus(CallStatusEnum.ACCEPTED)
+        } else {
+          callStore.setCallStatus(CallStatusEnum.RINGING)
+        }
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }
+
+  if (!callData.value) {
     // dev fallback: simulate ringing → accepted
     setTimeout((): void => {
-      callStatus.value = 'ACCEPTED'
-      startTimer()
+      callStore.setCallStatus(CallStatusEnum.ACCEPTED)
     }, 3000)
     return
   }
 
-  if (callData.value.status === 'ACCEPTED') {
-    callStatus.value = 'ACCEPTED'
+  if (callStatus.value === CallStatusEnum.ACCEPTED) {
     startTimer()
-  } else {
-    callStatus.value = 'RINGING'
   }
 })
 
