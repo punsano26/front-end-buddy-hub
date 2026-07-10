@@ -236,6 +236,9 @@
         </div>
       </div>
     </footer>
+    <audio
+      ref="remoteAudioRef"
+      autoplay />
   </div>
 </template>
 
@@ -256,13 +259,25 @@ useHead({
 // ─── Env / store ──────────────────────────────────────────────────────────────
 const authStore = useAuthStore()
 const callStore = useCallStore()
-const { callStatus, callData } = storeToRefs(callStore)
+const { callStatus, callData, remoteOffer, remoteAnswer, remoteIceCandidates } = storeToRefs(callStore)
 const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
 
 // ─── Route: callData comes as a JSON query param ──────────────────────────────
 const route = useRoute()
 const router = useRouter()
-const { $handleLoading } = useNuxtApp()
+const { $handleLoading, $ws } = useNuxtApp()
+
+// ─── WebRTC state ─────────────────────────────────────────────────────────────
+const remoteAudioRef = ref<HTMLAudioElement | null>(null)
+const remoteStream = ref<MediaStream | null>(null)
+let localStream: MediaStream | null = null
+let peerConnection: RTCPeerConnection | null = null
+let isWebrtcInitialized = false
+
+const iceServers = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' }
+]
 
 const statusText = computed((): string => {
   if (!callStatus.value) return ''
@@ -367,20 +382,226 @@ function stopTimer (): void {
   }
 }
 
+// ─── WebRTC functions ─────────────────────────────────────────────────────────
+async function initPeerConnection (): Promise<void> {
+  peerConnection = new RTCPeerConnection({ iceServers })
+
+  peerConnection.onicecandidate = (event: RTCPeerConnectionIceEvent): void => {
+    if (event.candidate && callData.value) {
+      const socket = $ws()
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+          event: 'call:ice-candidate',
+          data: {
+            callId: callData.value.id,
+            candidate: {
+              candidate: event.candidate.candidate,
+              sdpMid: event.candidate.sdpMid,
+              sdpMLineIndex: event.candidate.sdpMLineIndex
+            }
+          }
+        }))
+      }
+    }
+  }
+
+  peerConnection.ontrack = (event: RTCTrackEvent): void => {
+    if (event.streams && event.streams[0]) {
+      remoteStream.value = event.streams[0]
+      if (remoteAudioRef.value) {
+        remoteAudioRef.value.srcObject = event.streams[0]
+      }
+    }
+  }
+
+  if (localStream) {
+    localStream.getTracks().forEach((track: MediaStreamTrack): void => {
+      if (peerConnection && localStream) {
+        peerConnection.addTrack(track, localStream)
+      }
+    })
+  }
+}
+
+async function startCallFlow (): Promise<void> {
+  if (isWebrtcInitialized) return
+  isWebrtcInitialized = true
+
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    if (isMuted.value && localStream) {
+      localStream.getAudioTracks().forEach((track: MediaStreamTrack): void => {
+        track.enabled = false
+      })
+    }
+  } catch (err) {
+    console.error('Failed to get local stream:', err)
+  }
+
+  await initPeerConnection()
+
+  if (isCallerMe.value) {
+    try {
+      if (peerConnection) {
+        const offer = await peerConnection.createOffer()
+        await peerConnection.setLocalDescription(offer)
+
+        const socket = $ws()
+        if (socket && socket.readyState === WebSocket.OPEN && callData.value) {
+          socket.send(JSON.stringify({
+            event: 'call:offer',
+            data: {
+              callId: callData.value.id,
+              sdp: { type: offer.type, sdp: offer.sdp }
+            }
+          }))
+        }
+      }
+    } catch (err) {
+      console.error('Failed to create/send offer:', err)
+    }
+  } else {
+    if (remoteOffer.value) {
+      await handleIncomingOffer(remoteOffer.value)
+    }
+  }
+}
+
+async function handleIncomingOffer (offer: { sdp: { type: string, sdp: string }, senderId: number }): Promise<void> {
+  if (!peerConnection) return
+  try {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(offer.sdp))
+    const answer = await peerConnection.createAnswer()
+    await peerConnection.setLocalDescription(answer)
+
+    const socket = $ws()
+    if (socket && socket.readyState === WebSocket.OPEN && callData.value) {
+      socket.send(JSON.stringify({
+        event: 'call:answer',
+        data: {
+          callId: callData.value.id,
+          sdp: { type: answer.type, sdp: answer.sdp }
+        }
+      }))
+    }
+
+    await processQueuedIceCandidates()
+  } catch (err) {
+    console.error('Failed to handle incoming offer:', err)
+  }
+}
+
+async function handleIncomingAnswer (answer: { sdp: { type: string, sdp: string }, senderId: number }): Promise<void> {
+  if (!peerConnection) return
+  try {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(answer.sdp))
+    await processQueuedIceCandidates()
+  } catch (err) {
+    console.error('Failed to handle incoming answer:', err)
+  }
+}
+
+async function processQueuedIceCandidates (): Promise<void> {
+  if (!peerConnection || !peerConnection.remoteDescription) return
+  for (const item of remoteIceCandidates.value) {
+    if (item.senderId !== authStore.user.id) {
+      try {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(item.candidate))
+      } catch (err) {
+        console.error('Error adding ICE candidate:', err)
+      }
+    }
+  }
+}
+
+function cleanupWebRTC (): void {
+  stopTimer()
+
+  if (peerConnection) {
+    peerConnection.ontrack = null
+    peerConnection.onicecandidate = null
+    try {
+      peerConnection.close()
+    } catch (err) {
+      console.error('Error closing peer connection:', err)
+    }
+    peerConnection = null
+  }
+
+  if (localStream) {
+    localStream.getTracks().forEach((track: MediaStreamTrack): void => {
+      try {
+        track.stop()
+      } catch (err) {
+        console.error('Error stopping track:', err)
+      }
+    })
+    localStream = null
+  }
+
+  if (remoteAudioRef.value) {
+    remoteAudioRef.value.srcObject = null
+  }
+
+  remoteStream.value = null
+  isWebrtcInitialized = false
+}
+
 // ─── End call ─────────────────────────────────────────────────────────────────
 function handleEndCall (): void {
   $handleLoading((): Promise<void> => callStore.endCall(callData.value?.id ?? 0))
 }
 
-// ─── Watcher ──────────────────────────────────────────────────────────────────
+// ─── Watchers ─────────────────────────────────────────────────────────────────
+watch(isMuted, (val: boolean): void => {
+  if (localStream) {
+    localStream.getAudioTracks().forEach((track: MediaStreamTrack): void => {
+      track.enabled = !val
+    })
+  }
+})
+
+watch(remoteOffer, async (newOffer: { sdp: { type: string, sdp: string }, senderId: number } | null): Promise<void> => {
+  if (newOffer && !isCallerMe.value && peerConnection) {
+    await handleIncomingOffer(newOffer)
+  }
+})
+
+watch(remoteAnswer, async (newAnswer: { sdp: { type: string, sdp: string }, senderId: number } | null): Promise<void> => {
+  if (newAnswer && isCallerMe.value && peerConnection) {
+    await handleIncomingAnswer(newAnswer)
+  }
+})
+
+watch(remoteIceCandidates, async (candidates: Array<{
+  candidate: {
+    candidate: string
+    sdpMid?: string | null
+    sdpMLineIndex?: number | null
+  }
+  senderId: number
+}>): Promise<void> => {
+  if (!peerConnection || !peerConnection.remoteDescription) return
+  for (const item of candidates) {
+    if (item.senderId !== authStore.user.id) {
+      try {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(item.candidate))
+      } catch (err) {
+        console.error('Error adding ICE candidate:', err)
+      }
+    }
+  }
+}, { deep: true })
+
 watch(callStatus, (newStatus: CallStatusEnum | null): void => {
   if (newStatus === CallStatusEnum.ACCEPTED) {
     startTimer()
+    void startCallFlow()
   } else if (
     newStatus === CallStatusEnum.ENDED
     || newStatus === CallStatusEnum.MISSED
   ) {
-    stopTimer()
+    cleanupWebRTC()
     setTimeout((): void => {
       router.back()
     }, 1000)
@@ -416,11 +637,12 @@ onMounted((): void => {
 
   if (callStatus.value === CallStatusEnum.ACCEPTED) {
     startTimer()
+    void startCallFlow()
   }
 })
 
 onUnmounted((): void => {
-  stopTimer()
+  cleanupWebRTC()
 })
 </script>
 

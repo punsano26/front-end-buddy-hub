@@ -426,6 +426,26 @@ export default defineNuxtPlugin((): any => {
           break
         }
 
+        case CallEvent.CALL_OFFER: {
+          callStore.setRemoteOffer(payload.data as any)
+          break
+        }
+
+        case CallEvent.CALL_ANSWER: {
+          callStore.setRemoteAnswer(payload.data as any)
+          break
+        }
+
+        case CallEvent.CALL_ICE_CANDIDATE: {
+          callStore.addRemoteIceCandidate(payload.data as any)
+          break
+        }
+
+        case CallEvent.CALL_ERROR: {
+          console.error('[Websocket.client] Call error:', payload.data)
+          break
+        }
+
 
         case 'notification_read':
         case 'notification_deleted': {
