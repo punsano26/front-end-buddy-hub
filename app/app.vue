@@ -4,14 +4,57 @@
     <NuxtRouteAnnouncer />
     <Toast />
     <NuxtPage />
+    <ConfirmCallDialog
+      v-model:visible="isConfirmCallDialogVisible"
+      :value="incomingCallData"
+      @accept="clickAcceptCall"
+      @reject="clickRejectCall" />
   </NuxtLayout>
 </template>
 
 <script setup lang="ts">
 import LoadingPopUp from '~/components/loading/LoadingPopUp.vue'
+import ConfirmCallDialog from '~/components/call/ConfirmCallDialog.vue'
+import type { IInitiateCallData } from '~/models/response/CallRes.model'
+import { useCallStore } from '~/stores/Call'
+import { storeToRefs } from 'pinia'
 
 const route = useRoute()
+const router = useRouter()
+const { $handleLoading } = useNuxtApp()
 const runtimeConfig = useRuntimeConfig()
+
+const callStore = useCallStore()
+const { incomingCallData } = storeToRefs(callStore)
+const isConfirmCallDialogVisible = ref(false)
+
+watch(incomingCallData, (newVal: IInitiateCallData | null): void => {
+  isConfirmCallDialogVisible.value = newVal !== null
+})
+
+async function onAcceptCall (): Promise<void> {
+  if (!incomingCallData.value) return
+  await callStore.acceptIncomingCall(incomingCallData.value.id)
+  if (callStore.callData) {
+    void router.push({
+      name: 'call',
+      query: { callData: encodeURIComponent(JSON.stringify(callStore.callData)) }
+    })
+  }
+}
+
+function clickAcceptCall (): void {
+  $handleLoading(onAcceptCall)
+}
+
+async function onRejectCall (): Promise<void> {
+  if (!incomingCallData.value) return
+  await callStore.rejectIncomingCall(incomingCallData.value.id)
+}
+
+function clickRejectCall (): void {
+  $handleLoading(onRejectCall)
+}
 
 const siteUrl = String(runtimeConfig.public.siteUrl || 'http://localhost:5000').replace(/\/$/, '')
 const defaultOgImage = String(runtimeConfig.public.defaultOgImage || '/png/logo-buddy-hub.png')
