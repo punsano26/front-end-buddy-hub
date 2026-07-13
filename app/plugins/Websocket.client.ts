@@ -401,6 +401,9 @@ export default defineNuxtPlugin((): any => {
 
         case CallEvent.CALL_INCOMING: {
           const callData = payload.data as any
+          if (callData && typeof callData.callId === 'number' && !callData.id) {
+            callData.id = callData.callId
+          }
           callStore.setIncomingCallData(callData)
           callStore.setCallStatus(CallStatusEnum.RINGING)
           break

@@ -82,12 +82,6 @@
     </div>
 
     <ReportModalDialog v-model:visible="isReportDialogVisible" />
-
-    <ConfirmCallDialog
-      v-model:visible="isConfirmCallDialogVisible"
-      :value="incomingCallData"
-      @accept="clickAcceptCall"
-      @reject="clickRejectCall" />
   </header>
 </template>
 
@@ -95,14 +89,11 @@
 import 'dayjs/locale/th'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import { CallStatusEnum } from '~/models/enums/Call.enum'
 import type { IItems } from '~/models/Global.model'
-import type { IInitiateCallData } from '~/models/response/CallRes.model'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
 import type { IUserProvider } from '~/resource/provider/User.provider'
 import UserProvider from '~/resource/provider/User.provider'
 import { useCallStore } from '~/stores/Call'
-import { storeToRefs } from 'pinia'
 
 dayjs.extend(relativeTime)
 dayjs.locale('th')
@@ -133,13 +124,7 @@ const labelMenu = computed((): IItems[] => {
   ]
 })
 
-// Call state
-const isConfirmCallDialogVisible = ref(false)
-const { callStatus: currentCallStatus, incomingCallData } = storeToRefs(callStore)
 
-watch(incomingCallData, (newVal: IInitiateCallData | null): void => {
-  isConfirmCallDialogVisible.value = newVal !== null
-})
 // ─── Lifecycle Hooks ──────────────────────────────────────────────────────────
 onMounted((): void => {
   fetch()
@@ -169,30 +154,6 @@ async function onClickCall (): Promise<void> {
 
 function clickCall (): void {
   $handleLoading(onClickCall)
-}
-
-async function onAcceptCall (): Promise<void> {
-  if (!incomingCallData.value) return
-  await callStore.acceptIncomingCall(incomingCallData.value.id)
-  if (callStore.callData) {
-    void router.push({
-      name: 'call',
-      query: { callData: encodeURIComponent(JSON.stringify(callStore.callData)) }
-    })
-  }
-}
-
-function clickAcceptCall (): void {
-  $handleLoading(onAcceptCall)
-}
-
-async function onRejectCall (): Promise<void> {
-  if (!incomingCallData.value) return
-  await callStore.rejectIncomingCall(incomingCallData.value.id)
-}
-
-function clickRejectCall (): void {
-  $handleLoading(onRejectCall)
 }
 </script>
 
