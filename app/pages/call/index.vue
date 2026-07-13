@@ -470,7 +470,10 @@ async function startCallFlow (): Promise<void> {
 async function handleIncomingOffer (offer: { sdp: { type: string, sdp: string }, senderId: number }): Promise<void> {
   if (!peerConnection) return
   try {
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(offer.sdp))
+    await peerConnection.setRemoteDescription({
+      type: offer.sdp.type as RTCSdpType,
+      sdp: offer.sdp.sdp
+    })
     const answer = await peerConnection.createAnswer()
     await peerConnection.setLocalDescription(answer)
 
@@ -494,7 +497,10 @@ async function handleIncomingOffer (offer: { sdp: { type: string, sdp: string },
 async function handleIncomingAnswer (answer: { sdp: { type: string, sdp: string }, senderId: number }): Promise<void> {
   if (!peerConnection) return
   try {
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(answer.sdp))
+    await peerConnection.setRemoteDescription({
+      type: answer.sdp.type as RTCSdpType,
+      sdp: answer.sdp.sdp
+    })
     await processQueuedIceCandidates()
   } catch (err) {
     console.error('Failed to handle incoming answer:', err)
@@ -593,20 +599,47 @@ watch(remoteIceCandidates, async (candidates: Array<{
   }
 }, { deep: true })
 
+let waitCallingAudio: HTMLAudioElement | null = null
+
+function playWaitCallingSound (): void {
+  if (typeof window === 'undefined') return
+  stopWaitCallingSound()
+  waitCallingAudio = new Audio('/sound/waitcalling.mp3')
+  waitCallingAudio.loop = true
+  waitCallingAudio.play().catch((err: any): void => {
+    console.warn('Autoplay prevented playing waitcalling ringtone:', err)
+  })
+}
+
+function stopWaitCallingSound (): void {
+  if (waitCallingAudio) {
+    waitCallingAudio.pause()
+    waitCallingAudio = null
+  }
+}
+
 watch(callStatus, (newStatus: CallStatusEnum | null): void => {
-  if (newStatus === CallStatusEnum.ACCEPTED) {
+  if (newStatus === CallStatusEnum.RINGING) {
+    playWaitCallingSound()
+  } else if (newStatus === CallStatusEnum.ACCEPTED) {
+    stopWaitCallingSound()
     startTimer()
     void startCallFlow()
   } else if (
     newStatus === CallStatusEnum.ENDED
     || newStatus === CallStatusEnum.MISSED
   ) {
+    stopWaitCallingSound()
     cleanupWebRTC()
     setTimeout((): void => {
-      router.back()
+      if (typeof window !== 'undefined' && window.opener) {
+        window.close()
+      } else {
+        router.back()
+      }
     }, 1000)
   }
-})
+}, { immediate: true })
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted((): void => {
@@ -643,6 +676,7 @@ onMounted((): void => {
 
 onUnmounted((): void => {
   cleanupWebRTC()
+  stopWaitCallingSound()
 })
 </script>
 
