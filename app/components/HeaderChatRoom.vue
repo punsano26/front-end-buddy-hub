@@ -94,6 +94,7 @@ import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
 import type { IUserProvider } from '~/resource/provider/User.provider'
 import UserProvider from '~/resource/provider/User.provider'
 import { useCallStore } from '~/stores/Call'
+import { CallStatusEnum } from '~/models/enums/Call.enum'
 
 dayjs.extend(relativeTime)
 dayjs.locale('th')
@@ -109,6 +110,7 @@ const items = ref<IFindOneCurrentUserData[]>([])
 const id = computed((): number => Number(useRoute().params.id))
 const user = computed((): IFindOneCurrentUserData | undefined => items.value[0])
 const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
+const currentCallStatus = computed((): CallStatusEnum | null => callStore.callStatus)
 
 // UI state
 const isReportDialogVisible = ref(false)
