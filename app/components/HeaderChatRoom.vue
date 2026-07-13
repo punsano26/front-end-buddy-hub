@@ -145,12 +145,42 @@ function fetch (): void {
 // ─── Call Actions ──────────────────────────────────────────────────────────────
 async function onClickCall (): Promise<void> {
   if (!user.value) return
-  await callStore.initiateCall(user.value.id)
-  if (callStore.callData) {
-    void router.push({
-      name: 'call',
-      query: { callData: encodeURIComponent(JSON.stringify(callStore.callData)) }
-    })
+
+  // Detect computer/desktop
+  const isDesktop = typeof window !== 'undefined' && !((/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i).test(navigator.userAgent))
+
+  // Open window/popup synchronously before the first await to bypass popup blocker
+  let newWindow: Window | null = null
+  if (isDesktop) {
+    const width = 450
+    const height = 650
+    const left = (window.screen.width - width) / 2
+    const top = (window.screen.height - height) / 2
+    newWindow = window.open('about:blank', '_blank', `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes`)
+  }
+
+  try {
+    await callStore.initiateCall(user.value.id)
+    if (callStore.callData) {
+      const resolved = router.resolve({
+        name: 'call',
+        query: { callData: encodeURIComponent(JSON.stringify(callStore.callData)) }
+      })
+      if (newWindow) {
+        newWindow.location.href = resolved.href
+      } else {
+        void router.push(resolved)
+      }
+    } else {
+      if (newWindow) {
+        newWindow.close()
+      }
+    }
+  } catch (error) {
+    if (newWindow) {
+      newWindow.close()
+    }
+    throw error
   }
 }
 

@@ -53,5 +53,13 @@
 - ใช้ `JSON.parse(JSON.stringify(obj))` เมื่อต้องการดูค่าปัจจุบันของ Proxy object (Vue Ref)
 - ลบ log ออกทุกครั้งเมื่อแก้เสร็จ (Surgical Cleanup)
 
+### 5. การจัดการ TypeScript / ESLint ใน Catch Block
+- **ปัญหา**: เมื่อ Commit code แล้วติด ESLint error จากกฎ `@typescript-eslint/typedef` (เช่น `Expected err to have a type annotation`) หรือมี Import ที่ไม่ได้ใช้งาน
+- **จุดแก้ไข**:
+    - ใน Callback function ของ `.catch()` จะต้องกำหนด Type Annotation ให้พารามิเตอร์เสมอ เช่น `(err: any)` หรือหากมีการใช้ `TErrorResponse` (import จาก `~/models/response/Response.model`) ให้พิมพ์พารามิเตอร์นั้นเป็น `TErrorResponse` เพื่อหลีกเลี่ยงปัญหา Unused Import:
+      ```typescript
+      ringtoneAudio.play().catch((err: TErrorResponse): void => { ... })
+      ```
+
 ### if your test run using bun 
 - bun run lint or bun run test and bun lint when you want to check for linting errors

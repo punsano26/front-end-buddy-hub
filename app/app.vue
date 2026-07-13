@@ -18,6 +18,7 @@ import ConfirmCallDialog from '~/components/call/ConfirmCallDialog.vue'
 import type { IInitiateCallData } from '~/models/response/CallRes.model'
 import { useCallStore } from '~/stores/Call'
 import { storeToRefs } from 'pinia'
+import type { TErrorResponse } from './models/response/Response.model'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,18 +29,72 @@ const callStore = useCallStore()
 const { incomingCallData } = storeToRefs(callStore)
 const isConfirmCallDialogVisible = ref(false)
 
+let ringtoneAudio: HTMLAudioElement | null = null
+
+function playRingtone (): void {
+  if (typeof window === 'undefined') return
+  stopRingtone()
+  ringtoneAudio = new Audio('/sound/calling.mp3')
+  ringtoneAudio.loop = true
+  ringtoneAudio.play().catch((err: TErrorResponse): void => {
+    console.warn('Autoplay prevented playing incoming call ringtone:', err)
+  })
+}
+
+function stopRingtone (): void {
+  if (ringtoneAudio) {
+    ringtoneAudio.pause()
+    ringtoneAudio = null
+  }
+}
+
 watch(incomingCallData, (newVal: IInitiateCallData | null): void => {
   isConfirmCallDialogVisible.value = newVal !== null
+  if (newVal) {
+    playRingtone()
+  } else {
+    stopRingtone()
+  }
 })
 
 async function onAcceptCall (): Promise<void> {
   if (!incomingCallData.value) return
-  await callStore.acceptIncomingCall(incomingCallData.value.id)
-  if (callStore.callData) {
-    void router.push({
-      name: 'call',
-      query: { callData: encodeURIComponent(JSON.stringify(callStore.callData)) }
-    })
+
+  // Detect computer/desktop
+  const isDesktop = typeof window !== 'undefined' && !((/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i).test(navigator.userAgent))
+
+  // Open window synchronously before the first await to bypass popup blocker
+  let newWindow: Window | null = null
+  if (isDesktop) {
+    const width = 450
+    const height = 650
+    const left = (window.screen.width - width) / 2
+    const top = (window.screen.height - height) / 2
+    newWindow = window.open('about:blank', '_blank', `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes`)
+  }
+
+  try {
+    await callStore.acceptIncomingCall(incomingCallData.value.id)
+    if (callStore.callData) {
+      const resolved = router.resolve({
+        name: 'call',
+        query: { callData: encodeURIComponent(JSON.stringify(callStore.callData)) }
+      })
+      if (newWindow) {
+        newWindow.location.href = resolved.href
+      } else {
+        void router.push(resolved)
+      }
+    } else {
+      if (newWindow) {
+        newWindow.close()
+      }
+    }
+  } catch (error: TErrorResponse) {
+    if (newWindow) {
+      newWindow.close()
+    }
+    throw error
   }
 }
 
@@ -111,5 +166,6 @@ watch((): string => String(route.name || ''), (): void => {
 onUnmounted((): void => {
   window.removeEventListener('resize', updateAppHeight)
   window.visualViewport?.removeEventListener('resize', updateAppHeight)
+  stopRingtone()
 })
 </script>
