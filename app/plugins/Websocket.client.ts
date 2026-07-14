@@ -186,12 +186,15 @@ export default defineNuxtPlugin((): any => {
 
   const connect = (): void => {
     const userId = authStore.user.id
+    const accessToken = authStore.userToken.accessToken
 
     if (!Number.isFinite(userId) || userId <= 0) return
 
-    ws = new WebSocket(
-      `${import.meta.env.VITE_ENV_BASE_WS_API}?id=${userId}`
-    ) as WebSocket & { __manualClose?: boolean }
+    const wsUrl = accessToken
+      ? `${import.meta.env.VITE_ENV_BASE_WS_API}?token=${accessToken}`
+      : `${import.meta.env.VITE_ENV_BASE_WS_API}?id=${userId}`
+
+    ws = new WebSocket(wsUrl) as WebSocket & { __manualClose?: boolean }
 
     ws.onopen = (): void => {
       console.log('WS connected')
@@ -211,6 +214,17 @@ export default defineNuxtPlugin((): any => {
       const currentUserId = authStore.user.id
 
       switch (payload.event) {
+        case 'ping': {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            try {
+              ws.send(JSON.stringify({ event: 'pong', data: {} }))
+            } catch {
+              // Ignore sending errors
+            }
+          }
+          break
+        }
+
         case 'users:list': {
           const data = isRecord(payload.data) ? payload.data : null
           const incoming = Array.isArray(data?.data) ? data.data : []
@@ -462,13 +476,32 @@ export default defineNuxtPlugin((): any => {
       }
     }
 
-    ws.onclose = (): void => {
-      console.log('WS disconnected')
+    ws.onclose = (closeEvent: CloseEvent): void => {
+      console.log('WS disconnected', closeEvent.code, closeEvent.reason)
 
       const wasManualClose = ws?.__manualClose === true
       ws = null
 
       if (wasManualClose) return
+
+      if (closeEvent.code === 4001) {
+        console.log('[WS] Connection closed with 4001 (Unauthorized). Attempting token refresh...')
+        import('~/utils/authRefresh')
+          .then(async (m: any): Promise<void> => {
+            const isSuccess = await m.forceRefreshToken()
+            if (isSuccess) {
+              connect()
+            } else {
+              m.clearPersistedAuth()
+              authStore.logout()
+              router.push({ name: 'auth-verify' })
+            }
+          })
+          .catch((err: any): void => {
+            console.error('[WS] Failed to load authRefresh utility:', err)
+          })
+        return
+      }
 
       setTimeout((): void => {
         connect()

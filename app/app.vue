@@ -20,10 +20,14 @@ import { useCallStore } from '~/stores/Call'
 import { storeToRefs } from 'pinia'
 import type { TErrorResponse } from './models/response/Response.model'
 
+import { useTokenRefresh } from '~/composables/useTokenRefresh'
+
 const route = useRoute()
 const router = useRouter()
 const { $handleLoading } = useNuxtApp()
 const runtimeConfig = useRuntimeConfig()
+
+useTokenRefresh()
 
 const callStore = useCallStore()
 const { incomingCallData } = storeToRefs(callStore)

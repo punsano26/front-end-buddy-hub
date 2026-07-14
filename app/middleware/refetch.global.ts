@@ -1,16 +1,11 @@
 import type { RouteLocationNormalized } from 'vue-router'
-import AuthProvider, { type IAuthProvider } from '~/resource/provider/Auth.provider'
-
-const REFRESH_BUFFER_MS = 2 * 60 * 1000
-let refreshLock: Promise<boolean> | null = null
+import { tryRefreshToken, clearPersistedAuth } from '~/utils/authRefresh'
 
 export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Promise<void> => {
   // Tokens are stored in localStorage, so skip auth checks during SSR.
   if (import.meta.server) return
 
-  const authService: IAuthProvider = new AuthProvider()
   const authStore = useAuthStore()
-  const { $handleLoading } = useNuxtApp()
   hydrateTokenFromLocalStorage()
 
   const isAuthPath = to.path.startsWith('/auth')
@@ -31,7 +26,7 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
 
   // 🔄 Refresh token only on protected pages.
   if (hasTokenData && isProtectedPath) {
-    const isRefreshSuccess = await tryRefreshToken()
+    const isRefreshSuccess = await tryRefreshToken({ showSpinner: true })
 
     if (!isRefreshSuccess) {
       clearPersistedAuth()
@@ -66,73 +61,5 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
     } catch {
       // Ignore invalid persisted format and continue with current store state.
     }
-  }
-
-  async function resetToken (): Promise<boolean> {
-    if (!authStore.userToken.refreshToken) return false
-
-    const payload = {
-      refreshToken: authStore.userToken.refreshToken
-    }
-
-    const response = await authService.refreshToken(payload)
-
-    authStore.userToken.accessToken = response.accessToken
-    authStore.userToken.refreshToken = response.refreshToken
-    authStore.userToken.tokenExpiresIn = response.tokenExpiresIn
-
-    return true
-  }
-
-  async function tryRefreshToken (): Promise<boolean> {
-    if (refreshLock) {
-      return await refreshLock
-    }
-
-    if (!shouldRefreshToken()) return true
-
-    refreshLock = (async (): Promise<boolean> => {
-      try {
-        const result = await $handleLoading(resetToken)
-        return result === true
-      } catch {
-        return false
-      } finally {
-        refreshLock = null
-      }
-    })()
-
-    return await refreshLock
-  }
-
-  function shouldRefreshToken (): boolean {
-    const tokenExpiresIn = authStore.userToken.tokenExpiresIn
-
-    if (!tokenExpiresIn || tokenExpiresIn <= 0) return false
-
-    const now = Date.now()
-    const expireAtMs = normalizeExpireAtMs(tokenExpiresIn, now)
-
-    if (!expireAtMs) return false
-
-    return expireAtMs - now <= REFRESH_BUFFER_MS
-  }
-
-  function normalizeExpireAtMs (tokenExpiresIn: number, now: number): number | null {
-    if (!Number.isFinite(tokenExpiresIn) || tokenExpiresIn <= 0) return null
-
-    if (tokenExpiresIn > 1_000_000_000_000) {
-      return tokenExpiresIn
-    }
-
-    if (tokenExpiresIn > 1_000_000_000) {
-      return tokenExpiresIn * 1000
-    }
-
-    return now + tokenExpiresIn * 1000
-  }
-
-  function clearPersistedAuth (): void {
-    localStorage.removeItem('Auth')
   }
 })

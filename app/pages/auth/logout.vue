@@ -25,7 +25,22 @@ definePageMeta({
 })
 
 async function onLogout (): Promise<void> {
-  await authService.logout()
+  // 1. Close WebSocket connection immediately for instant offline status
+  const { $ws } = useNuxtApp()
+  const socket = $ws?.()
+  if (socket) {
+    (socket as WebSocket & { __manualClose?: boolean }).__manualClose = true
+    socket.close()
+  }
+
+  // 2. Call backend session revocation (using access token before it is cleared)
+  try {
+    await authService.logout()
+  } catch (err: any) {
+    console.error('[Logout] Failed to revoke session on backend:', err)
+  }
+
+  // 3. Clear auth store and redirect
   authStore.logout()
   router.push({ name: 'public-home' })
 }
