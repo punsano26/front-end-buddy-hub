@@ -273,6 +273,7 @@ const remoteStream = ref<MediaStream | null>(null)
 let localStream: MediaStream | null = null
 let peerConnection: RTCPeerConnection | null = null
 let isWebrtcInitialized = false
+let offerInterval: ReturnType<typeof setInterval> | null = null
 
 const iceServers = [
   { urls: 'stun:stun.l.google.com:19302' },
@@ -441,8 +442,19 @@ async function startCallFlow (): Promise<void> {
   await initPeerConnection()
 
   if (isCallerMe.value) {
-    try {
-      if (peerConnection) {
+    const sendOffer = async (): Promise<void> => {
+      if (!peerConnection) return
+      const isConnected = peerConnection.connectionState === 'connected'
+        || peerConnection.iceConnectionState === 'connected'
+      if (isConnected) {
+        if (offerInterval) {
+          clearInterval(offerInterval)
+          offerInterval = null
+        }
+        return
+      }
+
+      try {
         const offer = await peerConnection.createOffer()
         await peerConnection.setLocalDescription(offer)
 
@@ -456,10 +468,16 @@ async function startCallFlow (): Promise<void> {
             }
           }))
         }
+      } catch (err: any) {
+        console.error('Failed to create/send offer:', err)
       }
-    } catch (err) {
-      console.error('Failed to create/send offer:', err)
     }
+
+    void sendOffer()
+
+    offerInterval = setInterval((): void => {
+      void sendOffer()
+    }, 3000)
   } else {
     if (remoteOffer.value) {
       await handleIncomingOffer(remoteOffer.value)
@@ -523,12 +541,17 @@ async function processQueuedIceCandidates (): Promise<void> {
 function cleanupWebRTC (): void {
   stopTimer()
 
+  if (offerInterval) {
+    clearInterval(offerInterval)
+    offerInterval = null
+  }
+
   if (peerConnection) {
     peerConnection.ontrack = null
     peerConnection.onicecandidate = null
     try {
       peerConnection.close()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error closing peer connection:', err)
     }
     peerConnection = null
@@ -649,7 +672,8 @@ onMounted((): void => {
       if (raw) {
         const parsed = JSON.parse(decodeURIComponent(raw)) as IInitiateCallData
         callStore.setCallData(parsed)
-        if (parsed.status === 'ACCEPTED') {
+        const isCaller = parsed.callerId === authStore.user.id
+        if (parsed.status === 'ACCEPTED' || !isCaller) {
           callStore.setCallStatus(CallStatusEnum.ACCEPTED)
         } else {
           callStore.setCallStatus(CallStatusEnum.RINGING)
@@ -658,6 +682,10 @@ onMounted((): void => {
     } catch {
       // Ignore parse errors
     }
+  }
+
+  if (callData.value && callData.value.callerId !== authStore.user.id) {
+    callStore.setCallStatus(CallStatusEnum.ACCEPTED)
   }
 
   if (!callData.value) {
