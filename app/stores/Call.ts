@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import { CallStatusEnum } from '~/models/enums/Call.enum'
+import type { TBaseParamsId } from '~/models/request/Request.model'
 import type { IInitiateCallData } from '~/models/response/CallRes.model'
 import CallProvider from '~/resource/provider/Call.provider'
-import type { TBaseParamsId } from '~/models/request/Request.model'
 
 interface ICallState {
   callStatus: CallStatusEnum | null
