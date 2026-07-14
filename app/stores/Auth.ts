@@ -78,20 +78,6 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
     const socket = $ws?.()
 
     if (socket) {
-      if (socket.readyState === WebSocket.OPEN) {
-        try {
-          socket.send(JSON.stringify({
-            event: 'user:status:update',
-            data: {
-              userId: user.value.id,
-              isOnline: false
-            }
-          }))
-        } catch {
-          // Ignore errors during logout
-        }
-      }
-
       (socket as WebSocket & { __manualClose?: boolean }).__manualClose = true
       socket.close()
     }

@@ -1,5 +1,7 @@
 import type { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios'
+import axios from 'axios'
 import humps from 'humps'
+import { useAuthStore } from '~/stores/Auth'
 
 export function onRequest (config: AxiosRequestConfig): AxiosRequestConfig {
   config.headers = config.headers ?? {}
@@ -32,8 +34,54 @@ export function onResponse (response: AxiosResponse): Promise<any> {
 
 export async function onResponseError (error: AxiosError): Promise<any> {
   const newError = error
+
+  // 🔄 Handle 401 Unauthorized by attempting to refresh token
+  if (error.response?.status === 401) {
+    const config = error.config
+    // Avoid infinite loop if refreshing fails
+    if (config && config.url && config.url.includes('/auth/sessions/refresh')) {
+      return Promise.reject(error)
+    }
+
+    const authStore = useAuthStore()
+    if (authStore.userToken.refreshToken) {
+      try {
+        const { forceRefreshToken, clearPersistedAuth } = await import('~/utils/authRefresh')
+        const isSuccess = await forceRefreshToken()
+        if (isSuccess) {
+          if (config && config.headers) {
+            config.headers.Authorization = `Bearer ${authStore.userToken.accessToken}`
+          }
+          const response = await axios(config)
+          return onResponse(response)
+        } else {
+          clearPersistedAuth()
+          authStore.logout()
+          const router = useNuxtApp().$router
+          void router.push({ name: 'auth-verify' })
+          return Promise.reject(error)
+        }
+      } catch {
+        const { clearPersistedAuth } = await import('~/utils/authRefresh')
+        clearPersistedAuth()
+        authStore.logout()
+        const router = useNuxtApp().$router
+        void router.push({ name: 'auth-verify' })
+        return Promise.reject(error)
+      }
+    } else {
+      const { clearPersistedAuth } = await import('~/utils/authRefresh')
+      clearPersistedAuth()
+      authStore.logout()
+      const router = useNuxtApp().$router
+      void router.push({ name: 'auth-verify' })
+      return Promise.reject(error)
+    }
+  }
+
   if (
-    error.request.responseType === 'blob'
+    error.request
+    && error.request.responseType === 'blob'
     && error?.response?.data instanceof Blob
     && error?.response?.data?.type
     && error?.response?.data?.type.toLowerCase().indexOf('json') !== -1

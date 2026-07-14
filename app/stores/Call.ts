@@ -33,6 +33,13 @@ export const useCallStore = defineStore('Call', {
   actions: {
     setCallStatus (status: CallStatusEnum | null): void {
       this.callStatus = status
+      if (
+        status === CallStatusEnum.ACCEPTED
+        || status === CallStatusEnum.ENDED
+        || status === CallStatusEnum.MISSED
+      ) {
+        this.incomingCallData = null
+      }
     },
 
     setCallData (data: IInitiateCallData | null): void {
@@ -77,6 +84,7 @@ export const useCallStore = defineStore('Call', {
       if (response?.data) {
         this.callData = response.data
         this.callStatus = CallStatusEnum.ACCEPTED
+        this.incomingCallData = null
       }
     },
 
