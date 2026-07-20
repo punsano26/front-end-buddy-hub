@@ -5,7 +5,7 @@
     pt:content:class="p-0"
     pt:header-actions:class="!m-0 !p-0 !flex"
     pt:header:class="!absolute !top-2 !right-2 !z-30 !p-0 !m-0 !bg-transparent !border-0 !shadow-none"
-    pt:root:class="!relative bg-surface-900! border-none rounded-xl shadow-lg"
+    pt:root:class="!relative bg-surface-0! dark:bg-surface-900! border-none rounded-xl shadow-lg"
     pt:title:class="hidden"
     dismissable-mask
     modal>
@@ -17,10 +17,10 @@
       <img
         :src="value.profileImg ? imageBaseUrl + value.profileImg : '/png/upload-profile.png'"
         alt="user avatar"
-        class="w-24 h-24 rounded-full border-4 border-surface-0 object-cover">
+        class="w-24 h-24 rounded-full border-4 border-surface-0 dark:border-surface-900 object-cover">
     </div>
     <div class="flex flex-col items-center gap-2">
-      <p class="text-xl text-white font-semibold">
+      <p class="text-xl text-surface-900 dark:text-white font-semibold">
         {{ value.nickname || value.username }}
       </p>
       <p
