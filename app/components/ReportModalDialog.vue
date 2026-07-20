@@ -11,7 +11,7 @@
           คุณต้องการรายงานผู้ใช้นี้หรือไม่?
         </p>
         <p class="text-sm text-gray-500">
-          โปรดระบุเหตุผลในการรายงานผู้ใช้เพื่อให้เราสามารถดำเนินการได้อย่างเหมาะสม
+          โปรดระบุเหตุผลในการรายงานผู้ใช้เพื่อให้เราสามารถดำเนินการได้อย่างเหมาะสม (อย่างน้อย 10 ตัวอักษร)
         </p>
         <div class="flex items-center gap-2">
           <Checkbox
@@ -42,7 +42,8 @@
           <label for="ingredient4"> 🚫 สแปมรัวๆ เหมือนบอท </label>
         </div>
         <InputLabelTextarea
-          placeholder="ระบุเหตุผลของคุณที่นี่..."
+          v-model="detailReason"
+          placeholder="ระบุรายละเอียดเพิ่มเติมที่นี่..."
           rows="3"
           auto-resize />
       </div>
@@ -52,10 +53,8 @@
           pt:root:class="bg-red-500 enabled:hover:bg-red-600 text-white border-none"
           @click="visible = false" />
         <Button
-          :disabled="selectedReasons.length === 0"
+          :disabled="isSubmitDisabled"
           label="ส่งรายงาน"
-
-
           @click="handleReport" />
       </div>
     </div>
@@ -63,21 +62,51 @@
 </template>
 
 <script lang="ts" setup>
+import { ref, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import ReportProvider from '~/resource/provider/Report.provider'
+
+interface IProps {
+  reportedUserId: number
+}
+
+const props = defineProps<IProps>()
 
 const toast = useToast()
 const visible = defineModel<boolean>('visible', { default: false })
 const { $handleLoading } = useNuxtApp()
-const selectedReasons = ref<string[]>([])
 
-const reportAction = (): Promise<void> => {
-  return new Promise((resolve: () => void): void => {
-    setTimeout((): void => {
-      visible.value = false
-      selectedReasons.value = []
-      resolve()
-    }, 100)
+const selectedReasons = ref<string[]>([])
+const detailReason = ref<string>('')
+
+const reasonMapping: Record<string, string> = {
+  threat: 'คุกคาม / ทำให้รู้สึกไม่ปลอดภัย',
+  abusive_language: 'คำพูดไม่เหมาะสม',
+  advertising: 'โฆษณา / ขายของ',
+  spam_bot: 'สแปมรัวๆ เหมือนบอท'
+}
+
+const getFullReason = (): string => {
+  const selectedTexts = selectedReasons.value.map((r: string): string => reasonMapping[r] || r)
+  const detailText = detailReason.value.trim()
+  return [...selectedTexts, detailText].filter(Boolean).join(' - ')
+}
+
+const isSubmitDisabled = computed((): boolean => {
+  const reason = getFullReason()
+  return reason.length < 10 || reason.length > 500
+})
+
+const reportProvider = new ReportProvider()
+
+const reportAction = async (): Promise<void> => {
+  await reportProvider.createReport({
+    reportedId: props.reportedUserId,
+    reason: getFullReason()
   })
+  visible.value = false
+  selectedReasons.value = []
+  detailReason.value = ''
 }
 
 function handleReport (): void {
@@ -85,7 +114,7 @@ function handleReport (): void {
     toast: {
       instance: toast,
       success: {
-        summary: 'รายงานสาเร็จ',
+        summary: 'รายงานสำเร็จ',
         detail: 'ขอบคุณที่ช่วยทำให้ชุมชนของเราปลอดภัยยิ่งขึ้น!'
       }
     }

@@ -8,10 +8,17 @@ export interface IUpdateUserPayload {
   dateOfBirth?: string
 }
 
+export enum BanStatusFilterEnum {
+  ALL = 'ALL',
+  BANNED = 'BANNED',
+  NON_BANNED = 'NON_BANNED'
+}
+
 export interface IFindUserFilters {
   sortByGender?: genderQueryEnum
   minAge?: number
   maxAge?: number
+  banStatus?: BanStatusFilterEnum
 }
 
 export interface IFindAllUsersPaginateQuery extends IBasePaginationRequest, IFindUserFilters {}

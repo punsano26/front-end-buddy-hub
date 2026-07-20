@@ -284,7 +284,9 @@ export const useChatRoomStore = defineStore('ChatRoom', {
           ...options,
           messageText: nextMessageText
         })
-      } catch {
+      } catch (error: any) {
+        const errorMsg = error?.response?.data?.message || error?.message || 'เกิดข้อผิดพลาดระหว่างส่งข้อความ'
+        this.setSendError(options.receiverId, errorMsg)
         return false
       } finally {
         this.isSubmittingMessage = false

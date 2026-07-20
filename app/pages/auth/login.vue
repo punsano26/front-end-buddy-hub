@@ -85,8 +85,19 @@ function login (): void {
 }
 
 onBeforeMount((): void => {
-  if (route.query.account || route.query.from === 'reset-forgot-password') return
+  if (route.query.account || route.query.from === 'reset-forgot-password' || route.query.banned === 'true') return
   router.replace({ name: 'auth-verify' })
+})
+
+onMounted((): void => {
+  if (route.query.banned === 'true' && route.query.reason) {
+    toast.add({
+      severity: 'error',
+      summary: 'บัญชีถูกระงับการใช้งาน',
+      detail: String(route.query.reason),
+      life: 5000
+    })
+  }
 })
 </script>
 

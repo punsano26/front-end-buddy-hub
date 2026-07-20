@@ -124,12 +124,14 @@ import type { ICreateMessagePayload } from '~/models/request/ChatReq.model'
 import type { ICreateMessageData } from '~/models/response/ChatRes.model'
 import type { TErrorResponse } from '~/models/response/Response.model'
 import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provider'
+import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from '~/stores/Auth'
 import { useChatStore } from '~/stores/Chat'
 import { type IChatMessageItem, useChatRoomStore } from '~/stores/ChatRoom'
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
+const toast = useToast();
 const chatRoomStore = useChatRoomStore();
 const chatService: IChatProvider = new ChatProvider();
 const dayjs = useDayjs();
@@ -405,7 +407,18 @@ async function sendMessage(messageText: string, messageType: chatEnum = form.val
     onMessagesUpdated: scrollToBottom,
   });
 
-  if (!isSuccess) return;
+  if (!isSuccess) {
+    const errorMsg = chatRoomStore.getSendError(id.value);
+    if (errorMsg.includes('ถูกระงับ')) {
+      toast.add({
+        severity: 'error',
+        summary: 'ผิดพลาด',
+        detail: 'บัญชีของคุณถูกระงับ ไม่สามารถส่งข้อความได้',
+        life: 3000
+      })
+    }
+    return;
+  }
 
   if (wasEditing) {
     cancelEditMessage();
@@ -423,13 +436,25 @@ async function sendMediaMessage(message: string | ICreateMessageData): Promise<v
     return;
   }
 
-  await chatRoomStore.submitMessage({
+  const isSuccess = await chatRoomStore.submitMessage({
     messageText: message,
     receiverId: id.value,
     messageType: chatEnum.MEDIA,
     currentUserId: authStore.user.id,
     onMessagesUpdated: scrollToBottom,
   });
+
+  if (!isSuccess) {
+    const errorMsg = chatRoomStore.getSendError(id.value);
+    if (errorMsg.includes('ถูกระงับ')) {
+      toast.add({
+        severity: 'error',
+        summary: 'ผิดพลาด',
+        detail: 'บัญชีของคุณถูกระงับ ไม่สามารถส่งข้อความได้',
+        life: 3000
+      })
+    }
+  }
 }
 
 onMounted((): void => {

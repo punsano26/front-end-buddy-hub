@@ -32,45 +32,57 @@
         {{ value.description || '-' }}
       </p>
     </div>
+    <div
+      v-if="value.isBanned"
+      class="mt-2 mx-4 p-2 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center justify-center gap-2 text-red-500">
+      <i class="pi pi-exclamation-triangle shrink-0" />
+      <p class="text-xs font-bold">
+        ⚠️ บัญชีนี้ถูกระงับการใช้งาน
+      </p>
+    </div>
     <div class="flex justify-center items-center gap-2 mt-2 p-4">
-      <template v-if="shouldShowFriendRequestActions">
+      <template v-if="!value.isBanned">
+        <template v-if="shouldShowFriendRequestActions">
+          <Button
+            :disabled="isSubmitting"
+            class="w-full bg-linear-to-r from-emerald-500 to-green-600 border-none text-white enabled:hover:from-emerald-600 enabled:hover:to-green-700 active:from-emerald-400 active:to-green-500"
+            @click="onClickAcceptRequest">
+            ยอมรับ
+          </Button>
+          <Button
+            :disabled="isSubmitting"
+            class="w-full bg-linear-to-r from-red-500 to-rose-600 border-none text-white enabled:hover:from-red-600 enabled:hover:to-rose-700 active:from-red-400 active:to-rose-500"
+            @click="onClickRejectRequest">
+            ปฏิเสธ
+          </Button>
+        </template>
         <Button
-          :disabled="isSubmitting"
-          class="w-full bg-linear-to-r from-emerald-500 to-green-600 border-none text-white enabled:hover:from-emerald-600 enabled:hover:to-green-700 active:from-emerald-400 active:to-green-500"
-          @click="onClickAcceptRequest">
-          ยอมรับ
+          v-else-if="shouldShowAddFriendButton && authStore.user.id"
+          :disabled="isFriendRequestSent || isSubmitting"
+          class="w-full bg-linear-to-r from-sky-500 to-pink-600 border-none text-black!"
+          @click="clickAddFriend">
+          {{
+            isFriendRequestSent
+              ? 'ส่งคำขอแล้ว'
+              : 'เพิ่มเพื่อน'
+          }}
         </Button>
         <Button
-          :disabled="isSubmitting"
-          class="w-full bg-linear-to-r from-red-500 to-rose-600 border-none text-white enabled:hover:from-red-600 enabled:hover:to-rose-700 active:from-red-400 active:to-rose-500"
-          @click="onClickRejectRequest">
-          ปฏิเสธ
+          v-if="authStore.user.id"
+          class="w-full bg-gray-800! text-white border-none enabled:hover:bg-gray-900"
+          @click="onClickToOpenChat(value.id)">
+          แชท
         </Button>
       </template>
-      <Button
-        v-else-if="shouldShowAddFriendButton && authStore.user.id"
-        :disabled="isFriendRequestSent || isSubmitting"
-        class="w-full bg-linear-to-r from-sky-500 to-pink-600 border-none text-black!"
-        @click="clickAddFriend">
-        {{
-          isFriendRequestSent
-            ? 'ส่งคำขอแล้ว'
-            : 'เพิ่มเพื่อน'
-        }}
-      </Button>
-      <Button
-        v-if="authStore.user.id"
-        class="w-full bg-gray-800! text-white border-none enabled:hover:bg-gray-900"
-        @click="onClickToOpenChat(value.id)">
-        แชท
-      </Button>
       <Button
         v-if="authStore.user.id"
         pt:root:class="w-full bg-transparent border-none text-red-500 enabled:hover:bg-red-500/10 enabled:hover:text-red-700 enabled:active:bg-red-500/20 active:text-red-700"
         @click="() => { isReportDialogVisible = true }">
         รายงาน
       </Button>
-      <ReportModalDialog v-model:visible="isReportDialogVisible" />
+      <ReportModalDialog
+        v-model:visible="isReportDialogVisible"
+        :reported-user-id="value.id" />
     </div>
   </Dialog>
 </template>

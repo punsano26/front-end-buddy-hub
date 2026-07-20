@@ -10,6 +10,13 @@
           <ImageProfileDetail v-if="items" :value="items" />
         </template>
         <template #content>
+          <div v-if="items?.isBanned" class="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-500">
+            <i class="pi pi-exclamation-triangle shrink-0"></i>
+            <div>
+              <p class="text-sm font-bold">⚠️ ผู้ใช้นี้ถูกระงับการใช้งาน</p>
+              <p v-if="isOwnProfile && banReasonText" class="text-xs text-red-400 mt-0.5">เหตุผล: {{ banReasonText }}</p>
+            </div>
+          </div>
           <div class="flex flex-col md:flex-row md:items-start gap-4 md:gap-2">
             <div class="flex flex-col gap-2 flex-1 min-w-0">
               <div class="flex gap-2 items-center">
@@ -73,63 +80,65 @@
             </div>
             <div class="w-full md:w-28 md:shrink-0 md:pt-1">
               <div class="grid grid-cols-1 gap-2">
-                <template v-if="shouldShowFriendRequestActions">
+                <template v-if="!items?.isBanned">
+                  <template v-if="shouldShowFriendRequestActions">
+                    <Button
+                      :disabled="isSubmitting"
+                      size="small"
+                      class="w-full bg-linear-to-r from-emerald-500 to-green-600 border-none text-white enabled:hover:from-emerald-600 enabled:hover:to-green-700 active:from-emerald-400 active:to-green-500"
+                      @click="onClickAcceptRequest"
+                    >
+                      <i class="pi pi-check"></i>
+                      ยอมรับ
+                    </Button>
+                    <Button
+                      size="small"
+                      :disabled="isSubmitting"
+                      class="w-full bg-linear-to-r from-red-500 to-rose-600 border-none text-white enabled:hover:from-red-600 enabled:hover:to-rose-700 active:from-red-400 active:to-rose-500"
+                      @click="onClickRejectRequest"
+                    >
+                      <i class="pi pi-times"></i>
+                      ปฏิเสธ
+                    </Button>
+                  </template>
                   <Button
-                    :disabled="isSubmitting"
+                    v-else-if="isFriend"
                     size="small"
-                    class="w-full bg-linear-to-r from-emerald-500 to-green-600 border-none text-white enabled:hover:from-emerald-600 enabled:hover:to-green-700 active:from-emerald-400 active:to-green-500"
-                    @click="onClickAcceptRequest"
+                    @click="clickRemoveFriend"
+                    class="w-full bg-emerald-500/25 border-emerald-500/40 text-emerald-200"
                   >
-                    <i class="pi pi-check"></i>
-                    ยอมรับ
+                    <i class="pi pi-check-circle"></i>
+                    เพื่อน
+                  </Button>
+                  <Button
+                    v-else-if="shouldShowAddFriendButton"
+                    :disabled="isSubmitting || isFriendRequestSent"
+                    @click="clickAddFriend"
+                    size="small"
+                    class="w-full bg-linear-to-r from-sky-500 to-pink-600 border-none text-black! enabled:hover:from-sky-600 enabled:hover:to-pink-700 active:from-sky-400 active:to-pink-500"
+                  >
+                    <i
+                      v-if="isSubmitting"
+                      class="pi pi-spin pi-spinner text-black!"
+                    />
+                    <i
+                      v-else-if="isFriendRequestSent"
+                      class="pi pi-clock text-surface-500 shrink-0"
+                    />
+                    <i v-else class="pi pi-user-plus"></i>
+                    {{
+                      isFriendRequestSent ? "คำขอถูกส่งแล้ว" : "เพิ่มเป็นเพื่อน"
+                    }}
                   </Button>
                   <Button
                     size="small"
-                    :disabled="isSubmitting"
-                    class="w-full bg-linear-to-r from-red-500 to-rose-600 border-none text-white enabled:hover:from-red-600 enabled:hover:to-rose-700 active:from-red-400 active:to-rose-500"
-                    @click="onClickRejectRequest"
+                    class="w-full bg-gray-800! dark:text-white border-none enabled:hover:bg-gray-900"
+                    @click="onClickToOpenChat"
                   >
-                    <i class="pi pi-times"></i>
-                    ปฏิเสธ
+                    <i class="pi pi-comments"></i>
+                    แชท
                   </Button>
                 </template>
-                <Button
-                  v-else-if="isFriend"
-                  size="small"
-                  @click="clickRemoveFriend"
-                  class="w-full bg-emerald-500/25 border-emerald-500/40 text-emerald-200"
-                >
-                  <i class="pi pi-check-circle"></i>
-                  เพื่อน
-                </Button>
-                <Button
-                  v-else-if="shouldShowAddFriendButton"
-                  :disabled="isSubmitting || isFriendRequestSent"
-                  @click="clickAddFriend"
-                  size="small"
-                  class="w-full bg-linear-to-r from-sky-500 to-pink-600 border-none text-black! enabled:hover:from-sky-600 enabled:hover:to-pink-700 active:from-sky-400 active:to-pink-500"
-                >
-                  <i
-                    v-if="isSubmitting"
-                    class="pi pi-spin pi-spinner text-black!"
-                  />
-                  <i
-                    v-else-if="isFriendRequestSent"
-                    class="pi pi-clock text-surface-500 shrink-0"
-                  />
-                  <i v-else class="pi pi-user-plus"></i>
-                  {{
-                    isFriendRequestSent ? "คำขอถูกส่งแล้ว" : "เพิ่มเป็นเพื่อน"
-                  }}
-                </Button>
-                <Button
-                  size="small"
-                  class="w-full bg-gray-800! dark:text-white border-none enabled:hover:bg-gray-900"
-                  @click="onClickToOpenChat"
-                >
-                  <i class="pi pi-comments"></i>
-                  แชท
-                </Button>
                 <Button
                   size="small"
                   pt:root:class="w-full bg-transparent border-none text-red-500 enabled:hover:bg-red-500/10 enabled:hover:text-red-700 enabled:active:bg-red-500/20 active:text-red-700"
@@ -140,7 +149,7 @@
                 </Button>
               </div>
             </div>
-            <ReportModalDialog v-model:visible="isReportDialogVisible" />
+            <ReportModalDialog v-model:visible="isReportDialogVisible" :reported-user-id="id" />
           </div>
         </template>
         <template #footer>
@@ -186,6 +195,7 @@ import type { IFindOneUserDetailData } from '~/models/response/UserRes.model'
 import type { IFriendProvider } from '~/resource/provider/Friend.provider'
 import FriendProvider from '~/resource/provider/Friend.provider'
 import UserProvider, { type IUserProvider } from '~/resource/provider/User.provider'
+import ReportProvider from '~/resource/provider/Report.provider'
 import { useAuthStore } from '~/stores/Auth'
 import { useFriendStore } from '~/stores/Friend'
 
@@ -194,6 +204,7 @@ definePageMeta({ layout: "navbar" });
 const visible = ref(false);
 const userService: IUserProvider = new UserProvider();
 const friendService: IFriendProvider = new FriendProvider();
+const reportProvider = new ReportProvider();
 const authStore = useAuthStore();
 const friendStore = useFriendStore();
 const { $handleLoading } = useNuxtApp();
@@ -204,6 +215,7 @@ const isLoading = ref<boolean>(true);
 const toast = useToast();
 const isSubmitting = ref(false);
 const id = computed((): number => Number(useRoute().params.id));
+const banReasonText = ref<string>('');
 const router = useRouter();
 const dialogOpenConfirmRemoveFriends = ref(false);
 const targetUserId = computed((): number => {
@@ -313,6 +325,15 @@ const shouldShowAddFriendButton = computed((): boolean => {
   );
 });
 
+async function fetchBanStatus (): Promise<void> {
+  try {
+    const response = await reportProvider.checkBanStatus(id.value)
+    banReasonText.value = response?.data?.reason || ''
+  } catch (err: any) {
+    console.error('Failed to check ban status:', err)
+  }
+}
+
 async function useFetchDetails(): Promise<void> {
   if (!Number.isFinite(id.value) || id.value <= 0) return;
 
@@ -321,6 +342,11 @@ async function useFetchDetails(): Promise<void> {
   if (!data) return;
 
   items.value = data;
+  if (data.isBanned && isOwnProfile.value) {
+    await fetchBanStatus()
+  } else {
+    banReasonText.value = ''
+  }
 }
 
 function fetch(): void {

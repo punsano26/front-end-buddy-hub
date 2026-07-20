@@ -11,6 +11,7 @@ interface IUser {
   gender?: genderEnum
   dateOfBirth?: string
   isOnline?: boolean
+  isBanned?: boolean
 }
 
 export const useUserStore = defineStore('User', {
@@ -44,6 +45,7 @@ export const useUserStore = defineStore('User', {
         gender: data.gender ?? genderEnum.OTHER,
         dateOfBirth: data.dateOfBirth ?? '',
         isOnline: data.isOnline ?? false,
+        isBanned: data.isBanned ?? false,
         lastOnlineAt: data.lastOnlineAt ?? null,
         roles: data.roles ?? [],
         isFriend: data.isFriend ?? false,

@@ -1,4 +1,4 @@
-import { ref, type Ref } from 'vue'
+import { ref, computed, type Ref, type ComputedRef } from 'vue'
 import { defineStore } from 'pinia'
 import type { IAuthLoginData } from '~/models/response/AuthRes.model'
 
@@ -18,6 +18,7 @@ interface IAuthStore {
   user: Ref<IUser>
   userToken: Ref<IToken>
   resetToken: Ref<IResetToken>
+  isAdmin: ComputedRef<boolean>
   userLogin(user: IUser, accessToken: string, refreshToken: string, tokenExpiresIn: number): void
   resetPassword(token: IResetToken): void
   updateUser (userValue: IUser): void
@@ -102,6 +103,8 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
     }
   }
 
+  const isAdmin = computed((): boolean => user.value.roles.includes('Admin'))
+
   return {
     user,
     userToken,
@@ -109,7 +112,8 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
     resetPassword,
     updateUser,
     userLogin,
-    logout
+    logout,
+    isAdmin
   }
 }, {
   persist: [
