@@ -137,7 +137,7 @@
     </div>
 
     <!-- Send Coin Modal Dialog -->
-    <SendCoinModalDialogVue
+    <SendCoinModalDialog
       v-model:form-send-coins="formSendCoins"
       v-model:visible="isSendCoinVisible"
       :avatar="partnerProfileImg"

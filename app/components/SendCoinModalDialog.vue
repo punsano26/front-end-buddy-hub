@@ -95,7 +95,7 @@
 
         <div class="flex flex-col gap-1.5">
           <label class="text-xs font-semibold text-slate-500 dark:text-slate-400">คำอธิบายเพิ่มเติม</label>
-          <InputTextarea
+          <Textarea
             v-model="formSendCoins.description"
             :pt="{
               root: 'w-full !rounded-xl !p-3 !border-slate-200 dark:!border-slate-800 bg-white dark:bg-slate-950 focus:!border-blue-500 focus:!ring-1 focus:!ring-blue-500/30 transition-all text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600'
