@@ -27,3 +27,15 @@ export type IAuthLoginResponse = IApiTokenResponse<IAuthLoginData>
 export interface IForgotPasswordResponse extends IApiResponse<IForgotPasswordData> {
   resetPasswordToken: string
 }
+
+export interface ISessionData {
+  id: number
+  deviceName: string | null
+  deviceType: 'MOBILE' | 'TABLET' | 'DESKTOP' | 'UNKNOWN'
+  ipAddress: string | null
+  lastUsedAt: string
+  createdAt: string
+  isCurrent: boolean
+}
+
+export type IListSessionsResponse = IApiResponse<ISessionData[]>

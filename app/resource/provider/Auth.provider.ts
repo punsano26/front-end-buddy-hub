@@ -9,7 +9,7 @@ import type {
   IReFreshTokenPayload,
   IResetPasswordPayload
 } from '~/models/request/AuthReq.model'
-import type { IAuthLoginResponse, ICheckAuthResponse, IForgotPasswordResponse } from '~/models/response/AuthRes.model'
+import type { IAuthLoginResponse, ICheckAuthResponse, IForgotPasswordResponse, IListSessionsResponse } from '~/models/response/AuthRes.model'
 import type { IMessageResponse } from '~/models/response/Response.model'
 
 export interface IAuthProvider {
@@ -24,6 +24,9 @@ export interface IAuthProvider {
   sendEmailVerification (): Promise<IMessageResponse>
   verifyEmail (): Promise<IMessageResponse>
   logout (): Promise<IMessageResponse>
+  listSessions (): Promise<IListSessionsResponse>
+  revokeSession (refreshToken: string): Promise<IMessageResponse>
+  revokeAllOtherSessions (): Promise<IMessageResponse>
 }
 
 class AuthProvider extends HttpRequest implements IAuthProvider {
@@ -57,7 +60,38 @@ class AuthProvider extends HttpRequest implements IAuthProvider {
 
   public async logout (): Promise<IMessageResponse> {
     this.setUserAuthHeader()
-    const response = await this.delete(`${this.urlPrefix}/sessions/current`)
+    const authStore = useAuthStore()
+    const response = await this.delete(`${this.urlPrefix}/sessions/current`, undefined, {
+      refreshToken: authStore.userToken.refreshToken
+    })
+    return response
+  }
+
+  public async listSessions (): Promise<IListSessionsResponse> {
+    this.setUserAuthHeader()
+    const authStore = useAuthStore()
+    const response = await this.get(`${this.urlPrefix}/sessions`, undefined, {
+      headers: {
+        'x-refresh-token': authStore.userToken.refreshToken
+      }
+    })
+    return response
+  }
+
+  public async revokeSession (refreshToken: string): Promise<IMessageResponse> {
+    this.setUserAuthHeader()
+    const response = await this.delete(`${this.urlPrefix}/sessions/current`, undefined, {
+      refreshToken
+    })
+    return response
+  }
+
+  public async revokeAllOtherSessions (): Promise<IMessageResponse> {
+    this.setUserAuthHeader()
+    const authStore = useAuthStore()
+    const response = await this.delete(`${this.urlPrefix}/sessions`, undefined, {
+      refreshToken: authStore.userToken.refreshToken
+    })
     return response
   }
 

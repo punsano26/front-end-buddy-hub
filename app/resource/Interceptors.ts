@@ -55,13 +55,30 @@ export async function onResponseError (error: AxiosError): Promise<any> {
           const response = await axios(config)
           return onResponse(response)
         } else {
+          try {
+            const AuthProvider = (await import('~/resource/provider/Auth.provider')).default
+            const authService = new AuthProvider()
+            await authService.logout()
+          } catch (logoutErr: any) {
+            console.error('[Interceptors] Force logout API call failed:', logoutErr)
+          }
+
           clearPersistedAuth()
           authStore.logout()
           const router = useNuxtApp().$router
           void router.push({ name: 'auth-verify' })
           return Promise.reject(error)
         }
-      } catch {
+      } catch (err: any) {
+        console.error('[Interceptors] Force refresh token failed:', err)
+        try {
+          const AuthProvider = (await import('~/resource/provider/Auth.provider')).default
+          const authService = new AuthProvider()
+          await authService.logout()
+        } catch (logoutErr: any) {
+          console.error('[Interceptors] Force logout API call failed in catch:', logoutErr)
+        }
+
         const { clearPersistedAuth } = await import('~/utils/authRefresh')
         clearPersistedAuth()
         authStore.logout()
@@ -75,6 +92,25 @@ export async function onResponseError (error: AxiosError): Promise<any> {
       authStore.logout()
       const router = useNuxtApp().$router
       void router.push({ name: 'auth-verify' })
+      return Promise.reject(error)
+    }
+  }
+
+  if (error.response?.status === 403) {
+    const data = error.response.data as any
+    const message = data?.message || ''
+
+    if (message.includes('ถูกระงับ')) {
+      const authStore = useAuthStore()
+      const { clearPersistedAuth } = await import('~/utils/authRefresh')
+      clearPersistedAuth()
+      authStore.logout()
+
+      const router = useNuxtApp().$router
+      void router.push({
+        name: 'auth-login',
+        query: { banned: 'true', reason: message }
+      })
       return Promise.reject(error)
     }
   }

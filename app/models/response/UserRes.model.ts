@@ -10,6 +10,7 @@ export interface IFindOneCurrentUserData {
   email: string
   bannerImg: string | null
   isOnline: boolean
+  isBanned: boolean
   description: string | null
   gender: genderEnum
   dateOfBirth: string
@@ -34,6 +35,7 @@ export interface IUserList {
   profileImg: string | null
   bannerImg: string | null
   isOnline: boolean
+  isBanned: boolean
 }
 
 export type IFindOneCurrentUserResponse = IApiResponse<IFindOneCurrentUserData>
