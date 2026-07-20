@@ -54,6 +54,21 @@
           </InputLabelField>
         </div>
 
+        <div
+          v-if="authStore.isAdmin"
+          class="shrink-0">
+          <InputLabelField
+            label="สถานะบัญชี">
+            <Select
+              v-model="localBanStatus"
+              :options="banStatusOptions"
+              class="w-[125px] rounded-xl"
+              option-label="label"
+              option-value="value"
+              placeholder="ทั้งหมด" />
+          </InputLabelField>
+        </div>
+
         <div class="shrink-0 pb-1">
           <Button
             :disabled="!hasActiveFilters"
@@ -69,16 +84,28 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { genderEnum } from '~/models/enums/User.enum'
+import { BanStatusFilterEnum } from '~/models/request/UserReq.model'
+import { useAuthStore } from '~/stores/Auth'
+
+const authStore = useAuthStore()
 
 const localGender = defineModel<genderEnum | null>('gender', { default: null })
 const localMinAge = defineModel<number | undefined>('minAge', { default: undefined })
 const localMaxAge = defineModel<number | undefined>('maxAge', { default: undefined })
+const localBanStatus = defineModel<BanStatusFilterEnum | null>('banStatus', { default: null })
 
 const genderOptions = [
   { label: 'ผู้ชาย', value: genderEnum.MALE },
   { label: 'ผู้หญิง', value: genderEnum.FEMALE },
   { label: 'อื่นๆ', value: genderEnum.OTHER }
+]
+
+const banStatusOptions = [
+  { label: 'ทั้งหมด', value: BanStatusFilterEnum.ALL },
+  { label: 'ถูกระงับ', value: BanStatusFilterEnum.BANNED },
+  { label: 'ปกติ', value: BanStatusFilterEnum.NON_BANNED }
 ]
 
 const emit = defineEmits<{
@@ -91,13 +118,14 @@ const hasActiveFilters = computed((): boolean => {
   return localGender.value !== null
     || localMinAge.value !== undefined
     || localMaxAge.value !== undefined
+    || (localBanStatus.value !== null && localBanStatus.value !== BanStatusFilterEnum.ALL)
 })
 
 function toggleFilter (): void {
   isFilterOpen.value = !isFilterOpen.value
 }
 
-watch([localGender, localMinAge, localMaxAge], (): void => {
+watch([localGender, localMinAge, localMaxAge, localBanStatus], (): void => {
   emit('change')
 })
 
@@ -105,5 +133,6 @@ function clearFilters (): void {
   localGender.value = null
   localMinAge.value = undefined
   localMaxAge.value = undefined
+  localBanStatus.value = null
 }
 </script>
