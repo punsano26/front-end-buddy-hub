@@ -81,6 +81,13 @@
                 >
                   แก้ไขโปรไฟล์
                 </Button>
+                <Button
+                  size="small"
+                  class="w-full bg-surface-100 hover:bg-surface-200 dark:bg-surface-800 dark:hover:bg-surface-700 border-none text-surface-900 dark:text-surface-50"
+                  @click="router.push({ name: 'public-profile-sessions' })"
+                >
+                  จัดการเซสชัน
+                </Button>
               </div>
             </div>
           </div>
@@ -122,6 +129,7 @@ definePageMeta({ layout: "navbar" });
 const visible = ref(false);
 const userService: IUserProvider = new UserProvider();
 const { $handleLoading } = useNuxtApp();
+const router = useRouter();
 const dayjs = useDayjs();
 const items = ref<IFindOneCurrentUserData>();
 const isLoading = ref<boolean>(true);

@@ -31,7 +31,7 @@
       </template>
     </Card>
     <div class="px-4 mt-4 flex justify-start">
-      <UserFilter v-model:gender="sortByGender" v-model:minAge="minAge" v-model:maxAge="maxAge"
+      <UserFilter v-model:gender="sortByGender" v-model:minAge="minAge" v-model:maxAge="maxAge" v-model:banStatus="banStatus"
         @change="onFilterChange()" />
     </div>
     <div class="p-4 grid grid-cols-4 lg:grid-cols-6 gap-2 lg:gap-4">
@@ -61,6 +61,7 @@ import UserCard from '~/components/user/UserCard.vue'
 import UserDetailDialog from '~/components/user/UserDetailDialog.vue'
 import UserFilter from '~/components/user/UserFilter.vue'
 import { genderEnum, genderQueryEnum } from '~/models/enums/User.enum'
+import { BanStatusFilterEnum } from '~/models/request/UserReq.model'
 import type { IFindOneUserDetailData, IUserList } from '~/models/response/UserRes.model'
 import type { IUserProvider } from '~/resource/provider/User.provider'
 import UserProvider from '~/resource/provider/User.provider'
@@ -100,6 +101,7 @@ const details = ref<IFindOneUserDetailData>();
 const sortByGender = ref<genderEnum | null>(null);
 const minAge = ref<number>();
 const maxAge = ref<number>();
+const banStatus = ref<BanStatusFilterEnum | null>(null);
 const isLoading = ref<boolean>(true);
 
 async function useFetchApi(): Promise<void> {
@@ -109,7 +111,8 @@ async function useFetchApi(): Promise<void> {
     search: search.value,
     sortByGender: sortByGender.value ? (sortByGender.value as unknown as genderQueryEnum) : undefined,
     minAge: minAge.value,
-    maxAge: maxAge.value
+    maxAge: maxAge.value,
+    banStatus: banStatus.value ?? undefined
   });
 
   items.value = Array.isArray(response?.data) ? response.data : [];
