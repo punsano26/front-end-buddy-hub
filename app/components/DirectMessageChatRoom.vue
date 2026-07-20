@@ -136,6 +136,7 @@
     <SendCoinModalDialogVue
       v-model:form-send-coins="formSendCoins"
       v-model:visible="isSendCoinVisible"
+      :avatar="partnerProfileImg"
       :coin-balance="coinBalance"
       :nickname="partnerNickname"
       :username="partnerUsername"
@@ -195,6 +196,7 @@ const toast = useToast()
 const isSendCoinVisible = ref(false)
 const partnerNickname = ref('')
 const partnerUsername = ref('')
+const partnerProfileImg = ref('')
 const coinBalance = ref(0)
 
 async function fetchPartnerInfo (): Promise<void> {
@@ -204,6 +206,7 @@ async function fetchPartnerInfo (): Promise<void> {
   if (response && response.data) {
     partnerNickname.value = response.data.nickname || ''
     partnerUsername.value = response.data.username || ''
+    partnerProfileImg.value = response.data.profileImg || ''
   }
 }
 
