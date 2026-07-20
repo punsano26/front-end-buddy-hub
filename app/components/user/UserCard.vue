@@ -19,8 +19,11 @@
             </ClientOnly>
           </OverlayBadge>
         </div>
-        <p class="text-xs">
+        <p class="text-xs flex items-center gap-1">
           {{ value.nickname || value.username }}
+          <span
+            v-if="value.isBanned"
+            class="px-1.5 py-0.5 text-[9px] text-white bg-red-500 rounded shrink-0 font-bold">ถูกระงับ</span>
         </p>
       </div>
     </template>
