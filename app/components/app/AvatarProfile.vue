@@ -61,6 +61,11 @@ const items = ref<IMenuItem[]>([
     command: goVip
   },
   {
+    label: 'จัดการเซสชัน',
+    icon: 'pi pi-shield',
+    command: goSessions
+  },
+  {
     label: 'logout',
     icon: 'pi pi-sign-out',
     command: onLogout
@@ -81,6 +86,10 @@ function goVip (): void {
 
 function goProfile (): void {
   router.push({ name: 'public-profile' })
+}
+
+function goSessions (): void {
+  router.push({ name: 'public-profile-sessions' })
 }
 const toggle = (event: Event): void => {
   menu.value?.toggle(event)
