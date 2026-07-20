@@ -87,6 +87,20 @@
           @change="onImageChange">
       </template>
 
+      <button
+        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-200/50 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400 active:scale-95"
+        type="button"
+        @click="isSendCoinVisible = true">
+        <img
+          alt="coin"
+          class="h-5 w-5 dark:hidden"
+          src="/svg/coin-logo-black.svg">
+        <img
+          alt="coin"
+          class="h-5 w-5 hidden dark:block"
+          src="/svg/coin-logo-white.svg">
+      </button>
+
       <!-- Input -->
       <div class="flex-1 min-w-0 pb-0.5">
         <textarea
@@ -121,15 +135,29 @@
           class="pi pi-check text-xs" />
       </button>
     </div>
+
+    <!-- Send Coin Modal Dialog -->
+    <SendCoinModalDialogVue
+      v-model:form-send-coins="formSendCoins"
+      v-model:visible="isSendCoinVisible"
+      :avatar="partnerProfileImg"
+      :coin-balance="coinBalance"
+      :nickname="partnerNickname"
+      :username="partnerUsername"
+      @confirm="onSendCoins" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { useToast } from 'primevue/usetoast'
 import { UploadCategoryEnum } from '~/models/enums/Upload.enum'
+import type { ISendCoinsToAnotherUserPayload } from '~/models/request/WalletReq.model'
 import type { ICreateMessageData } from '~/models/response/ChatRes.model'
 import type { IUploadResultData, IUploadUrlResultData } from '~/models/response/UploadRes.model'
 import type { IUploadProvider } from '~/resource/provider/Upload.provider'
 import UploadProvider from '~/resource/provider/Upload.provider'
+import UserProvider, { type IUserProvider } from '~/resource/provider/User.provider'
+import WalletProvider, { type IWalletProvider } from '~/resource/provider/Wallet.provider'
 
 interface IProps {
   modelValue?: string
@@ -145,6 +173,8 @@ const emit = defineEmits<{
   'cancelEdit': []
 }>()
 const UploadService: IUploadProvider = new UploadProvider()
+const WalletService: IWalletProvider = new WalletProvider()
+const UserService: IUserProvider = new UserProvider()
 const props = withDefaults(defineProps<IProps>(), {
   modelValue: '',
   isEditing: false,
@@ -159,6 +189,47 @@ const messageModel = computed({
   set (value: string): void {
     emit('update:modelValue', value)
   }
+})
+const formSendCoins = ref<ISendCoinsToAnotherUserPayload>({
+  receiverId: props.partnerId || 0,
+  amount: 10, // Example amount
+  description: ''
+})
+const toast = useToast()
+
+const isSendCoinVisible = ref(false)
+const partnerNickname = ref('')
+const partnerUsername = ref('')
+const partnerProfileImg = ref('')
+const coinBalance = ref(0)
+
+async function fetchPartnerInfo (): Promise<void> {
+  if (!props.partnerId) return
+
+  const response = await UserService.findOneUserById(props.partnerId)
+  if (response && response.data) {
+    partnerNickname.value = response.data.nickname || ''
+    partnerUsername.value = response.data.username || ''
+    partnerProfileImg.value = response.data.profileImg || ''
+  }
+}
+
+async function fetchWalletBalance (): Promise<void> {
+  const response = await WalletService.findWalletBalance()
+  if (response && response.data) {
+    coinBalance.value = response.data.balance
+  }
+}
+
+watch((): number | undefined => props.partnerId, (newId: number | undefined): void => {
+  if (newId) {
+    fetchPartnerInfo()
+    formSendCoins.value.receiverId = newId
+  }
+}, { immediate: true })
+
+onMounted((): void => {
+  fetchWalletBalance()
 })
 
 const isEditing = computed((): boolean => props.isEditing)
@@ -246,6 +317,43 @@ async function handleUpload (file: File, category: UploadCategoryEnum): Promise<
 }
 function handleCancelEdit (): void {
   emit('cancelEdit')
+}
+
+
+async function sendCoins (): Promise<void> {
+  const response = await WalletService.sendCoinsToAnotherUser(formSendCoins.value)
+  if (response && response.data) {
+    coinBalance.value = response.data.senderBalance
+    isSendCoinVisible.value = false
+    formSendCoins.value.amount = 10
+    formSendCoins.value.description = ''
+  }
+}
+
+function onSendCoins (): void {
+  if (!formSendCoins.value.amount || formSendCoins.value.amount <= 0) {
+    toast.add({
+      severity: 'warn',
+      summary: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+      detail: 'กรุณากรอกจำนวนเหรียญให้ถูกต้อง',
+      life: 3000
+    })
+    return
+  }
+  if (formSendCoins.value.amount > coinBalance.value) {
+    toast.add({
+      severity: 'warn',
+      summary: 'เหรียญไม่พอ',
+      detail: 'จำนวนเหรียญคงเหลือไม่เพียงพอสำหรับการโอน',
+      life: 3000
+    })
+    return
+  }
+  $handleLoading(sendCoins, {
+    toast: {
+      instance: toast
+    }
+  })
 }
 </script>
 
