@@ -5,4 +5,14 @@ export interface IFindWalletBalanceData {
   balance: number
 }
 
+export interface ISendCoinsToAnotherUserData {
+  amount: number
+  description: 'string'
+  senderUserId: number
+  senderBalance: number
+  receiverId: number
+  receiverBalance: number
+}
+
 export type IFindWalletBalanceResponse = IApiResponse<IFindWalletBalanceData>
+export interface ISendCoinsToAnotherUserResponse extends IApiResponse<ISendCoinsToAnotherUserData> {}
