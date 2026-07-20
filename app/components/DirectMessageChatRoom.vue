@@ -93,8 +93,12 @@
         @click="isSendCoinVisible = true">
         <img
           alt="coin"
-          class="h-5 w-5"
-          src="/svg/coin-logo.svg">
+          class="h-5 w-5 dark:hidden"
+          src="/svg/coin-logo-black.svg">
+        <img
+          alt="coin"
+          class="h-5 w-5 hidden dark:block"
+          src="/svg/coin-logo-white.svg">
       </button>
 
       <!-- Input -->

@@ -81,7 +81,14 @@
               class="w-full"
               placeholder="ระบุจำนวนเหรียญ..." />
             <span class="absolute right-3 text-xs font-bold text-blue-500">
-              🪙
+              <img
+                alt="coin"
+                class="h-4 w-4 inline-block dark:hidden"
+                src="/svg/coin-logo-black.svg">
+              <img
+                alt="coin"
+                class="h-4 w-4 inline-block hidden dark:inline-block"
+                src="/svg/coin-logo-white.svg">
             </span>
           </div>
         </div>
@@ -136,7 +143,7 @@ const model = defineModel<boolean>('visible')
 const formSendCoins = defineModel<ISendCoinsToAnotherUserPayload>('formSendCoins', { required: true })
 
 const confirmButton = ref('ยืนยัน')
-const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
+const imageBaseUrl = (import.meta.env.VITE_ENV_BASE_FILE_URL as string || '') + '/'
 
 const emit = defineEmits<{
   confirm: []
