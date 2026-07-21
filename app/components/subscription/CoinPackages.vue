@@ -137,22 +137,57 @@
       icon="pi pi-send"
       size="small">
       เหรียญใช้สำหรับเช่าคุยกับ Emotional Supporter, ส่งของขวัญ, และปลดล็อกฟีเจอร์พิเศษ · เหรียญไม่มีหมดอายุ
-    </message>
+    </Message>
   </div>
+
   <ChoosePaymentDialog
     v-model:visible="paymentDialogVisible"
     :coins="selectedPackage?.coins"
-    :price="selectedPackage?.price" />
+    :price="selectedPackage?.price"
+    @proceed="handleProceedPayment" />
+
+  <QRPaymentDialog
+    v-model:visible="qrDialogVisible"
+    :coins="selectedPackage?.coins"
+    :price="selectedPackage?.price"
+    @back="handleBackToSelect" />
+
+  <WalletPaymentDialog
+    v-model:visible="walletDialogVisible"
+    :coins="selectedPackage?.coins"
+    :price="selectedPackage?.price"
+    @back="handleBackToSelect" />
 </template>
 
 <script lang="ts" setup>
+import { ref } from 'vue'
 import ChoosePaymentDialog from '~/components/payment/ChoosePaymentDialog.vue'
+import QRPaymentDialog from '~/components/payment/QRPaymentDialog.vue'
+import WalletPaymentDialog from '~/components/payment/WalletPaymentDialog.vue'
 
 const paymentDialogVisible = ref(false)
+const qrDialogVisible = ref(false)
+const walletDialogVisible = ref(false)
+
 const selectedPackage = ref<Package | null>(null)
 
 const handleSelectPackage = (pkg: Package): void => {
   selectedPackage.value = pkg
+  paymentDialogVisible.value = true
+}
+
+const handleProceedPayment = (methodId: string): void => {
+  paymentDialogVisible.value = false
+  if (methodId === 'promptpay') {
+    qrDialogVisible.value = true
+  } else if (methodId === 'truemoney') {
+    walletDialogVisible.value = true
+  }
+}
+
+const handleBackToSelect = (): void => {
+  qrDialogVisible.value = false
+  walletDialogVisible.value = false
   paymentDialogVisible.value = true
 }
 
