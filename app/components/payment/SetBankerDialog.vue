@@ -1,14 +1,36 @@
 <template>
   <Dialog
     v-model:visible="visible"
-    class="sm:w-110 w-[95%]"
-    header="ผูกบัญชีธนาคาร"
+    :show-header="false"
+    class="w-11/12 sm:max-w-[446px]"
+    pt:content:class="p-0"
+    pt:root:class="overflow-hidden rounded-[28px] shadow-2xl bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800"
+    dismissable-mask
     modal>
-    <div class="flex flex-col gap-4 pt-2">
-      <p class="text-xs text-surface-500 dark:text-surface-400">
-        โปรดเลือกธนาคารและกรอกข้อมูลบัญชีเพื่อใช้สำหรับการรับเงินจากการให้บริการ
-      </p>
+    <!-- Header with logo and close button (like auth page layout) -->
+    <div class="relative w-full flex flex-col items-center gap-4 px-[30px] pt-10 pb-2 text-center select-none">
+      <!-- Close Button -->
+      <button
+        class="absolute right-6 top-6 text-surface-400 hover:text-surface-900 dark:hover:text-white transition-colors duration-200 cursor-pointer w-8 h-8 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800/40 flex items-center justify-center border-none bg-transparent"
+        type="button"
+        @click="visible = false">
+        <i class="pi pi-times text-sm" />
+      </button>
 
+
+      <!-- Title -->
+      <h6 class="font-bold text-2xl text-surface-900 dark:text-white tracking-wide">
+        ผูกบัญชีธนาคาร
+      </h6>
+
+      <!-- Description -->
+      <p class="text-xs sm:text-sm text-surface-500 dark:text-surface-400 max-w-[340px]">
+        โปรดเลือกธนาคารและกรอกข้อมูลบัญชีเพื่อใช้รับเงินจากการให้บริการ
+      </p>
+    </div>
+
+    <!-- Form Content -->
+    <div class="px-6 flex flex-col gap-4 mt-2">
       <div class="flex flex-col gap-3.5">
         <!-- Bank Dropdown Selection -->
         <InputLabelField
@@ -40,18 +62,18 @@
       </div>
     </div>
 
-    <!-- Footer Actions -->
-    <template #footer>
-      <div class="flex justify-end gap-2.5 w-full mt-2">
-        <CancelButton
-          text="ยกเลิก"
-          @click="visible = false" />
-        <ConfirmButton
-          :disabled="!isValid"
-          text="บันทึกข้อมูล"
-          @click="handleSave" />
-      </div>
-    </template>
+    <!-- Actions (Inside body for consistent layout) -->
+    <div class="flex justify-end gap-2.5 px-6 mt-6 mb-8 w-full">
+      <CancelButton
+        class="flex-1 py-3!"
+        text="ยกเลิก"
+        @click="visible = false" />
+      <ConfirmButton
+        :disabled="!isValid"
+        class="flex-1 py-3!"
+        text="บันทึกข้อมูล"
+        @click="handleSave" />
+    </div>
   </Dialog>
 </template>
 
@@ -101,7 +123,8 @@ watch(visible, (newVal: boolean): void => {
       const matched = bankOptionsMock.value.find(
         (b: IBaseOptions): boolean => b.label === bankInfo.value?.bankName || b.value === bankInfo.value?.bankName
       )
-      selectedBank.value = matched ? matched.value : null
+      const matchedValue = matched?.value
+      selectedBank.value = typeof matchedValue === 'string' ? matchedValue : null
       accountNumber.value = bankInfo.value.accountNumber
       accountName.value = bankInfo.value.accountName
     } else {

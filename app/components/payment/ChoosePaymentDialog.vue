@@ -2,30 +2,30 @@
   <Dialog
     v-model:visible="visible"
     :show-header="false"
-    class="w-11/12 sm:max-w-[420px]"
+    class="w-11/12 sm:max-w-[446px]"
     pt:content:class="p-0"
-    pt:root:class="overflow-hidden rounded-3xl shadow-2xl"
+    pt:root:class="overflow-hidden rounded-[28px] shadow-2xl bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800"
     dismissable-mask
     modal>
-    <!-- Header -->
-    <div class="flex items-center justify-between px-6 pt-6 pb-4">
-      <div class="flex items-center gap-2">
-        <!-- Secure Shield Icon -->
-        <span class="relative flex items-center justify-center w-6 h-6">
-          <i class="pi pi-shield text-emerald-500 dark:text-emerald-400 text-xl" />
-          <i class="pi pi-check text-[9px] text-emerald-500 dark:text-emerald-400 absolute font-black" />
-        </span>
-        <span class="text-sm sm:text-base font-bold text-surface-900 dark:text-surface-50 tracking-wide">
-          โปรดเลือกช่องทางการชำระเงิน
-        </span>
-      </div>
+    <!-- Header with logo and back/close buttons (like auth page layout) -->
+    <div class="relative w-full flex flex-col items-center gap-4 px-[30px] pt-10 pb-2 text-center select-none">
       <!-- Close Button -->
       <button
-        class="text-surface-400 hover:text-surface-900 dark:hover:text-white transition-colors duration-200 cursor-pointer w-8 h-8 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800/40 flex items-center justify-center border-none bg-transparent"
+        class="absolute right-6 top-6 text-surface-400 hover:text-surface-900 dark:hover:text-white transition-colors duration-200 cursor-pointer w-8 h-8 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800/40 flex items-center justify-center border-none bg-transparent"
         type="button"
         @click="visible = false">
         <i class="pi pi-times text-sm" />
       </button>
+
+      <!-- Title -->
+      <h6 class="font-bold text-2xl text-surface-900 dark:text-white tracking-wide">
+        ชำระเงิน
+      </h6>
+
+      <!-- Description -->
+      <p class="text-xs sm:text-sm text-surface-500 dark:text-surface-400 max-w-[340px]">
+        โปรดเลือกช่องทางการชำระเงินเพื่อเติมเหรียญ
+      </p>
     </div>
 
     <!-- Package Summary Row -->
@@ -54,7 +54,7 @@
         :key="method.id"
         :class="[
           selectedMethod === method.id
-            ? 'border-emerald-500/80 bg-emerald-500/5 dark:bg-emerald-950/15 shadow-[0_0_12px_rgba(16,185,129,0.08)]'
+            ? 'border-emerald-500/80 bg-emerald-50/5 dark:bg-emerald-950/15 shadow-[0_0_12px_rgba(16,185,129,0.08)]'
             : 'border-surface-200 dark:border-surface-800/80 bg-surface-0 dark:bg-surface-900/30 hover:border-surface-300 dark:hover:border-surface-700 hover:bg-surface-50 dark:hover:bg-surface-900/50'
         ]"
         class="p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all duration-200 select-none"
@@ -132,18 +132,16 @@ const paymentMethods: PaymentMethod[] = [
     name: 'TrueMoney Wallet',
     subtext: 'ชำระผ่านวอลเล็ตทรูมันนี่',
     icon: 'pi pi-wallet'
-  },
-  {
-    id: 'bank',
-    name: 'โอนผ่านบัญชีธนาคาร',
-    subtext: 'เลือกธนาคารในประเทศไทย',
-    icon: 'pi pi-building'
   }
 ]
 
 const selectedMethod = ref<string>('promptpay')
 
+const emit = defineEmits<{
+  (e: 'proceed', method: string): void
+}>()
+
 const handleProceed = (): void => {
-  visible.value = false
+  emit('proceed', selectedMethod.value)
 }
 </script>
