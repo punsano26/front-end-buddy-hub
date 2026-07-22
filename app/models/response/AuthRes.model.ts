@@ -1,4 +1,5 @@
-import type { IApiResponse, IApiTokenResponse } from './Response.model'
+import type { deviceTypeEnum } from '../enums/Auth.enum'
+import type { IApiResponse, IApiTokenResponse, IBasePaginationResponse } from './Response.model'
 
 export interface ICheckAuthData {
   exists: boolean
@@ -27,14 +28,14 @@ export interface IForgotPasswordResponse extends IApiResponse<IForgotPasswordDat
   resetPasswordToken: string
 }
 
-export interface ISessionData {
+export interface ISessionDataList {
   id: number
   deviceName: string | null
-  deviceType: 'MOBILE' | 'TABLET' | 'DESKTOP' | 'UNKNOWN'
+  deviceType: deviceTypeEnum
   ipAddress: string | null
   lastUsedAt: string
   createdAt: string
   isCurrent: boolean
 }
 
-export type IListSessionsResponse = IApiResponse<ISessionData[]>
+export interface IFindAllSessionsPaginateResponse extends IBasePaginationResponse<ISessionDataList> {}
