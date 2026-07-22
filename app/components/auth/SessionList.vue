@@ -20,7 +20,7 @@
           เซสชันทั้งหมด:
         </span>
         <span class="px-2 py-0.5 bg-surface-200 dark:bg-surface-800 text-surface-700 dark:text-surface-300 text-xs font-bold rounded-full">
-          {{ sessions.length }}
+          {{ total ?? sessions.length }}
         </span>
       </div>
     </div>
@@ -113,23 +113,24 @@ import { computed } from 'vue'
 import 'dayjs/locale/th'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import type { ISessionData } from '~/models/response/AuthRes.model'
+import type { ISessionDataList } from '~/models/response/AuthRes.model'
 import Button from '~/volt/Button.vue'
 
 dayjs.extend(relativeTime)
 dayjs.locale('th')
 
 const props = defineProps<{
-  sessions: ISessionData[]
+  sessions: ISessionDataList[]
+  total?: number
 }>()
 
 const emit = defineEmits<{
-  (e: 'revoke', session: ISessionData): void
+  (e: 'revoke', session: ISessionDataList): void
   (e: 'revokeAllOthers'): void
 }>()
 
 // Helper to determine the device icon based on device type
-const getDeviceIcon = (deviceType: ISessionData['deviceType']): string => {
+const getDeviceIcon = (deviceType: ISessionDataList['deviceType']): string => {
   switch (deviceType) {
     case 'MOBILE':
       return 'pi pi-mobile'
@@ -149,8 +150,8 @@ const getRelativeTime = (dateString: string): string => {
 }
 
 // Sort sessions so the current session is always at the top, then by last used time
-const sortedSessions = computed((): ISessionData[] => {
-  return [...props.sessions].sort((a: ISessionData, b: ISessionData): number => {
+const sortedSessions = computed((): ISessionDataList[] => {
+  return [...props.sessions].sort((a: ISessionDataList, b: ISessionDataList): number => {
     if (a.isCurrent && !b.isCurrent) return -1
     if (!a.isCurrent && b.isCurrent) return 1
     return new Date(b.lastUsedAt).getTime() - new Date(a.lastUsedAt).getTime()
@@ -159,7 +160,7 @@ const sortedSessions = computed((): ISessionData[] => {
 
 // Check if there are other sessions that can be revoked
 const hasOtherSessions = computed((): boolean => {
-  return props.sessions.some((session: ISessionData): boolean => !session.isCurrent)
+  return props.sessions.some((session: ISessionDataList): boolean => !session.isCurrent)
 })
 </script>
 
