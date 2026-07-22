@@ -42,6 +42,7 @@
         <SessionList
           v-if="sessions.length > 0"
           :sessions="sessions"
+          :total="pagination.total"
           @revoke="confirmRevokeSingle"
           @revokeAllOthers="confirmRevokeAllOthers" />
 
@@ -57,6 +58,14 @@
           </p>
         </div>
       </DataLoadingState>
+    </div>
+
+    <div
+      v-if="hasMultiplePages"
+      class="flex justify-center w-full">
+      <Paginate
+        v-model="pagination"
+        @page="loadSessions" />
     </div>
 
     <!-- Confirm Modal Dialogs -->
@@ -82,12 +91,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import type { ISessionData } from '~/models/response/AuthRes.model'
-import AuthProvider from '~/resource/provider/Auth.provider'
 import SessionList from '~/components/auth/SessionList.vue'
 import ConfirmModalDialog from '~/components/ConfirmModalDialog.vue'
+import DataLoadingState from '~/components/skeleton/DataLoadingState.vue'
+import Paginate from '~/components/user/Paginate.vue'
+import type { ISessionDataList } from '~/models/response/AuthRes.model'
+import AuthProvider, { type IAuthProvider } from '~/resource/provider/Auth.provider'
 
 definePageMeta({
   layout: 'navbar'
@@ -103,28 +114,31 @@ useHead({
   ]
 })
 
-const authService = new AuthProvider()
+const authService: IAuthProvider = new AuthProvider()
 const toast = useToast()
 const { $handleLoading } = useNuxtApp()
 
-const sessions = ref<ISessionData[]>([])
-const isLoading = ref(true)
+const sessions = ref<ISessionDataList[]>([])
+const isLoading = ref<boolean>(true)
+const { pagination, extractPagination } = usePagination()
+const isConfirmRevokeSingleVisible = ref<boolean>(false)
+const isConfirmRevokeAllOthersVisible = ref<boolean>(false)
 
-const isConfirmRevokeSingleVisible = ref(false)
-const isConfirmRevokeAllOthersVisible = ref(false)
+const hasMultiplePages = computed((): boolean => {
+  return (pagination.value.total ?? 0) > pagination.value.limit
+})
 
-// Fetch active sessions from backend
-async function fetchSessionsData (): Promise<void> {
-  try {
-    const response = await authService.listSessions()
-    sessions.value = response?.data || []
-  } catch (err: any) {
-    console.error('[SessionsPage] Failed to fetch sessions:', err)
-  }
+async function useFetch (): Promise<void> {
+  const response = await authService.listSessions({
+    page: pagination.value.page,
+    limit: pagination.value.limit
+  })
+  sessions.value = Array.isArray(response?.data) ? response.data : []
+  pagination.value = extractPagination(response?.pagination)
 }
 
 function loadSessions (): void {
-  $handleLoading(fetchSessionsData, {
+  $handleLoading(useFetch, {
     loadingUnit: isLoading
   })
 }
@@ -134,7 +148,7 @@ onMounted((): void => {
 })
 
 // Trigger single session revocation confirmation
-function confirmRevokeSingle (session: ISessionData): void {
+function confirmRevokeSingle (session: ISessionDataList): void {
   isConfirmRevokeSingleVisible.value = true
 }
 
@@ -146,7 +160,8 @@ function confirmRevokeAllOthers (): void {
 // Handle revoking all other sessions
 async function executeRevokeAllOthers (): Promise<void> {
   await authService.revokeAllOtherSessions()
-  await fetchSessionsData()
+  pagination.value.page = 1
+  await useFetch()
 }
 
 function handleRevokeAllOthers (): void {

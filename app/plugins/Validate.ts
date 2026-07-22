@@ -18,6 +18,7 @@ export interface IValidate {
   minValue (val: any, min: number): boolean | string
   textThai (val: string): boolean | string
   textEnglish (val: string): boolean | string
+  account (val: string): boolean | string
 }
 
 const emailRegex = /^[\w.-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*(?:\.[a-zA-Z]{2,})$/
@@ -39,6 +40,10 @@ export const validate: IValidate = {
   textEnglish: (val: string): boolean | string => {
     if (!val) return true
     return (/^[a-zA-Z0-9\s]+$/).test(String(val)) || 'กรุณากรอกเป็นภาษาอังกฤษเท่านั้น'
+  },
+  account: (val: string): boolean | string => {
+    if (!val) return true
+    return (/^[a-zA-Z0-9@._+-]+$/).test(String(val)) || 'กรุณากรอกเป็นภาษาอังกฤษ ตัวเลข หรืออีเมลที่ถูกต้องเท่านั้น'
   },
   email: (val: any): boolean | string => emailRegex.test(val) || 'รูปแบบอีเมลไม่ถูกต้อง',
   emailOptional: (val: any): boolean | string => !val || emailRegex.test(val) || 'รูปแบบอีเมลไม่ถูกต้อง',

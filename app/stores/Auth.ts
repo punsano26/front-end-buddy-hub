@@ -29,7 +29,6 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
   const user = ref<IUser>({
     id: 0,
     username: '',
-    email: '',
     profileImg: null,
     isVerified: false,
     roles: []
@@ -86,7 +85,6 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
     user.value = {
       id: 0,
       username: '',
-      email: '',
       profileImg: null,
       isVerified: false,
       roles: []
@@ -118,7 +116,15 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
 }, {
   persist: [
     {
-      pick: ['userToken', 'user', 'resetToken'],
+      pick: [
+        'userToken',
+        'user.id',
+        'user.username',
+        'user.profileImg',
+        'user.isVerified',
+        'user.roles',
+        'resetToken'
+      ],
       storage: piniaPluginPersistedstate.localStorage()
     }
   ]

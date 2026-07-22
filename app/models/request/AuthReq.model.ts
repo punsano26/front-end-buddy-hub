@@ -1,4 +1,5 @@
 import type { genderEnum } from '../enums/User.enum'
+import type { IBasePaginationRequest } from './Request.model'
 
 export interface ICheckAuthPayload {
   account: string
@@ -41,3 +42,7 @@ export interface IResetPasswordPayload {
 export interface IReFreshTokenPayload {
   refreshToken: string
 }
+
+export interface IFindSessionsFilters {}
+
+export interface IFindAllSessionsPaginateQuery extends IBasePaginationRequest, IFindSessionsFilters {}

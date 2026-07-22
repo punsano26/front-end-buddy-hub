@@ -43,7 +43,7 @@ const account = ref<string>('')
 const submitted = ref(false)
 
 const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> => ({
-  account: [validate.required, validate.textEnglish]
+  account: [validate.required, validate.account]
 }))
 
 async function onVerify (): Promise<void> {

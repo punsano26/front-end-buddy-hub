@@ -5,11 +5,12 @@ import type {
   IChangeEmail,
   IChangePasswordPayload,
   ICheckAuthPayload,
+  IFindAllSessionsPaginateQuery,
   IForgotPasswordPayload,
   IReFreshTokenPayload,
   IResetPasswordPayload
 } from '~/models/request/AuthReq.model'
-import type { IAuthLoginResponse, ICheckAuthResponse, IForgotPasswordResponse, IListSessionsResponse } from '~/models/response/AuthRes.model'
+import type { IAuthLoginResponse, ICheckAuthResponse, IFindAllSessionsPaginateResponse, IForgotPasswordResponse } from '~/models/response/AuthRes.model'
 import type { IMessageResponse } from '~/models/response/Response.model'
 
 export interface IAuthProvider {
@@ -24,7 +25,7 @@ export interface IAuthProvider {
   sendEmailVerification (): Promise<IMessageResponse>
   verifyEmail (): Promise<IMessageResponse>
   logout (): Promise<IMessageResponse>
-  listSessions (): Promise<IListSessionsResponse>
+  listSessions (query: IFindAllSessionsPaginateQuery): Promise<IFindAllSessionsPaginateResponse>
   revokeSession (refreshToken: string): Promise<IMessageResponse>
   revokeAllOtherSessions (): Promise<IMessageResponse>
 }
@@ -67,13 +68,14 @@ class AuthProvider extends HttpRequest implements IAuthProvider {
     return response
   }
 
-  public async listSessions (): Promise<IListSessionsResponse> {
+  public async listSessions (query: IFindAllSessionsPaginateQuery): Promise<IFindAllSessionsPaginateResponse> {
     this.setUserAuthHeader()
     const authStore = useAuthStore()
     const response = await this.get(`${this.urlPrefix}/sessions`, undefined, {
       headers: {
         'x-refresh-token': authStore.userToken.refreshToken
-      }
+      },
+      query
     })
     return response
   }
