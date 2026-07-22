@@ -37,7 +37,6 @@ const userData = computed((): IAuthLoginData => {
   return {
     id: authStore.user.id,
     username: authStore.user.username,
-    email: authStore.user.email,
     isVerified: authStore.user.isVerified,
     roles: authStore.user.roles,
     profileImg: authStore.user.profileImg
