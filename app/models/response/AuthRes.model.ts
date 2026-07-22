@@ -7,7 +7,6 @@ export interface ICheckAuthData {
 export interface IAuthLoginData {
   id: number
   username: string
-  email: string
   profileImg: string | null
   isVerified: boolean
   roles: string[]
