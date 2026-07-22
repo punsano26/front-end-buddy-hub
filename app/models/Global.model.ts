@@ -18,10 +18,10 @@ export interface IItems {
 }
 
 export interface IPagination {
-  total: number
+  total?: number
   limit: number
   page: number
-  lastPage: number
+  lastPage?: number
 }
 export interface IBaseOptions<T = string | number> {
   label: string
