@@ -3,7 +3,7 @@
     :first="(pagination.page - 1) * pagination.limit"
     :rows="pagination.limit"
     :total-records="pagination.total"
-    pt:root:class="justify-end px-4 py-1 bg-transparent dark:bg-transparent"
+    pt:root:class="justify-center px-4 py-1 bg-transparent dark:bg-transparent"
     @page="onPageChange($event)" />
 </template>
 
@@ -17,13 +17,12 @@ interface IEmits {
 const emits = defineEmits<IEmits>()
 
 const pagination = defineModel<IPagination>({
-  default: {
+  default: (): IPagination => ({
     page: 1,
     limit: 20,
-    totalPage: 1,
-    count: 0,
-    totalRecords: 0
-  }
+    total: 0,
+    lastPage: 1
+  })
 })
 
 function onPageChange (event: { page: number, rows: number }): void {
