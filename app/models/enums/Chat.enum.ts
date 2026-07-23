@@ -1,4 +1,8 @@
 export enum chatEnum {
   TEXT = 'TEXT',
-  MEDIA = 'MEDIA'
+  MEDIA = 'MEDIA',
+  START_CALL = 'START_CALL',
+  END_CALL = 'END_CALL',
+  MISSED_CALL = 'MISSED_CALL',
+  COIN_GRANTED = 'COIN_GRANTED'
 }
