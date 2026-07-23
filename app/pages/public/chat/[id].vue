@@ -41,11 +41,11 @@
                 <div
                   class="flex flex-col gap-1 px-4 py-2.5 rounded-2xl shadow-sm max-w-full min-w-0 transition-all duration-200"
                   @click="onMessageTap(chat)"
-                  :class="
+                  :class="[
                     isOwnMessage(chat)
                       ? 'bg-gradient-primary text-white rounded-br-xs shadow-indigo-500/10 dark:shadow-indigo-950/20'
                       : 'bg-white text-slate-800 rounded-bl-xs border border-slate-200/80 shadow-slate-100 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-800'
-                  "
+                  ]"
                 >
                   <!-- Media/Image Block -->
                   <template v-if="isMediaMessage(chat)">
@@ -59,7 +59,96 @@
                       Image unavailable
                     </p>
                   </template>
-                  
+
+                  <!-- Call Action Block -->
+                  <template v-else-if="isCallMessage(chat)">
+                    <div class="flex items-center gap-3 py-1 min-w-[200px] sm:min-w-[220px]">
+                      <div
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform duration-200 group-hover:scale-105"
+                        :class="[
+                          chat.messageType === chatEnum.MISSED_CALL
+                            ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 ring-1 ring-rose-300/40 dark:ring-rose-800/40'
+                            : chat.messageType === chatEnum.START_CALL
+                            ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-300/40 dark:ring-emerald-800/40'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-700'
+                        ]"
+                      >
+                        <img
+                          :src="getCallIcon(chat)"
+                          alt="Call status"
+                          class="h-5 w-5 object-contain dark:invert"
+                        />
+                      </div>
+
+                      <div class="flex flex-col min-w-0 flex-1">
+                        <span class="text-sm font-semibold leading-tight">
+                          {{ getCallTitle(chat) }}
+                        </span>
+                        <span
+                          class="text-[11px] opacity-80 mt-0.5"
+                          :class="isOwnMessage(chat) ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'"
+                        >
+                          {{ getCallSubtitle(chat) }}
+                        </span>
+                      </div>
+
+                      <button
+                        v-if="chat.messageType === chatEnum.MISSED_CALL"
+                        type="button"
+                        @click.stop="clickCall"
+                        class="ml-1 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl transition-all duration-200 shrink-0 shadow-xs active:scale-95 cursor-pointer"
+                        :class="
+                          isOwnMessage(chat)
+                            ? 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-xs'
+                            : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200/50 dark:border-indigo-800/40'
+                        "
+                      >
+                        <i class="pi pi-phone text-[10px]" />
+                        <span>โทรกลับ</span>
+                      </button>
+                    </div>
+                  </template>
+
+                  <!-- Coin Granted Block -->
+                  <template v-else-if="isCoinMessage(chat)">
+                    <div class="flex flex-col gap-2 py-1 min-w-[210px] sm:min-w-[240px]">
+                      <div class="flex items-center justify-between gap-2 pb-1.5 border-b" :class="isOwnMessage(chat) ? 'border-white/20' : 'border-slate-200 dark:border-slate-800'">
+                        <span
+                          class="inline-flex items-center justify-center h-5 px-2 text-[10px] font-bold rounded-full"
+                          :class="isOwnMessage(chat) ? 'bg-white/20 text-white' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 dark:bg-amber-500/20 border border-amber-500/20'"
+                        >
+                          <i class="pi pi-bolt mr-1 text-[9px]" />
+                          BUDDY COIN
+                        </span>
+                        <span class="text-[10px] font-medium opacity-80" :class="isOwnMessage(chat) ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'">
+                          {{ isOwnMessage(chat) ? 'ส่งคอยน์สำเร็จ' : 'ได้รับคอยน์' }}
+                        </span>
+                      </div>
+
+                      <div class="flex items-center gap-3 py-1">
+                        <div
+                          class="relative shrink-0 flex items-center justify-center h-12 w-12 rounded-2xl p-2 transition-transform group-hover:scale-105"
+                          :class="isOwnMessage(chat) ? 'bg-white/20 ring-1 ring-white/30 backdrop-blur-xs' : 'bg-amber-500/10 dark:bg-amber-500/20 ring-1 ring-amber-500/30'"
+                        >
+                          <img
+                            src="/svg/coin-granted.svg"
+                            alt="Coin granted"
+                            class="h-8 w-8 object-contain drop-shadow-xs"
+                          />
+                        </div>
+
+                        <div class="flex flex-col min-w-0 flex-1">
+                          <span class="text-[11px] font-medium opacity-85" :class="isOwnMessage(chat) ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'">
+                            {{ isOwnMessage(chat) ? 'คุณโอนคอยน์ให้เพื่อน' : 'ได้รับคอยน์จากเพื่อน' }}
+                          </span>
+                          <span class="text-base font-extrabold tracking-tight" :class="isOwnMessage(chat) ? 'text-white' : 'text-slate-900 dark:text-amber-400'">
+                            {{ chat.messageText || 'คอยน์พิเศษ' }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
                   <!-- Text Block -->
                   <p
                     v-else
@@ -127,10 +216,12 @@ import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provi
 import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from '~/stores/Auth'
 import { useChatStore } from '~/stores/Chat'
+import { useCallStore } from '~/stores/Call'
 import { type IChatMessageItem, useChatRoomStore } from '~/stores/ChatRoom'
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
+const callStore = useCallStore();
 const toast = useToast();
 const chatRoomStore = useChatRoomStore();
 const chatService: IChatProvider = new ChatProvider();
@@ -175,13 +266,15 @@ async function scrollToBottom(): Promise<void> {
 }
 
 function getMessageMenuItems(message: ICreateMessageData): IItems[] {
-  return [
-    { label: "แก้ไข", command: (): void => startEditMessage(message) },
-    {
-      label: "ลบ",
-      command: (): Promise<void> => confirmDeleteMessage(message),
-    },
-  ];
+  const items: IItems[] = [];
+  if (message.messageType === chatEnum.TEXT) {
+    items.push({ label: "แก้ไข", command: (): void => startEditMessage(message) });
+  }
+  items.push({
+    label: "ลบ",
+    command: (): Promise<void> => confirmDeleteMessage(message),
+  });
+  return items;
 }
 
 function startEditMessage(message: ICreateMessageData): void {
@@ -279,6 +372,111 @@ function isMessageMenuVisible(messageId: number): boolean {
 
 function isMediaMessage(message: ICreateMessageData): boolean {
   return message.messageType === chatEnum.MEDIA;
+}
+
+function isCallMessage(message: ICreateMessageData): boolean {
+  return [
+    chatEnum.START_CALL,
+    chatEnum.END_CALL,
+    chatEnum.MISSED_CALL,
+  ].includes(message.messageType);
+}
+
+function isCoinMessage(message: ICreateMessageData): boolean {
+  return message.messageType === chatEnum.COIN_GRANTED;
+}
+
+function getCallIcon(message: ICreateMessageData): string {
+  switch (message.messageType) {
+    case chatEnum.START_CALL:
+      return "/svg/start-call.svg";
+    case chatEnum.END_CALL:
+      return "/svg/end-call.svg";
+    case chatEnum.MISSED_CALL:
+      return "/svg/missed-call.svg";
+    default:
+      return "/svg/start-call.svg";
+  }
+}
+
+function getCallTitle(message: ICreateMessageData): string {
+  if (
+    message.messageText &&
+    !Object.values(chatEnum).includes(message.messageText as chatEnum)
+  ) {
+    return message.messageText;
+  }
+  switch (message.messageType) {
+    case chatEnum.START_CALL:
+      return "เริ่มการโทร";
+    case chatEnum.END_CALL:
+      return "สิ้นสุดการโทร";
+    case chatEnum.MISSED_CALL:
+      return "ไม่ได้รับสาย";
+    default:
+      return "สายโทรศัพท์";
+  }
+}
+
+function getCallSubtitle(message: ICreateMessageData): string {
+  const isOwn = isOwnMessage(message);
+  switch (message.messageType) {
+    case chatEnum.START_CALL:
+      return isOwn ? "คุณเริ่มการโทร" : "สายโทรเข้า";
+    case chatEnum.END_CALL:
+      return "การโทรจบแล้ว";
+    case chatEnum.MISSED_CALL:
+      return isOwn ? "ปลายทางไม่ได้รับสาย" : "คุณไม่ได้รับสาย";
+    default:
+      return "สายโทรศัพท์";
+  }
+}
+
+async function onClickCall(): Promise<void> {
+  const isDesktop =
+    typeof window !== "undefined" &&
+    !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent,
+    );
+
+  let newWindow: Window | null = null;
+  if (isDesktop) {
+    const width = 450;
+    const height = 650;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    newWindow = window.open(
+      "about:blank",
+      "_blank",
+      `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes`,
+    );
+  }
+
+  try {
+    await callStore.initiateCall(id.value);
+    if (callStore.callData) {
+      const resolved = useRouter().resolve({
+        name: "call",
+        query: { callData: encodeURIComponent(JSON.stringify(callStore.callData)) },
+      });
+      if (newWindow) {
+        newWindow.location.href = resolved.href;
+      } else {
+        void useRouter().push(resolved);
+      }
+    } else if (newWindow) {
+      newWindow.close();
+    }
+  } catch (error: any) {
+    if (newWindow) {
+      newWindow.close();
+    }
+    throw error;
+  }
+}
+
+function clickCall(): void {
+  $handleLoading(onClickCall);
 }
 
 function resolveMediaUrl(value: string): string {
