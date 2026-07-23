@@ -41,11 +41,11 @@
                 <div
                   class="flex flex-col gap-1 px-4 py-2.5 rounded-2xl shadow-sm max-w-full min-w-0 transition-all duration-200"
                   @click="onMessageTap(chat)"
-                  :class="
+                  :class="[
                     isOwnMessage(chat)
                       ? 'bg-gradient-primary text-white rounded-br-xs shadow-indigo-500/10 dark:shadow-indigo-950/20'
                       : 'bg-white text-slate-800 rounded-bl-xs border border-slate-200/80 shadow-slate-100 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-800'
-                  "
+                  ]"
                 >
                   <!-- Media/Image Block -->
                   <template v-if="isMediaMessage(chat)">
@@ -59,7 +59,24 @@
                       Image unavailable
                     </p>
                   </template>
-                  
+
+                  <!-- Call Action Block -->
+                  <template v-else-if="isCallMessage(chat)">
+                    <CallMessageCard
+                      :chat="chat"
+                      :is-own="isOwnMessage(chat)"
+                      @click-call="clickCall"
+                    />
+                  </template>
+
+                  <!-- Coin Granted Block -->
+                  <template v-else-if="isCoinMessage(chat)">
+                    <CoinMessageCard
+                      :chat="chat"
+                      :is-own="isOwnMessage(chat)"
+                    />
+                  </template>
+
                   <!-- Text Block -->
                   <p
                     v-else
@@ -127,10 +144,12 @@ import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provi
 import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from '~/stores/Auth'
 import { useChatStore } from '~/stores/Chat'
+import { useCallStore } from '~/stores/Call'
 import { type IChatMessageItem, useChatRoomStore } from '~/stores/ChatRoom'
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
+const callStore = useCallStore();
 const toast = useToast();
 const chatRoomStore = useChatRoomStore();
 const chatService: IChatProvider = new ChatProvider();
@@ -175,13 +194,15 @@ async function scrollToBottom(): Promise<void> {
 }
 
 function getMessageMenuItems(message: ICreateMessageData): IItems[] {
-  return [
-    { label: "แก้ไข", command: (): void => startEditMessage(message) },
-    {
-      label: "ลบ",
-      command: (): Promise<void> => confirmDeleteMessage(message),
-    },
-  ];
+  const items: IItems[] = [];
+  if (message.messageType === chatEnum.TEXT) {
+    items.push({ label: "แก้ไข", command: (): void => startEditMessage(message) });
+  }
+  items.push({
+    label: "ลบ",
+    command: (): Promise<void> => confirmDeleteMessage(message),
+  });
+  return items;
 }
 
 function startEditMessage(message: ICreateMessageData): void {
@@ -279,6 +300,65 @@ function isMessageMenuVisible(messageId: number): boolean {
 
 function isMediaMessage(message: ICreateMessageData): boolean {
   return message.messageType === chatEnum.MEDIA;
+}
+
+function isCallMessage(message: ICreateMessageData): boolean {
+  return [
+    chatEnum.START_CALL,
+    chatEnum.END_CALL,
+    chatEnum.MISSED_CALL,
+  ].includes(message.messageType);
+}
+
+function isCoinMessage(message: ICreateMessageData): boolean {
+  return message.messageType === chatEnum.COIN_GRANTED;
+}
+
+async function onClickCall(): Promise<void> {
+  const isDesktop =
+    typeof window !== "undefined" &&
+    !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent,
+    );
+
+  let newWindow: Window | null = null;
+  if (isDesktop) {
+    const width = 450;
+    const height = 650;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    newWindow = window.open(
+      "about:blank",
+      "_blank",
+      `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes`,
+    );
+  }
+
+  try {
+    await callStore.initiateCall(id.value);
+    if (callStore.callData) {
+      const resolved = useRouter().resolve({
+        name: "call",
+        query: { callData: encodeURIComponent(JSON.stringify(callStore.callData)) },
+      });
+      if (newWindow) {
+        newWindow.location.href = resolved.href;
+      } else {
+        void useRouter().push(resolved);
+      }
+    } else if (newWindow) {
+      newWindow.close();
+    }
+  } catch (error: any) {
+    if (newWindow) {
+      newWindow.close();
+    }
+    throw error;
+  }
+}
+
+function clickCall(): void {
+  $handleLoading(onClickCall);
 }
 
 function resolveMediaUrl(value: string): string {
