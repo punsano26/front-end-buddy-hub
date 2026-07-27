@@ -74,6 +74,7 @@
                     <CoinMessageCard
                       :chat="chat"
                       :is-own="isOwnMessage(chat)"
+                      @coin-event="handleCoinMessageEvent"
                     />
                   </template>
 
@@ -136,6 +137,7 @@
 import { storeToRefs } from 'pinia'
 import { AttachmentTypeEnum } from '~/models/enums/Attachment.enum'
 import { chatEnum } from '~/models/enums/Chat.enum'
+import { CoinGrantedEvent } from '~/models/enums/Coin.enum'
 import type { IItems } from '~/models/Global.model'
 import type { ICreateMessagePayload } from '~/models/request/ChatReq.model'
 import type { ICreateMessageData } from '~/models/response/ChatRes.model'
@@ -314,6 +316,12 @@ function isCoinMessage(message: ICreateMessageData): boolean {
   return message.messageType === chatEnum.COIN_GRANTED;
 }
 
+function handleCoinMessageEvent(event: CoinGrantedEvent, message: ICreateMessageData): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(event, { detail: message }));
+  }
+}
+
 async function onClickCall(): Promise<void> {
   const isDesktop =
     typeof window !== "undefined" &&
@@ -414,6 +422,15 @@ const { removeSocketListener, startSocketSync, stopSocketSync } =
       if (!isCurrentConversationMessage(message)) return;
 
       upsertMessage(message);
+
+      if (isCoinMessage(message)) {
+        const targetEvent = message.senderId === authStore.user.id
+          ? CoinGrantedEvent.SPEND_COIN
+          : CoinGrantedEvent.GRANT_COIN;
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent(targetEvent, { detail: message }));
+        }
+      }
 
       if (
         message.senderId === id.value &&
