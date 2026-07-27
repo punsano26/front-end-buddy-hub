@@ -24,7 +24,7 @@
       <div
         :class="
           isOwn
-            ? 'bg-white/20 ring-1 ring-white/30 backdrop-blur-xs'
+            ? 'bg-primary-950/20 ring-1 ring-primary-100/30 backdrop-blur-xs'
             : 'bg-amber-500/10 dark:bg-amber-500/20 ring-1 ring-amber-500/30'
         "
         class="relative shrink-0 flex items-center justify-center h-12 w-12 rounded-2xl p-2 transition-transform group-hover:scale-105">
