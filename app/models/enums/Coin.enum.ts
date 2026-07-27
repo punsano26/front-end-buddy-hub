@@ -1,4 +1,3 @@
-// 2. Event Coin Granted Enum Definition
 export enum CoinGrantedEvent {
   PURCHASE_COIN = 'purchase_coin', // "purchase_coin"       - การซื้อ/เติมเหรียญ
   SPEND_COIN = 'spend_coin', // "spend_coin"          - การใช้/โอนเหรียญ
