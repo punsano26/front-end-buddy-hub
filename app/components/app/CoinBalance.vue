@@ -93,8 +93,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useAuthStore } from '~/stores/Auth'
+import { CoinGrantedEvent } from '~/models/enums/Coin.enum'
 import WalletProvider from '~/resource/provider/Wallet.provider'
 import Button from '~/volt/Button.vue'
 import Popover from '~/volt/Popover.vue'
@@ -118,6 +119,8 @@ const walletService = new WalletProvider()
 const localBalance = ref<number | null>(null)
 const isLoading = ref<boolean>(false)
 const op = ref()
+
+const coinEvents = Object.values(CoinGrantedEvent)
 
 const currentBalance = computed((): number => {
   if (props.balance !== undefined) {
@@ -156,10 +159,68 @@ const handleTopupClick = (): void => {
   }
 }
 
+const handleCoinEvent = (): void => {
+  fetchBalance()
+}
+
+let wsListener: ((event: MessageEvent) => void) | null = null
+
+const setupWebSocketListener = (): void => {
+  const { $ws } = useNuxtApp()
+  const socket = $ws()
+  if (!socket) return
+
+  wsListener = (event: MessageEvent): void => {
+    try {
+      const payload = JSON.parse(event.data) as { data?: { messageType?: string }, event?: string }
+      if (!payload) return
+
+      const isCoinEvent = payload.event && coinEvents.includes(payload.event as CoinGrantedEvent)
+      const isCoinMessage = payload.event === 'new_message' && payload.data?.messageType === 'COIN_GRANTED'
+
+      if (isCoinEvent || isCoinMessage) {
+        fetchBalance()
+      }
+    } catch (err: any) {
+      // Ignore non-JSON socket messages
+      void err
+    }
+  }
+
+  socket.addEventListener('message', wsListener)
+}
+
+const removeWebSocketListener = (): void => {
+  const { $ws } = useNuxtApp()
+  const socket = $ws?.()
+  if (socket && wsListener) {
+    socket.removeEventListener('message', wsListener)
+    wsListener = null
+  }
+}
+
 onMounted((): void => {
   if (props.balance === undefined) {
     fetchBalance()
   }
+
+  if (typeof window !== 'undefined') {
+    coinEvents.forEach((eventType: string): void => {
+      window.addEventListener(eventType, handleCoinEvent)
+    })
+  }
+
+  setupWebSocketListener()
+})
+
+onUnmounted((): void => {
+  if (typeof window !== 'undefined') {
+    coinEvents.forEach((eventType: string): void => {
+      window.removeEventListener(eventType, handleCoinEvent)
+    })
+  }
+
+  removeWebSocketListener()
 })
 
 watch((): number => authStore.user.id, (newId: number): void => {

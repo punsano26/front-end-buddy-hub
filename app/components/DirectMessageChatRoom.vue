@@ -150,6 +150,7 @@
 
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
+import { CoinGrantedEvent } from '~/models/enums/Coin.enum'
 import { UploadCategoryEnum } from '~/models/enums/Upload.enum'
 import type { ISendCoinsToAnotherUserPayload } from '~/models/request/WalletReq.model'
 import type { ICreateMessageData } from '~/models/response/ChatRes.model'
@@ -327,6 +328,9 @@ async function sendCoins (): Promise<void> {
     isSendCoinVisible.value = false
     formSendCoins.value.amount = 10
     formSendCoins.value.description = ''
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(CoinGrantedEvent.SPEND_COIN))
+    }
   }
 }
 
