@@ -52,6 +52,7 @@
 </template>
 
 <script setup lang="ts">
+import { CoinGrantedEvent } from '~/models/enums/Coin.enum'
 import type { ICreateMessageData } from '~/models/response/ChatRes.model'
 
 interface IProps {
@@ -63,12 +64,33 @@ const props = withDefaults(defineProps<IProps>(), {
   isOwn: false
 })
 
+const emit = defineEmits<{
+  coinEvent: [event: CoinGrantedEvent, message: ICreateMessageData]
+}>()
+
 function handleImageError (event: Event): void {
   const target = event.target as HTMLImageElement
   if (target) {
     target.src = props.isOwn ? '/svg/coin-logo-white.svg' : '/svg/coin-logo-black.svg'
   }
 }
+
+function getTargetCoinEvent (): CoinGrantedEvent {
+  return props.isOwn ? CoinGrantedEvent.SPEND_COIN : CoinGrantedEvent.GRANT_COIN
+}
+
+function dispatchCoinEvent (): void {
+  const event = getTargetCoinEvent()
+  emit('coinEvent', event, props.chat)
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(event, { detail: props.chat }))
+  }
+}
+
+defineExpose({
+  dispatchCoinEvent,
+  getTargetCoinEvent
+})
 </script>
 
 <style scoped></style>
