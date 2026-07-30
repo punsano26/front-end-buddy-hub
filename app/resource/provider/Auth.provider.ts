@@ -75,7 +75,7 @@ class AuthProvider extends HttpRequest implements IAuthProvider {
       headers: {
         'x-refresh-token': authStore.userToken.refreshToken
       },
-      query
+      params: query
     })
     return response
   }
