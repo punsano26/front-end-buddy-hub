@@ -133,8 +133,8 @@ async function useFetch (): Promise<void> {
     page: pagination.value.page,
     limit: pagination.value.limit
   })
-  sessions.value = Array.isArray(response?.data) ? response.data : []
-  pagination.value = extractPagination(response?.pagination)
+ sessions.value = response.data || []
+pagination.value = extractPagination(response.pagination)
 }
 
 function loadSessions (): void {
