@@ -1,5 +1,6 @@
 export enum CallEvent {
   CALL_INCOMING = 'call:incoming',
+  CALL_INITIATED = 'call:initiated',
   CALL_ACCEPTED = 'call:accepted',
   CALL_REJECTED = 'call:rejected',
   CALL_ENDED = 'call:ended',
