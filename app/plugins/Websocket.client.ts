@@ -332,9 +332,16 @@ export default defineNuxtPlugin((): any => {
           if (!isRecord(payload.data) || currentUserId <= 0) break
 
           const requesterId = toNumber(payload.data.requesterId)
-          if (!requesterId || requesterId === currentUserId) break
+          if (!requesterId) break
 
-          friendStore.markRequestCancelled(requesterId)
+          if (requesterId === currentUserId) {
+            const receiverId = toNumber(payload.data.receiverId)
+            if (receiverId) {
+              friendStore.clearOutgoingPending(receiverId)
+            }
+          } else {
+            friendStore.markRequestCancelled(requesterId)
+          }
 
           const notificationStore = useNotificationStore()
           void notificationStore.fetchNotifications()
@@ -373,6 +380,11 @@ export default defineNuxtPlugin((): any => {
 
           const data = payload.data
           if (isRecord(data)) {
+            const acceptedByUserId = toNumber(data.acceptedByUserId)
+            if (acceptedByUserId && acceptedByUserId === currentUserId) {
+              break
+            }
+
             const customerId = toNumber(data.customerId)
               || toNumber(data.customer_id)
               || toNumber(data.userId)
@@ -386,7 +398,6 @@ export default defineNuxtPlugin((): any => {
               || (isRecord(data.provider) ? toNumber(data.provider.userId) : null)
               || (isRecord(data.provider) ? toNumber(data.provider.user_id) : null)
 
-            const currentUserId = authStore.user.id
             const isParticipant = currentUserId > 0 && (
               currentUserId === customerId
               || currentUserId === providerId
@@ -413,6 +424,14 @@ export default defineNuxtPlugin((): any => {
         case MatchEvent.FRIEND_REQUEST:
         case MatchEvent.PERSISTED: {
           matchStore.pushSocketEvent(payload.event as MatchEvent, payload.data)
+          break
+        }
+
+        case CallEvent.CALL_INITIATED: {
+          const initiatedData = payload.data as any
+          if (initiatedData && typeof initiatedData.callId === 'number') {
+            callStore.setCallStatus(CallStatusEnum.RINGING)
+          }
           break
         }
 
