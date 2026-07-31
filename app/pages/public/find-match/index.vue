@@ -78,6 +78,12 @@ const payload = ref<IJoinTheRandomMatchQueuePayload>({
 })
 const { $handleLoading } = useNuxtApp()
 async function onMatch (): Promise<void> {
+  if (import.meta.client) {
+    const { $wsConnect } = useNuxtApp() as any
+    if (typeof $wsConnect === 'function') {
+      $wsConnect()
+    }
+  }
   await matchService.JoinTheRandomMatchQueue(payload.value)
   router.push({ name: 'public-find-match-loading' })
 }

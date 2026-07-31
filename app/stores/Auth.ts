@@ -53,11 +53,16 @@ export const useAuthStore = defineStore('Auth', (): IAuthStore => {
     }
 
     if (import.meta.client) {
-      const { $ws } = useNuxtApp()
-      const socket = $ws()
+      const { $ws, $wsConnect } = useNuxtApp() as any
+      const socket = $ws?.()
 
       if (socket) {
+        (socket as WebSocket & { __manualClose?: boolean }).__manualClose = true
         socket.close()
+      }
+
+      if (typeof $wsConnect === 'function') {
+        $wsConnect()
       }
     }
   }

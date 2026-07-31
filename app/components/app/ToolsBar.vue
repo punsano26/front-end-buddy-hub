@@ -57,7 +57,8 @@
             :to="{ name: 'public-chat' }">
             <OverlayBadge
               :show="unreadCount > 0"
-              :value="unreadCount">
+              :value="unreadCount"
+              severity="danger">
               <SecondaryButton
                 :class="navClass('public-chat', 'public-chat-id')"
                 icon="pi pi-comment"
