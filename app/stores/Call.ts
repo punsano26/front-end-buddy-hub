@@ -20,6 +20,28 @@ interface ICallState {
   }>
 }
 
+let callChannel: BroadcastChannel | null = null
+let endResetTimer: ReturnType<typeof setTimeout> | null = null
+let isListenerSet = false
+
+function getCallChannel (): BroadcastChannel | null {
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    if (!callChannel) {
+      callChannel = new BroadcastChannel('buddyhub_call_state')
+    }
+    return callChannel
+  }
+  return null
+}
+
+function postCallBroadcast (status: CallStatusEnum | null, data: IInitiateCallData | null): void {
+  getCallChannel()?.postMessage({
+    type: 'CALL_STATUS_CHANGE',
+    status,
+    data
+  })
+}
+
 export const useCallStore = defineStore('Call', {
   state: (): ICallState => ({
     callStatus: null,
@@ -31,7 +53,21 @@ export const useCallStore = defineStore('Call', {
   }),
 
   actions: {
-    setCallStatus (status: CallStatusEnum | null): void {
+    initBroadcastListener (): void {
+      const channel = getCallChannel()
+      if (channel && !isListenerSet) {
+        isListenerSet = true
+        channel.onmessage = (event: MessageEvent): void => {
+          const payload = event.data
+          if (payload && payload.type === 'CALL_STATUS_CHANGE') {
+            this.applyRemoteCallState(payload.status, payload.data)
+          }
+        }
+      }
+    },
+
+    setCallStatus (status: CallStatusEnum | null, broadcast: boolean = true): void {
+      this.initBroadcastListener()
       this.callStatus = status
       if (
         status === CallStatusEnum.ACCEPTED
@@ -40,14 +76,62 @@ export const useCallStore = defineStore('Call', {
       ) {
         this.incomingCallData = null
       }
+
+      if (endResetTimer) {
+        clearTimeout(endResetTimer)
+        endResetTimer = null
+      }
+
+      if (status === CallStatusEnum.ENDED || status === CallStatusEnum.MISSED) {
+        endResetTimer = setTimeout((): void => {
+          this.resetCallState(false)
+        }, 1500)
+      }
+
+      if (broadcast) {
+        postCallBroadcast(this.callStatus, this.callData)
+      }
     },
 
-    setCallData (data: IInitiateCallData | null): void {
+    setCallData (data: IInitiateCallData | null, broadcast: boolean = true): void {
+      this.initBroadcastListener()
       this.callData = data
+      if (broadcast) {
+        postCallBroadcast(this.callStatus, this.callData)
+      }
     },
 
     setIncomingCallData (data: IInitiateCallData | null): void {
+      this.initBroadcastListener()
       this.incomingCallData = data
+    },
+
+    applyRemoteCallState (status: CallStatusEnum | null, data: IInitiateCallData | null): void {
+      this.callStatus = status
+      if (data !== undefined) {
+        this.callData = data
+      }
+      if (
+        status === CallStatusEnum.ACCEPTED
+        || status === CallStatusEnum.ENDED
+        || status === CallStatusEnum.MISSED
+        || status === null
+      ) {
+        this.incomingCallData = null
+      }
+
+      if (endResetTimer) {
+        clearTimeout(endResetTimer)
+        endResetTimer = null
+      }
+
+      if (status === CallStatusEnum.ENDED || status === CallStatusEnum.MISSED) {
+        endResetTimer = setTimeout((): void => {
+          this.resetCallState(false)
+        }, 1500)
+      } else if (status === null) {
+        this.resetCallState(false)
+      }
     },
 
     setRemoteOffer (offer: { sdp: { type: string, sdp: string }, senderId: number } | null): void {
@@ -70,48 +154,69 @@ export const useCallStore = defineStore('Call', {
     },
 
     async initiateCall (id: TBaseParamsId): Promise<void> {
+      if (import.meta.client) {
+        const { $wsConnect } = useNuxtApp() as any
+        if (typeof $wsConnect === 'function') {
+          $wsConnect()
+        }
+      }
+      this.initBroadcastListener()
       const callsService = new CallProvider()
       const response = await callsService.InitiateCall(id)
       if (response?.data) {
         this.callData = response.data
-        this.callStatus = CallStatusEnum.RINGING
+        this.setCallStatus(CallStatusEnum.RINGING)
       }
     },
 
     async acceptIncomingCall (id: TBaseParamsId): Promise<void> {
+      this.initBroadcastListener()
       const callsService = new CallProvider()
       const response = await callsService.AcceptIncomingCall(id)
       if (response?.data) {
         this.callData = response.data
-        this.callStatus = CallStatusEnum.ACCEPTED
+        this.setCallStatus(CallStatusEnum.ACCEPTED)
         this.incomingCallData = null
       }
     },
 
     async rejectIncomingCall (id: TBaseParamsId): Promise<void> {
+      this.initBroadcastListener()
       const callsService = new CallProvider()
-      await callsService.RejectIncomingCall(id)
+      try {
+        await callsService.RejectIncomingCall(id)
+      } catch (err: any) {
+        console.error('[CallStore] RejectIncomingCall error:', err)
+      }
       this.resetCallState()
     },
 
     async endCall (id: TBaseParamsId): Promise<void> {
+      this.initBroadcastListener()
       const callsService = new CallProvider()
-      await callsService.EndCall(id)
-      this.callStatus = CallStatusEnum.ENDED
+      try {
+        await callsService.EndCall(id)
+      } catch (err: any) {
+        console.error('[CallStore] EndCall error:', err)
+      }
       this.callData = null
-      this.incomingCallData = null
-      this.remoteOffer = null
-      this.remoteAnswer = null
-      this.remoteIceCandidates = []
+      this.setCallStatus(CallStatusEnum.ENDED)
     },
 
-    resetCallState (): void {
+    resetCallState (broadcast: boolean = true): void {
+      if (endResetTimer) {
+        clearTimeout(endResetTimer)
+        endResetTimer = null
+      }
       this.callStatus = null
       this.callData = null
       this.incomingCallData = null
       this.remoteOffer = null
       this.remoteAnswer = null
       this.remoteIceCandidates = []
+      if (broadcast) {
+        postCallBroadcast(null, null)
+      }
     }
   }
 })
