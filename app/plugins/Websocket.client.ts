@@ -1,17 +1,18 @@
 import { watch } from 'vue'
+import { CallEvent, CallStatusEnum } from '~/models/enums/Call.enum'
 import { FriendRequestStatusEnum } from '~/models/enums/Friend.enum'
 import { MatchEvent } from '~/models/enums/Match.enum'
-import { RentEvent } from '~/models/enums/Rent.enum'
+import { RentEvent, RentSessionsEvent } from '~/models/enums/Rent.enum'
 import type { ICreateMessageData, IFindAllConversationsList, IMessageReadStatus } from '~/models/response/ChatRes.model'
 import ChatProvider, { type IChatProvider } from '~/resource/provider/Chat.provider'
 import { useAuthStore } from '~/stores/Auth'
+import { useCallStore } from '~/stores/Call'
 import { useChatStore } from '~/stores/Chat'
 import { useFriendStore } from '~/stores/Friend'
 import { useMatchStore } from '~/stores/Match'
 import { useNotificationStore } from '~/stores/Notification'
+import { useRentChatStore } from '~/stores/RentChat'
 import { useUserStore } from '~/stores/User'
-import { CallEvent, CallStatusEnum } from '~/models/enums/Call.enum'
-import { useCallStore } from '~/stores/Call'
 
 type TWebSocketEvent
   = 'users:list'
@@ -29,6 +30,7 @@ type TWebSocketEvent
     | 'notification_deleted'
     | MatchEvent
     | RentEvent
+    | RentSessionsEvent
     | CallEvent
 
 interface IWebSocketPayload {
@@ -168,8 +170,8 @@ export default defineNuxtPlugin((): any => {
         })
 
         const lastPage = response.pagination?.lastPage
-        totalPage = Number.isFinite(lastPage) && lastPage > 0
-          ? Math.floor(lastPage)
+        totalPage = Number.isFinite(lastPage) && Number(lastPage) > 0
+          ? Math.floor(Number(lastPage))
           : 1
 
         page += 1
@@ -189,6 +191,7 @@ export default defineNuxtPlugin((): any => {
     const accessToken = authStore.userToken.accessToken
 
     if (!Number.isFinite(userId) || userId <= 0) return
+    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return
 
     const wsUrl = accessToken
       ? `${import.meta.env.VITE_ENV_BASE_WS_API}?token=${accessToken}`
@@ -463,6 +466,24 @@ export default defineNuxtPlugin((): any => {
           break
         }
 
+        case RentSessionsEvent.SERVICE_NEW_MESSAGE:
+        case RentSessionsEvent.SERVICE_MESSAGE_UPDATED:
+        case RentSessionsEvent.SERVICE_MESSAGE_DELETED:
+        case RentSessionsEvent.SERVICE_MESSAGE_READ:
+        case RentSessionsEvent.SESSION_STARTED:
+        case RentSessionsEvent.SESSION_EXPIRED:
+        case RentSessionsEvent.SESSION_COMPLETED:
+        case RentSessionsEvent.SESSION_COMPLETING:
+        case RentSessionsEvent.SESSION_COMPLETING_EXPIRED: {
+          const rentChatStore = useRentChatStore()
+          if (rentChatStore.item?.id) {
+            rentChatStore.handleSocketMessage(event, rentChatStore.item.id, currentUserId)
+          }
+          if (payload.event === RentSessionsEvent.SERVICE_NEW_MESSAGE) {
+            void playNotificationSound()
+          }
+          break
+        }
 
         case 'notification_read':
         case 'notification_deleted': {
@@ -545,9 +566,20 @@ export default defineNuxtPlugin((): any => {
     }
   }, { immediate: true })
 
+  onNuxtReady((): void => {
+    if (authStore.userToken.accessToken && (!ws || ws.readyState !== WebSocket.OPEN)) {
+      connect()
+    }
+  })
+
   return {
     provide: {
-      ws: (): any => ws
+      ws: (): any => ws,
+      wsConnect: (): void => {
+        if (!ws || ws.readyState === WebSocket.CLOSED) {
+          connect()
+        }
+      }
     }
   }
 })
