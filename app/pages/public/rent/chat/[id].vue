@@ -51,24 +51,6 @@ const { $handleLoading } = useNuxtApp()
 const silentLoadingUnit = ref(false)
 const messagesListRef = ref<any>(null)
 
-let socket: WebSocket | null = null
-let socketInterval: any = null
-
-const handleSocketMessage = (event: MessageEvent): void => {
-  store.handleSocketMessage(event, id.value, authStore.user.id)
-}
-
-const setupSocket = (): void => {
-  const wsInstance = useNuxtApp().$ws() as WebSocket | null
-  if (wsInstance && wsInstance !== socket) {
-    if (socket) {
-      socket.removeEventListener('message', handleSocketMessage)
-    }
-    socket = wsInstance
-    socket.addEventListener('message', handleSocketMessage)
-  }
-}
-
 async function useFetch (): Promise<void> {
   await store.fetchSession(id.value)
 }
@@ -127,19 +109,11 @@ function showStickerAlert (): void {
 }
 
 onMounted((): void => {
-  setupSocket()
-  socketInterval = setInterval(setupSocket, 1000)
   fetch()
   fetchMessages()
 })
 
 onBeforeUnmount((): void => {
-  if (socket) {
-    socket.removeEventListener('message', handleSocketMessage)
-  }
-  if (socketInterval) {
-    clearInterval(socketInterval)
-  }
   store.clear()
 })
 
