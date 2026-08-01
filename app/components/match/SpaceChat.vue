@@ -47,6 +47,7 @@
     <!-- Chat Input Room Component -->
     <DirectMessageChatRoom
       v-model="messageText"
+      :allow-coin="allowCoin"
       :allow-media="false"
       class="shrink-0 border-t border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900 safe-area-pad px-3 py-2 z-10"
       @create-message="sendMessage" />
@@ -65,9 +66,12 @@ export interface IMatchMessage {
   isOwn: boolean
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   messages: IMatchMessage[]
-}>()
+  allowCoin?: boolean
+}>(), {
+  allowCoin: false
+})
 
 const dayjs = useDayjs()
 const messageText = ref('')
