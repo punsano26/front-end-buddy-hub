@@ -7,16 +7,19 @@ const normalizedSiteUrl = siteUrl.replace(/\/$/, '')
 // eslint-disable-next-line nuxt/nuxt-config-keys-order
 export default defineNuxtConfig({
   modules: [
-    '@nuxt/test-utils',
     '@nuxt/image',
     '@nuxt/hints',
-    '@nuxt/eslint',
     '@nuxt/fonts',
     '@nuxt/icon',
     '@pinia/nuxt',
     'pinia-plugin-persistedstate/nuxt',
     'dayjs-nuxt'
   ],
+
+  sourcemap: {
+    client: false,
+    server: false
+  },
 
   components: {
     dirs: [
@@ -129,7 +132,13 @@ export default defineNuxtConfig({
   vite: {
     plugins: [
       tailwindcss()
-    ]
+    ],
+    build: {
+      sourcemap: false,
+      rollupOptions: {
+        maxParallelFileOps: 2
+      }
+    }
   },
   dayjs: {
     locales: ['en', 'th'],
