@@ -17,6 +17,7 @@ COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 COPY . .
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN bun run build
 
 # Stage 2: Runtime
