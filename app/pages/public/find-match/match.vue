@@ -140,7 +140,9 @@
       @send-message="sendMessageSessionMatch" />
 
     <!-- Report Dialog -->
-    <ReportModalDialog v-model:visible="isReportDialogVisible" />
+    <ReportModalDialog
+      v-model:visible="isReportDialogVisible"
+      :reported-user-id="partnerUserId || 0" />
     <ConfirmModalDialog
       v-model:visible="dialogOpenConfirmLeaveSessionEarly"
       confirm-button="ใช่, ฉันต้องการออกจากเซสชัน"
