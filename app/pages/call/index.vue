@@ -243,11 +243,11 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { CallStatusEnum } from '~/models/enums/Call.enum'
 import type { IInitiateCallData } from '~/models/response/CallRes.model'
 import { useAuthStore } from '~/stores/Auth'
 import { useCallStore } from '~/stores/Call'
-import { storeToRefs } from 'pinia'
 
 definePageMeta({ layout: 'fullscreen' })
 
@@ -627,7 +627,7 @@ let waitCallingAudio: HTMLAudioElement | null = null
 function playWaitCallingSound (): void {
   if (typeof window === 'undefined') return
   stopWaitCallingSound()
-  waitCallingAudio = new Audio('/sound/waitcalling.mp3')
+  waitCallingAudio = new Audio('https://res.cloudinary.com/epusyfzi/video/upload/v1785598969/waitcalling_x7rbhg.mp3')
   waitCallingAudio.loop = true
   waitCallingAudio.play().catch((err: any): void => {
     console.warn('Autoplay prevented playing waitcalling ringtone:', err)
