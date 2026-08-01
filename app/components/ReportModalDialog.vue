@@ -67,10 +67,12 @@ import { useToast } from 'primevue/usetoast'
 import ReportProvider from '~/resource/provider/Report.provider'
 
 interface IProps {
-  reportedUserId: number
+  reportedUserId?: number
 }
 
-const props = defineProps<IProps>()
+const props = withDefaults(defineProps<IProps>(), {
+  reportedUserId: 0
+})
 
 const toast = useToast()
 const visible = defineModel<boolean>('visible', { default: false })
