@@ -88,6 +88,7 @@
       </template>
 
       <button
+        v-if="allowCoin"
         class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-200/50 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400 active:scale-95"
         type="button"
         @click="isSendCoinVisible = true">
@@ -138,6 +139,7 @@
 
     <!-- Send Coin Modal Dialog -->
     <SendCoinModalDialog
+      v-if="allowCoin"
       v-model:form-send-coins="formSendCoins"
       v-model:visible="isSendCoinVisible"
       :avatar="partnerProfileImg"
@@ -165,6 +167,7 @@ interface IProps {
   isEditing?: boolean
   partnerId?: number
   allowMedia?: boolean
+  allowCoin?: boolean
 }
 const { $handleLoading } = useNuxtApp()
 const emit = defineEmits<{
@@ -180,7 +183,8 @@ const props = withDefaults(defineProps<IProps>(), {
   modelValue: '',
   isEditing: false,
   partnerId: undefined,
-  allowMedia: true
+  allowMedia: true,
+  allowCoin: true
 })
 
 const messageModel = computed({
@@ -203,6 +207,7 @@ const partnerNickname = ref('')
 const partnerUsername = ref('')
 const partnerProfileImg = ref('')
 const coinBalance = ref(0)
+const allowCoin = computed((): boolean => props.allowCoin)
 
 async function fetchPartnerInfo (): Promise<void> {
   if (!props.partnerId) return
@@ -224,13 +229,17 @@ async function fetchWalletBalance (): Promise<void> {
 
 watch((): number | undefined => props.partnerId, (newId: number | undefined): void => {
   if (newId) {
-    fetchPartnerInfo()
+    if (props.allowCoin) {
+      fetchPartnerInfo()
+    }
     formSendCoins.value.receiverId = newId
   }
 }, { immediate: true })
 
 onMounted((): void => {
-  fetchWalletBalance()
+  if (props.allowCoin) {
+    fetchWalletBalance()
+  }
 })
 
 const isEditing = computed((): boolean => props.isEditing)
