@@ -13,14 +13,13 @@
 </template>
 
 <script setup lang="ts">
-import LoadingPopUp from '~/components/loading/LoadingPopUp.vue'
-import ConfirmCallDialog from '~/components/call/ConfirmCallDialog.vue'
-import type { IInitiateCallData } from '~/models/response/CallRes.model'
-import { useCallStore } from '~/stores/Call'
 import { storeToRefs } from 'pinia'
 import type { TErrorResponse } from './models/response/Response.model'
-
+import ConfirmCallDialog from '~/components/call/ConfirmCallDialog.vue'
+import LoadingPopUp from '~/components/loading/LoadingPopUp.vue'
 import { useTokenRefresh } from '~/composables/useTokenRefresh'
+import type { IInitiateCallData } from '~/models/response/CallRes.model'
+import { useCallStore } from '~/stores/Call'
 
 const route = useRoute()
 const router = useRouter()
@@ -38,7 +37,7 @@ let ringtoneAudio: HTMLAudioElement | null = null
 function playRingtone (): void {
   if (typeof window === 'undefined') return
   stopRingtone()
-  ringtoneAudio = new Audio('/sound/calling.mp3')
+  ringtoneAudio = new Audio('https://res.cloudinary.com/epusyfzi/video/upload/v1785598973/calling_lbhqjm.mp3')
   ringtoneAudio.loop = true
   ringtoneAudio.play().catch((err: TErrorResponse): void => {
     console.warn('Autoplay prevented playing incoming call ringtone:', err)
