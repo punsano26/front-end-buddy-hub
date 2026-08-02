@@ -13,6 +13,7 @@ import { useMatchStore } from '~/stores/Match'
 import { useNotificationStore } from '~/stores/Notification'
 import { useRentChatStore } from '~/stores/RentChat'
 import { useUserStore } from '~/stores/User'
+import { useChatRoomStore } from '~/stores/ChatRoom'
 
 type TWebSocketEvent
   = 'users:list'
@@ -261,6 +262,8 @@ export default defineNuxtPlugin((): any => {
           if (messageIds.length === 0) break
 
           chatStore.removeUnreadMessageIds(messageIds, currentUserId)
+          const chatRoomStore = useChatRoomStore()
+          chatRoomStore.markMessagesAsRead(messageIds)
           break
         }
 
