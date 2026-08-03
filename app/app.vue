@@ -60,49 +60,20 @@ watch(incomingCallData, (newVal: IInitiateCallData | null): void => {
   }
 })
 
-async function onAcceptCall (): Promise<void> {
+function clickAcceptCall (): void {
   if (!incomingCallData.value) return
 
-  // Detect computer/desktop
-  const isDesktop = typeof window !== 'undefined' && !((/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i).test(navigator.userAgent))
-
-  // Open window synchronously before the first await to bypass popup blocker
-  let newWindow: Window | null = null
-  if (isDesktop) {
-    const width = 450
-    const height = 650
-    const left = (window.screen.width - width) / 2
-    const top = (window.screen.height - height) / 2
-    newWindow = window.open('about:blank', '_blank', `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes`)
-  }
-
-  try {
+  $handleLoading(async (): Promise<void> => {
+    if (!incomingCallData.value) return
     await callStore.acceptIncomingCall(incomingCallData.value.id)
+    isConfirmCallDialogVisible.value = false
     if (callStore.callData) {
-      const resolved = router.resolve({
+      void router.push({
         name: 'call',
-        query: { callData: encodeURIComponent(JSON.stringify(callStore.callData)) }
+        query: { callData: JSON.stringify(callStore.callData) }
       })
-      if (newWindow) {
-        newWindow.location.href = resolved.href
-      } else {
-        void router.push(resolved)
-      }
-    } else {
-      if (newWindow) {
-        newWindow.close()
-      }
     }
-  } catch (error: TErrorResponse) {
-    if (newWindow) {
-      newWindow.close()
-    }
-    throw error
-  }
-}
-
-function clickAcceptCall (): void {
-  $handleLoading(onAcceptCall)
+  })
 }
 
 async function onRejectCall (): Promise<void> {
