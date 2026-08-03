@@ -595,8 +595,13 @@ watch(isMuted, (val: boolean): void => {
 })
 
 watch(remoteOffer, async (newOffer: { sdp: { type: string, sdp: string }, senderId: number } | null): Promise<void> => {
-  if (newOffer && !isCallerMe.value && peerConnection) {
-    await handleIncomingOffer(newOffer)
+  if (newOffer && !isCallerMe.value) {
+    if (!peerConnection) {
+      await startCallFlow()
+    }
+    if (peerConnection) {
+      await handleIncomingOffer(newOffer)
+    }
   }
 })
 
@@ -639,7 +644,14 @@ function stopWaitCallingSound (): void {
   }
 }
 
+let closeWindowTimer: ReturnType<typeof setTimeout> | null = null
+
 watch(callStatus, (newStatus: CallStatusEnum | null): void => {
+  if (closeWindowTimer !== null) {
+    clearTimeout(closeWindowTimer)
+    closeWindowTimer = null
+  }
+
   if (newStatus === CallStatusEnum.RINGING) {
     playWaitCallingSound()
   } else if (newStatus === CallStatusEnum.ACCEPTED) {
@@ -652,23 +664,27 @@ watch(callStatus, (newStatus: CallStatusEnum | null): void => {
   ) {
     stopWaitCallingSound()
     cleanupWebRTC()
-    setTimeout((): void => {
-      if (typeof window !== 'undefined' && window.opener) {
-        window.close()
-      } else {
-        router.back()
-      }
+    closeWindowTimer = setTimeout((): void => {
+      router.back()
     }, 1000)
   }
 }, { immediate: true })
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted((): void => {
-  if (!callData.value) {
+  const raw = route.query.callData as string | undefined
+  if (raw) {
     try {
-      const raw = route.query.callData as string | undefined
-      if (raw) {
-        const parsed = JSON.parse(decodeURIComponent(raw)) as IInitiateCallData
+      let text = raw
+      if (text.startsWith('%')) {
+        try {
+          text = decodeURIComponent(text)
+        } catch {
+          // Keep raw
+        }
+      }
+      const parsed = JSON.parse(text) as IInitiateCallData
+      if (parsed && typeof parsed.id === 'number') {
         callStore.setCallData(parsed)
         const currentUserId = authStore.user.id
         const isCaller = currentUserId > 0 && parsed.callerId === currentUserId
@@ -698,6 +714,10 @@ onMounted((): void => {
 })
 
 onUnmounted((): void => {
+  if (closeWindowTimer !== null) {
+    clearTimeout(closeWindowTimer)
+    closeWindowTimer = null
+  }
   cleanupWebRTC()
   stopWaitCallingSound()
 })

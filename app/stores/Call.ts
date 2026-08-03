@@ -70,8 +70,7 @@ export const useCallStore = defineStore('Call', {
       this.initBroadcastListener()
       this.callStatus = status
       if (
-        status === CallStatusEnum.ACCEPTED
-        || status === CallStatusEnum.ENDED
+        status === CallStatusEnum.ENDED
         || status === CallStatusEnum.MISSED
       ) {
         this.incomingCallData = null
@@ -88,7 +87,7 @@ export const useCallStore = defineStore('Call', {
         }, 1500)
       }
 
-      if (broadcast) {
+      if (broadcast && status !== CallStatusEnum.ACCEPTED) {
         postCallBroadcast(this.callStatus, this.callData)
       }
     },
@@ -112,8 +111,7 @@ export const useCallStore = defineStore('Call', {
         this.callData = data
       }
       if (
-        status === CallStatusEnum.ACCEPTED
-        || status === CallStatusEnum.ENDED
+        status === CallStatusEnum.ENDED
         || status === CallStatusEnum.MISSED
         || status === null
       ) {
