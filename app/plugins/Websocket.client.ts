@@ -448,6 +448,10 @@ export default defineNuxtPlugin((): any => {
 
         case CallEvent.CALL_INCOMING: {
           const callData = payload.data as any
+          const authStore = useAuthStore()
+          if (authStore.user?.id && callData?.callerId === authStore.user.id) {
+            break
+          }
           if (callData && typeof callData.callId === 'number' && !callData.id) {
             callData.id = callData.callId
           }
