@@ -147,44 +147,32 @@ function fetch (): void {
 
 // ─── Call Actions ──────────────────────────────────────────────────────────────
 function clickCall (): void {
-  if (!user.value) return
+  const targetUser = user.value
+  if (!targetUser) return
 
-  // Detect computer/desktop
   const isDesktop = typeof window !== 'undefined' && !((/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i).test(navigator.userAgent))
 
-  // Open window/popup synchronously at the very start of click handler to bypass browser popup blocker
-  let newWindow: Window | null = null
   if (isDesktop) {
     const width = 450
     const height = 650
     const left = (window.screen.width - width) / 2
     const top = (window.screen.height - height) / 2
-    newWindow = window.open('about:blank', '_blank', `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes`)
-  }
-
-  $handleLoading(async (): Promise<void> => {
-    try {
-      await callStore.initiateCall(user.value!.id)
+    const resolved = router.resolve({
+      name: 'call',
+      query: { targetId: String(targetUser.id) }
+    })
+    window.open(resolved.href, 'buddyhub_call_window', `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes`)
+  } else {
+    $handleLoading(async (): Promise<void> => {
+      await callStore.initiateCall(targetUser.id)
       if (callStore.callData) {
-        const resolved = router.resolve({
+        void router.push({
           name: 'call',
           query: { callData: JSON.stringify(callStore.callData) }
         })
-        if (newWindow) {
-          newWindow.location.href = resolved.href
-        } else {
-          void router.push(resolved)
-        }
-      } else if (newWindow) {
-        newWindow.close()
       }
-    } catch (error: any) {
-      if (newWindow) {
-        newWindow.close()
-      }
-      throw error
-    }
-  })
+    })
+  }
 }
 </script>
 
