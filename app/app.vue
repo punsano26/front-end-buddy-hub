@@ -63,17 +63,31 @@ watch(incomingCallData, (newVal: IInitiateCallData | null): void => {
 function clickAcceptCall (): void {
   if (!incomingCallData.value) return
 
-  $handleLoading(async (): Promise<void> => {
-    if (!incomingCallData.value) return
-    await callStore.acceptIncomingCall(incomingCallData.value.id)
-    isConfirmCallDialogVisible.value = false
-    if (callStore.callData) {
-      void router.push({
-        name: 'call',
-        query: { callData: JSON.stringify(callStore.callData) }
-      })
+  const callId = incomingCallData.value.id
+  isConfirmCallDialogVisible.value = false
+  stopRingtone()
+
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768
+  if (isDesktop) {
+    const resolved = router.resolve({
+      name: 'call',
+      query: { acceptCallId: String(callId) }
+    })
+    const newWin = window.open(resolved.href, 'buddyhub_call_window', 'width=450,height=650,scrollbars=no,resizable=no,status=no,location=no,toolbar=no,menubar=no')
+    if (newWin) {
+      newWin.focus()
     }
-  })
+  } else {
+    $handleLoading(async (): Promise<void> => {
+      await callStore.acceptIncomingCall(callId)
+      if (callStore.callData) {
+        void router.push({
+          name: 'call',
+          query: { callData: JSON.stringify(callStore.callData) }
+        })
+      }
+    })
+  }
 }
 
 async function onRejectCall (): Promise<void> {

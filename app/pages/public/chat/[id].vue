@@ -323,48 +323,40 @@ function handleCoinMessageEvent(event: CoinGrantedEvent, message: ICreateMessage
 }
 
 function clickCall(): void {
+  const targetId = id.value;
+  if (!targetId) return;
+
   const isDesktop =
     typeof window !== "undefined" &&
     !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent,
     );
 
-  let newWindow: Window | null = null;
   if (isDesktop) {
     const width = 450;
     const height = 650;
     const left = (window.screen.width - width) / 2;
     const top = (window.screen.height - height) / 2;
-    newWindow = window.open(
-      "about:blank",
-      "_blank",
+    const resolved = useRouter().resolve({
+      name: "call",
+      query: { targetId: String(targetId) },
+    });
+    window.open(
+      resolved.href,
+      "buddyhub_call_window",
       `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes`,
     );
-  }
-
-  $handleLoading(async (): Promise<void> => {
-    try {
-      await callStore.initiateCall(id.value);
+  } else {
+    $handleLoading(async (): Promise<void> => {
+      await callStore.initiateCall(targetId);
       if (callStore.callData) {
-        const resolved = useRouter().resolve({
+        void useRouter().push({
           name: "call",
           query: { callData: JSON.stringify(callStore.callData) },
         });
-        if (newWindow) {
-          newWindow.location.href = resolved.href;
-        } else {
-          void useRouter().push(resolved);
-        }
-      } else if (newWindow) {
-        newWindow.close();
       }
-    } catch (error: any) {
-      if (newWindow) {
-        newWindow.close();
-      }
-      throw error;
-    }
-  });
+    });
+  }
 }
 
 function resolveMediaUrl(value: string): string {
