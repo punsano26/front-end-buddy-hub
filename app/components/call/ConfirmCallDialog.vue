@@ -167,7 +167,6 @@ const callerInitial = computed((): string => (callerName.value?.[0] ?? '?').toUp
 function onClickAcceptCall (): void {
   if (props.isSubmitting) return
   emit('accept')
-  visible.value = false
 }
 
 function onClickRejectCall (): void {
