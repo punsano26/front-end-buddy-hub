@@ -653,8 +653,10 @@ watch(callStatus, (newStatus: CallStatusEnum | null): void => {
   }
 
   if (newStatus === CallStatusEnum.RINGING) {
+    if (typeof window !== 'undefined') window.focus()
     playWaitCallingSound()
   } else if (newStatus === CallStatusEnum.ACCEPTED) {
+    if (typeof window !== 'undefined') window.focus()
     stopWaitCallingSound()
     startTimer()
     void startCallFlow()
@@ -665,15 +667,27 @@ watch(callStatus, (newStatus: CallStatusEnum | null): void => {
     stopWaitCallingSound()
     cleanupWebRTC()
     closeWindowTimer = setTimeout((): void => {
-      router.back()
+      if (typeof window !== 'undefined' && window.opener && !window.opener.closed) {
+        window.close()
+      } else {
+        router.back()
+      }
     }, 1000)
   }
 }, { immediate: true })
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
-onMounted((): void => {
+onMounted(async (): Promise<void> => {
   const raw = route.query.callData as string | undefined
-  if (raw) {
+  const targetId = route.query.targetId as string | undefined
+  const acceptCallId = route.query.acceptCallId as string | undefined
+
+  if (acceptCallId) {
+    const numericAcceptId = Number(acceptCallId)
+    if (!Number.isNaN(numericAcceptId) && numericAcceptId > 0) {
+      await callStore.acceptIncomingCall(numericAcceptId)
+    }
+  } else if (raw) {
     try {
       let text = raw
       if (text.startsWith('%')) {
@@ -696,6 +710,11 @@ onMounted((): void => {
       }
     } catch (err: any) {
       console.error('Error parsing callData query parameter:', err)
+    }
+  } else if (targetId) {
+    const numericTargetId = Number(targetId)
+    if (!Number.isNaN(numericTargetId) && numericTargetId > 0) {
+      await callStore.initiateCall(numericTargetId)
     }
   }
 
