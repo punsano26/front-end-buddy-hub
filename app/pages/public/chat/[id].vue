@@ -322,7 +322,7 @@ function handleCoinMessageEvent(event: CoinGrantedEvent, message: ICreateMessage
   }
 }
 
-async function onClickCall(): Promise<void> {
+function clickCall(): void {
   const isDesktop =
     typeof window !== "undefined" &&
     !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -342,31 +342,29 @@ async function onClickCall(): Promise<void> {
     );
   }
 
-  try {
-    await callStore.initiateCall(id.value);
-    if (callStore.callData) {
-      const resolved = useRouter().resolve({
-        name: "call",
-        query: { callData: encodeURIComponent(JSON.stringify(callStore.callData)) },
-      });
-      if (newWindow) {
-        newWindow.location.href = resolved.href;
-      } else {
-        void useRouter().push(resolved);
+  $handleLoading(async (): Promise<void> => {
+    try {
+      await callStore.initiateCall(id.value);
+      if (callStore.callData) {
+        const resolved = useRouter().resolve({
+          name: "call",
+          query: { callData: JSON.stringify(callStore.callData) },
+        });
+        if (newWindow) {
+          newWindow.location.href = resolved.href;
+        } else {
+          void useRouter().push(resolved);
+        }
+      } else if (newWindow) {
+        newWindow.close();
       }
-    } else if (newWindow) {
-      newWindow.close();
+    } catch (error: any) {
+      if (newWindow) {
+        newWindow.close();
+      }
+      throw error;
     }
-  } catch (error: any) {
-    if (newWindow) {
-      newWindow.close();
-    }
-    throw error;
-  }
-}
-
-function clickCall(): void {
-  $handleLoading(onClickCall);
+  });
 }
 
 function resolveMediaUrl(value: string): string {
