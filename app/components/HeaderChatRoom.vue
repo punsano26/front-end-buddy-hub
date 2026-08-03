@@ -146,13 +146,13 @@ function fetch (): void {
 }
 
 // ─── Call Actions ──────────────────────────────────────────────────────────────
-async function onClickCall (): Promise<void> {
+function clickCall (): void {
   if (!user.value) return
 
   // Detect computer/desktop
   const isDesktop = typeof window !== 'undefined' && !((/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i).test(navigator.userAgent))
 
-  // Open window/popup synchronously before the first await to bypass popup blocker
+  // Open window/popup synchronously at the very start of click handler to bypass browser popup blocker
   let newWindow: Window | null = null
   if (isDesktop) {
     const width = 450
@@ -162,33 +162,29 @@ async function onClickCall (): Promise<void> {
     newWindow = window.open('about:blank', '_blank', `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes`)
   }
 
-  try {
-    await callStore.initiateCall(user.value.id)
-    if (callStore.callData) {
-      const resolved = router.resolve({
-        name: 'call',
-        query: { callData: encodeURIComponent(JSON.stringify(callStore.callData)) }
-      })
-      if (newWindow) {
-        newWindow.location.href = resolved.href
-      } else {
-        void router.push(resolved)
+  $handleLoading(async (): Promise<void> => {
+    try {
+      await callStore.initiateCall(user.value!.id)
+      if (callStore.callData) {
+        const resolved = router.resolve({
+          name: 'call',
+          query: { callData: JSON.stringify(callStore.callData) }
+        })
+        if (newWindow) {
+          newWindow.location.href = resolved.href
+        } else {
+          void router.push(resolved)
+        }
+      } else if (newWindow) {
+        newWindow.close()
       }
-    } else {
+    } catch (error: any) {
       if (newWindow) {
         newWindow.close()
       }
+      throw error
     }
-  } catch (error) {
-    if (newWindow) {
-      newWindow.close()
-    }
-    throw error
-  }
-}
-
-function clickCall (): void {
-  $handleLoading(onClickCall)
+  })
 }
 </script>
 
