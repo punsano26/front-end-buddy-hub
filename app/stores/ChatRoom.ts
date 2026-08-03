@@ -64,6 +64,17 @@ export const useChatRoomStore = defineStore('ChatRoom', {
       this.messages = []
     },
 
+    markMessagesAsRead (messageIds: number[]): void {
+      if (!Array.isArray(messageIds) || messageIds.length === 0) return
+
+      this.messages = this.messages.map((item: IChatMessageItem): IChatMessageItem => {
+        if (messageIds.includes(item.id)) {
+          return { ...item, isRead: true }
+        }
+        return item
+      })
+    },
+
     getSendError (receiverId: number): string {
       if (receiverId <= 0) return ''
 

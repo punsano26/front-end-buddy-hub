@@ -442,14 +442,7 @@ const { removeSocketListener, startSocketSync, stopSocketSync } =
       void scrollToBottom();
     },
     onMessagesRead: (messageIds: number[]): void => {
-      chatData.value = chatData.value.map(
-        (message: ICreateMessageData): ICreateMessageData => {
-          if (messageIds.includes(message.id)) {
-            return { ...message, isRead: true };
-          }
-          return message;
-        },
-      );
+      chatRoomStore.markMessagesAsRead(messageIds);
     },
     onMessageDeleted: (messageId: number): void => {
       chatData.value = chatData.value.filter(
@@ -570,9 +563,20 @@ onMounted((): void => {
 
   screenQuery.addEventListener('change', handleScreenChange);
 
+  const handleWindowFocus = (): void => {
+    if (document.visibilityState === 'visible') {
+      void markMessagesAsRead();
+    }
+  };
+
+  window.addEventListener('focus', handleWindowFocus);
+  document.addEventListener('visibilitychange', handleWindowFocus);
+
   onUnmounted((): void => {
     screenQuery?.removeEventListener('change', handleScreenChange);
     screenQuery = null;
+    window.removeEventListener('focus', handleWindowFocus);
+    document.removeEventListener('visibilitychange', handleWindowFocus);
   });
 });
 
