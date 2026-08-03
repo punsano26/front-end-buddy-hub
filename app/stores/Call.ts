@@ -3,6 +3,7 @@ import { CallStatusEnum } from '~/models/enums/Call.enum'
 import type { TBaseParamsId } from '~/models/request/Request.model'
 import type { IInitiateCallData } from '~/models/response/CallRes.model'
 import CallProvider from '~/resource/provider/Call.provider'
+import { useAuthStore } from '~/stores/Auth'
 
 interface ICallState {
   callStatus: CallStatusEnum | null
@@ -102,6 +103,10 @@ export const useCallStore = defineStore('Call', {
 
     setIncomingCallData (data: IInitiateCallData | null): void {
       this.initBroadcastListener()
+      const authStore = useAuthStore()
+      if (data && authStore.user?.id && data.callerId === authStore.user.id) {
+        return
+      }
       this.incomingCallData = data
     },
 
