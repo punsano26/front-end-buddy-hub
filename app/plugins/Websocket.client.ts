@@ -433,6 +433,14 @@ export default defineNuxtPlugin((): any => {
         case CallEvent.CALL_INITIATED: {
           const initiatedData = payload.data as any
           if (initiatedData && typeof initiatedData.callId === 'number') {
+            if (!initiatedData.id) {
+              initiatedData.id = initiatedData.callId
+            }
+            callStore.setCallData({
+              ...(callStore.callData || {}),
+              ...initiatedData,
+              id: initiatedData.callId || initiatedData.id
+            }, false)
             callStore.setCallStatus(CallStatusEnum.RINGING)
           }
           break
@@ -449,6 +457,15 @@ export default defineNuxtPlugin((): any => {
         }
 
         case CallEvent.CALL_ACCEPTED: {
+          const acceptedData = payload.data as any
+          if (acceptedData && (acceptedData.callId || acceptedData.id)) {
+            const merged = {
+              ...(callStore.callData || {}),
+              ...acceptedData,
+              id: acceptedData.callId || acceptedData.id
+            }
+            callStore.setCallData(merged, false)
+          }
           callStore.setCallStatus(CallStatusEnum.ACCEPTED)
           break
         }
