@@ -552,7 +552,7 @@ export default defineNuxtPlugin((): any => {
     }
   }
 
-  watch((): string => authStore.userToken.accessToken, (token: string): void => {
+  watch((): string => authStore.userToken.accessToken, (token: string, oldToken?: string): void => {
     if (token) {
       chatStore.setActiveUserId(authStore.user.id)
       void syncUnreadCountOnLogin()
@@ -562,7 +562,7 @@ export default defineNuxtPlugin((): any => {
       connect()
     }
 
-    if (!token) {
+    if (!token && oldToken) {
       unreadSyncedUserId = null
       isSyncingUnreadOnLogin = false
       chatStore.setActiveUserId(null)
