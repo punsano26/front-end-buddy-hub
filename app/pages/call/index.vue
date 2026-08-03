@@ -273,7 +273,7 @@ const remoteStream = ref<MediaStream | null>(null)
 let localStream: MediaStream | null = null
 let peerConnection: RTCPeerConnection | null = null
 let isWebrtcInitialized = false
-let offerInterval: ReturnType<typeof setInterval> | null = null
+const processedIceCandidates = new Set<string>()
 
 const iceServers = [
   { urls: 'stun:stun.l.google.com:19302' },
@@ -411,6 +411,9 @@ async function initPeerConnection (): Promise<void> {
       remoteStream.value = event.streams[0]
       if (remoteAudioRef.value) {
         remoteAudioRef.value.srcObject = event.streams[0]
+        remoteAudioRef.value.play().catch((err: any): void => {
+          console.warn('Audio play error:', err)
+        })
       }
     }
   }
@@ -421,6 +424,31 @@ async function initPeerConnection (): Promise<void> {
         peerConnection.addTrack(track, localStream)
       }
     })
+  }
+}
+
+async function sendOfferOnce (): Promise<void> {
+  if (!peerConnection) return
+  const isConnected = peerConnection.connectionState === 'connected'
+    || peerConnection.iceConnectionState === 'connected'
+  if (isConnected) return
+
+  try {
+    const offer = await peerConnection.createOffer()
+    await peerConnection.setLocalDescription(offer)
+
+    const socket = $ws()
+    if (socket && socket.readyState === WebSocket.OPEN && callData.value) {
+      socket.send(JSON.stringify({
+        event: 'call:offer',
+        data: {
+          callId: callData.value.id,
+          sdp: { type: offer.type, sdp: offer.sdp }
+        }
+      }))
+    }
+  } catch (err: any) {
+    console.error('Failed to create/send offer:', err)
   }
 }
 
@@ -435,53 +463,18 @@ async function startCallFlow (): Promise<void> {
         track.enabled = false
       })
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to get local stream:', err)
   }
 
   await initPeerConnection()
 
+  if (!isCallerMe.value && remoteOffer.value) {
+    await handleIncomingOffer(remoteOffer.value)
+  }
+
   if (isCallerMe.value) {
-    const sendOffer = async (): Promise<void> => {
-      if (!peerConnection) return
-      const isConnected = peerConnection.connectionState === 'connected'
-        || peerConnection.iceConnectionState === 'connected'
-      if (isConnected) {
-        if (offerInterval) {
-          clearInterval(offerInterval)
-          offerInterval = null
-        }
-        return
-      }
-
-      try {
-        const offer = await peerConnection.createOffer()
-        await peerConnection.setLocalDescription(offer)
-
-        const socket = $ws()
-        if (socket && socket.readyState === WebSocket.OPEN && callData.value) {
-          socket.send(JSON.stringify({
-            event: 'call:offer',
-            data: {
-              callId: callData.value.id,
-              sdp: { type: offer.type, sdp: offer.sdp }
-            }
-          }))
-        }
-      } catch (err: any) {
-        console.error('Failed to create/send offer:', err)
-      }
-    }
-
-    void sendOffer()
-
-    offerInterval = setInterval((): void => {
-      void sendOffer()
-    }, 3000)
-  } else {
-    if (remoteOffer.value) {
-      await handleIncomingOffer(remoteOffer.value)
-    }
+    await sendOfferOnce()
   }
 }
 
@@ -507,7 +500,7 @@ async function handleIncomingOffer (offer: { sdp: { type: string, sdp: string },
     }
 
     await processQueuedIceCandidates()
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to handle incoming offer:', err)
   }
 }
@@ -520,31 +513,41 @@ async function handleIncomingAnswer (answer: { sdp: { type: string, sdp: string 
       sdp: answer.sdp.sdp
     })
     await processQueuedIceCandidates()
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to handle incoming answer:', err)
+  }
+}
+
+async function addCandidateSafely (item: {
+  candidate: {
+    candidate: string
+    sdpMid?: string | null
+    sdpMLineIndex?: number | null
+  }
+  senderId: number
+}): Promise<void> {
+  if (!peerConnection || !peerConnection.remoteDescription) return
+  if (item.senderId === authStore.user.id) return
+  const rawCand = item.candidate?.candidate
+  if (!rawCand || processedIceCandidates.has(rawCand)) return
+  processedIceCandidates.add(rawCand)
+
+  try {
+    await peerConnection.addIceCandidate(new RTCIceCandidate(item.candidate))
+  } catch (err: any) {
+    console.error('Error adding ICE candidate:', err)
   }
 }
 
 async function processQueuedIceCandidates (): Promise<void> {
   if (!peerConnection || !peerConnection.remoteDescription) return
   for (const item of remoteIceCandidates.value) {
-    if (item.senderId !== authStore.user.id) {
-      try {
-        await peerConnection.addIceCandidate(new RTCIceCandidate(item.candidate))
-      } catch (err) {
-        console.error('Error adding ICE candidate:', err)
-      }
-    }
+    await addCandidateSafely(item)
   }
 }
 
 function cleanupWebRTC (): void {
   stopTimer()
-
-  if (offerInterval) {
-    clearInterval(offerInterval)
-    offerInterval = null
-  }
 
   if (peerConnection) {
     peerConnection.ontrack = null
@@ -561,7 +564,7 @@ function cleanupWebRTC (): void {
     localStream.getTracks().forEach((track: MediaStreamTrack): void => {
       try {
         track.stop()
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error stopping track:', err)
       }
     })
@@ -573,6 +576,7 @@ function cleanupWebRTC (): void {
   }
 
   remoteStream.value = null
+  processedIceCandidates.clear()
   isWebrtcInitialized = false
 }
 
@@ -612,13 +616,7 @@ watch(remoteIceCandidates, async (candidates: Array<{
 }>): Promise<void> => {
   if (!peerConnection || !peerConnection.remoteDescription) return
   for (const item of candidates) {
-    if (item.senderId !== authStore.user.id) {
-      try {
-        await peerConnection.addIceCandidate(new RTCIceCandidate(item.candidate))
-      } catch (err) {
-        console.error('Error adding ICE candidate:', err)
-      }
-    }
+    await addCandidateSafely(item)
   }
 }, { deep: true })
 
@@ -672,27 +670,24 @@ onMounted((): void => {
       if (raw) {
         const parsed = JSON.parse(decodeURIComponent(raw)) as IInitiateCallData
         callStore.setCallData(parsed)
-        const isCaller = parsed.callerId === authStore.user.id
-        if (parsed.status === 'ACCEPTED' || !isCaller) {
+        const currentUserId = authStore.user.id
+        const isCaller = currentUserId > 0 && parsed.callerId === currentUserId
+        if (parsed.status === 'ACCEPTED' || (!isCaller && currentUserId > 0)) {
           callStore.setCallStatus(CallStatusEnum.ACCEPTED)
         } else {
           callStore.setCallStatus(CallStatusEnum.RINGING)
         }
       }
-    } catch {
-      // Ignore parse errors
+    } catch (err: any) {
+      console.error('Error parsing callData query parameter:', err)
     }
   }
 
-  if (callData.value && callData.value.callerId !== authStore.user.id) {
+  if (callData.value && authStore.user.id > 0 && callData.value.callerId !== authStore.user.id) {
     callStore.setCallStatus(CallStatusEnum.ACCEPTED)
   }
 
   if (!callData.value) {
-    // dev fallback: simulate ringing → accepted
-    setTimeout((): void => {
-      callStore.setCallStatus(CallStatusEnum.ACCEPTED)
-    }, 3000)
     return
   }
 

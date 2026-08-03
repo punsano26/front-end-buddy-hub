@@ -129,7 +129,7 @@ export const useCallStore = defineStore('Call', {
         endResetTimer = setTimeout((): void => {
           this.resetCallState(false)
         }, 1500)
-      } else if (status === null) {
+      } else if (status === null && this.callStatus !== null) {
         this.resetCallState(false)
       }
     },
