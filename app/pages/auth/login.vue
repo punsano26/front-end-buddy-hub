@@ -1,8 +1,8 @@
 <template>
-  <div>
+  <form @submit.prevent="login">
     <div
       v-if="route.query.banned === 'true'"
-      class="p-4 mb-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm flex flex-col gap-1">
+      class="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm flex flex-col gap-1">
       <div class="font-bold flex items-center gap-2">
         <span>⚠️</span>
         <span>บัญชีถูกระงับการใช้งาน</span>
@@ -15,32 +15,30 @@
       </div>
     </div>
 
-    <form @submit.prevent="login">
-      <InputLabelField
-        v-model="form.account"
-        :disabled="!!route.query.account"
-        :rules="formRules.account"
-        :show-error="submitted"
-        label="อีเมลหรือชื่อผู้ใช้"
-        placeholder="กรอกอีเมลหรือชื่อผู้ใช้ของคุณ"
-        required />
-      <InputPasswordField
-        v-model="form.password"
-        :rules="formRules.password"
-        :show-error="submitted"
-        label="รหัสผ่าน" />
-      <Button
-        label="เข้าสู่ระบบ"
-        pt:label:class="font-bold"
-        pt:root:class="bg-gradient-primary border-none rounded-xl py-3"
-        type="submit" />
-      <NuxtLink
-        :to="{ name: 'auth-forgot-password', query: { from: 'login' } }"
-        class="text-center text-blue-400">
-        ลืมรหัสผ่าน ?
-      </NuxtLink>
-    </form>
-  </div>
+    <InputLabelField
+      v-model="form.account"
+      :disabled="!!route.query.account"
+      :rules="formRules.account"
+      :show-error="submitted"
+      label="อีเมลหรือชื่อผู้ใช้"
+      placeholder="กรอกอีเมลหรือชื่อผู้ใช้ของคุณ"
+      required />
+    <InputPasswordField
+      v-model="form.password"
+      :rules="formRules.password"
+      :show-error="submitted"
+      label="รหัสผ่าน" />
+    <Button
+      label="เข้าสู่ระบบ"
+      pt:label:class="font-bold"
+      pt:root:class="bg-gradient-primary border-none rounded-xl py-3"
+      type="submit" />
+    <NuxtLink
+      :to="{ name: 'auth-forgot-password', query: { from: 'login' } }"
+      class="text-center text-blue-400">
+      ลืมรหัสผ่าน ?
+    </NuxtLink>
+  </form>
 </template>
 
 <script setup lang="ts">
