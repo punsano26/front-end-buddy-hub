@@ -29,7 +29,7 @@
       <Card pt:root:class="rounded-xl bg-white/60 dark:bg-surface-800/60 backdrop-blur shadow-sm">
         <template #content>
           <div class="flex flex-col items-center gap-1 py-2">
-            <p class="text-lg font-bold text-green-500">13</p>
+            <p class="text-lg font-bold text-green-500">{{ formattedOnlineCount }}</p>
             <p class="text-xs text-surface-500">ออนไลน์</p>
           </div>
         </template>
@@ -37,17 +37,16 @@
       <Card pt:root:class="rounded-xl bg-white/60 dark:bg-surface-800/60 backdrop-blur shadow-sm">
         <template #content>
           <div class="flex flex-col items-center gap-1 py-2">
-            <p class="text-lg font-bold text-primary">132</p>
+            <p class="text-lg font-bold text-primary">{{ formattedTotalUsers }}</p>
             <p class="text-xs text-surface-500">ผู้ใช้ทั้งหมด</p>
           </div>
         </template>
       </Card>
 
-     
       <Card pt:root:class="rounded-xl bg-white/60 dark:bg-surface-800/60 backdrop-blur shadow-sm">
         <template #content>
           <div class="flex flex-col items-center gap-1 py-2">
-            <p class="text-lg font-bold text-indigo-500">~1 นาที</p>
+            <p class="text-lg font-bold text-indigo-500">{{ estimatedWaitTime }}</p>
             <p class="text-xs text-surface-500">เวลารอ</p>
           </div>
         </template>
@@ -65,18 +64,142 @@ import { genderQueryEnum } from '~/models/enums/User.enum'
 import type { IJoinTheRandomMatchQueuePayload } from '~/models/request/MatchReq.model'
 import type { IMatchProvider } from '~/resource/provider/Match.provider'
 import MatchProvider from '~/resource/provider/Match.provider'
+import UserProvider from '~/resource/provider/User.provider'
+import { useAuthStore } from '~/stores/Auth'
+import { useUserStore } from '~/stores/User'
+import type { TErrorResponse } from '~/models/response/Response.model'
+
+interface IUserPresence {
+  id?: number
+  isOnline?: boolean
+}
 
 definePageMeta({ layout: "navbar" })
 
 const matchService: IMatchProvider = new MatchProvider()
+const userService = new UserProvider()
 const toast = useToast()
 const router = useRouter()
+const { $ws } = useNuxtApp()
+const authStore = useAuthStore()
+const userStore = useUserStore()
+
 const payload = ref<IJoinTheRandomMatchQueuePayload>({
   gender: genderQueryEnum.ALL,
   minAge: 16,
   maxAge: 26
 })
+
+// --- Real-time online count (via WebSocket, same pattern as index.vue) ---
+const safeUsers = computed<IUserPresence[]>((): IUserPresence[] => {
+  return Array.isArray(userStore.users) ? userStore.users : []
+})
+
+const onlineCount = computed<number>((): number => {
+  if (!safeUsers.value.length) return 0
+
+  const currentUserId = authStore.user.id
+  const onlineFromUsers = safeUsers.value.filter((user: IUserPresence): boolean => !!user?.isOnline).length
+  const hasCurrentUserInList = currentUserId > 0
+    && safeUsers.value.some((user: IUserPresence): boolean => user?.id === currentUserId)
+
+  return hasCurrentUserInList ? onlineFromUsers : onlineFromUsers + (currentUserId > 0 ? 1 : 0)
+})
+
+const formattedOnlineCount = computed<string>((): string => {
+  return new Intl.NumberFormat('en-US').format(onlineCount.value)
+})
+
+let socketMessageListener: ((event: MessageEvent) => void) | null = null
+let syncTimer: ReturnType<typeof setInterval> | null = null
+
+function requestUsersViaSocket (): void {
+  const socket = $ws()
+  if (!socket || socket.readyState !== WebSocket.OPEN) return
+
+  socket.send(JSON.stringify({
+    event: 'users:paginate',
+    data: {
+      page: 1,
+      limit: 200
+    }
+  }))
+}
+
+function setupRealtimeOnlineCount (): void {
+  const socket = $ws()
+  if (!socket || socket.readyState !== WebSocket.OPEN) return
+  if (socketMessageListener) return
+
+  socketMessageListener = (event: MessageEvent): void => {
+    try {
+      const payload = JSON.parse(event.data)
+      const isUsersEvent = payload?.event === 'users:update'
+        || payload?.event === 'users:list'
+        || payload?.event === 'users:paginate:response'
+
+      if (!isUsersEvent) return
+
+      const incoming = Array.isArray(payload.data)
+        ? payload.data
+        : Array.isArray(payload.data?.users)
+          ? payload.data.users
+          : []
+
+      userStore.setUsers(incoming)
+    } catch {
+      // Ignore non-JSON websocket payloads.
+    }
+  }
+
+  socket.addEventListener('message', socketMessageListener)
+  requestUsersViaSocket()
+  syncTimer = setInterval(requestUsersViaSocket, 15000)
+}
+
+function teardownRealtimeOnlineCount (): void {
+  const socket = $ws()
+  if (socket && socketMessageListener) {
+    socket.removeEventListener('message', socketMessageListener)
+  }
+  socketMessageListener = null
+
+  if (syncTimer) {
+    clearInterval(syncTimer)
+    syncTimer = null
+  }
+}
+
+// --- Total user count (via API) ---
+const totalUsers = ref<number>(0)
+
+const formattedTotalUsers = computed<string>((): string => {
+  return new Intl.NumberFormat('en-US').format(totalUsers.value)
+})
+
+async function fetchTotalUsers (): Promise<void> {
+  try {
+    const response = await userService.findAllUsersPaginate({ page: 1, limit: 1 })
+    totalUsers.value = response?.pagination?.total ?? 0
+  } catch (err: TErrorResponse) {
+    console.error('Failed to fetch total users:', err)
+  }
+}
+
+// --- Estimated wait time (derived from online count) ---
+const estimatedWaitTime = computed<string>((): string => {
+  const online = onlineCount.value
+  if (online >= 50) return '~30 วินาที'
+  if (online >= 20) return '~1 นาที'
+  if (online >= 10) return '~2 นาที'
+  if (online >= 5) return '~3 นาที'
+  if (online >= 1) return '~5 นาที'
+  return 'ไม่ทราบ'
+})
+
+// --- Match action ---
 const { $handleLoading } = useNuxtApp()
+
 async function onMatch (): Promise<void> {
   if (import.meta.client) {
     const { $wsConnect } = useNuxtApp() as any
@@ -94,8 +217,17 @@ function handleMatch (): void {
       instance: toast
     }
   })
-
 }
+
+// --- Lifecycle ---
+onMounted((): void => {
+  setupRealtimeOnlineCount()
+  fetchTotalUsers()
+})
+
+onBeforeUnmount((): void => {
+  teardownRealtimeOnlineCount()
+})
 </script>
 
 <style>
