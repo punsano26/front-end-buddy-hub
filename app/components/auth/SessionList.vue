@@ -109,8 +109,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import 'dayjs/locale/th'
+import { computed } from 'vue'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import type { ISessionDataList } from '~/models/response/AuthRes.model'
@@ -131,7 +131,7 @@ const emit = defineEmits<{
 
 // Helper to determine the device icon based on device type
 const getDeviceIcon = (deviceType: ISessionDataList['deviceType']): string => {
-  switch (deviceType) {
+  switch (deviceType as unknown as string) {
     case 'MOBILE':
       return 'pi pi-mobile'
     case 'TABLET':
