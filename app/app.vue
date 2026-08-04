@@ -9,6 +9,7 @@
       :value="incomingCallData"
       @accept="clickAcceptCall"
       @reject="clickRejectCall" />
+    <UserBannedModal />
   </NuxtLayout>
 </template>
 
@@ -16,6 +17,7 @@
 import { storeToRefs } from 'pinia'
 import type { TErrorResponse } from './models/response/Response.model'
 import ConfirmCallDialog from '~/components/call/ConfirmCallDialog.vue'
+import UserBannedModal from '~/components/user/UserBannedModal.vue'
 import LoadingPopUp from '~/components/loading/LoadingPopUp.vue'
 import { useTokenRefresh } from '~/composables/useTokenRefresh'
 import type { IInitiateCallData } from '~/models/response/CallRes.model'

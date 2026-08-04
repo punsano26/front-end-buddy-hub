@@ -121,6 +121,7 @@ const { $handleLoading } = useNuxtApp()
 const sessions = ref<ISessionDataList[]>([])
 const isLoading = ref<boolean>(true)
 const { pagination, extractPagination } = usePagination()
+pagination.value.limit = 10
 const isConfirmRevokeSingleVisible = ref<boolean>(false)
 const isConfirmRevokeAllOthersVisible = ref<boolean>(false)
 
@@ -133,8 +134,11 @@ async function useFetch (): Promise<void> {
     page: pagination.value.page,
     limit: pagination.value.limit
   })
- sessions.value = response.data || []
-pagination.value = extractPagination(response.pagination)
+  sessions.value = response.data || []
+  pagination.value = {
+    ...extractPagination(response.pagination),
+    limit: 10
+  }
 }
 
 function loadSessions (): void {

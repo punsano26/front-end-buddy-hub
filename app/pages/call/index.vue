@@ -285,7 +285,7 @@ const statusText = computed((): string => {
   const map: Record<CallStatusEnum, string> = {
     [CallStatusEnum.RINGING]: 'กำลังโทรออก…',
     [CallStatusEnum.ACCEPTED]: 'กำลังสนทนา',
-    [CallStatusEnum.ENDED]: 'สายหมด',
+    [CallStatusEnum.ENDED]: 'วางสายแล้ว',
     [CallStatusEnum.MISSED]: 'ไม่รับสาย'
   }
   return map[callStatus.value]

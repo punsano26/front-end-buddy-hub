@@ -15,6 +15,8 @@ import { useRentChatStore } from '~/stores/RentChat'
 import { useUserStore } from '~/stores/User'
 import { useChatRoomStore } from '~/stores/ChatRoom'
 
+import { useBanStore, type IBanEventData } from '~/stores/Ban'
+
 type TWebSocketEvent
   = 'users:list'
     | 'new_message'
@@ -29,6 +31,7 @@ type TWebSocketEvent
     | 'new_notification'
     | 'notification_read'
     | 'notification_deleted'
+    | 'user:banned'
     | MatchEvent
     | RentEvent
     | RentSessionsEvent
@@ -218,6 +221,26 @@ export default defineNuxtPlugin((): any => {
       const currentUserId = authStore.user.id
 
       switch (payload.event) {
+        case 'user:banned': {
+          let banInfo: IBanEventData = {
+            reason: 'บัญชีของคุณถูกระงับการใช้งาน',
+            expiresAt: null,
+            banDuration: 'PERMANENT'
+          }
+
+          if (isRecord(payload.data)) {
+            banInfo = {
+              reason: typeof payload.data.reason === 'string' ? payload.data.reason : 'บัญชีของคุณถูกระงับการใช้งาน',
+              expiresAt: typeof payload.data.expiresAt === 'string' ? payload.data.expiresAt : null,
+              banDuration: (payload.data.banDuration as any) || 'PERMANENT'
+            }
+          }
+
+          const banStore = useBanStore()
+          void banStore.triggerForceLogout(banInfo)
+          break
+        }
+
         case 'ping': {
           if (ws && ws.readyState === WebSocket.OPEN) {
             try {
@@ -556,9 +579,9 @@ export default defineNuxtPlugin((): any => {
             if (isSuccess) {
               connect()
             } else {
-              m.clearPersistedAuth()
-              authStore.logout()
-              router.push({ name: 'auth-verify' })
+              const { useBanStore } = await import('~/stores/Ban')
+              const banStore = useBanStore()
+              void banStore.triggerForceLogout('เซสชันหมดอายุ หรือบัญชีถูกระงับการใช้งาน')
             }
           })
           .catch((err: any): void => {

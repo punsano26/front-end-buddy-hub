@@ -46,73 +46,49 @@ export async function onResponseError (error: AxiosError): Promise<any> {
     const authStore = useAuthStore()
     if (authStore.userToken.refreshToken) {
       try {
-        const { forceRefreshToken, clearPersistedAuth } = await import('~/utils/authRefresh')
+        const { forceRefreshToken } = await import('~/utils/authRefresh')
         const isSuccess = await forceRefreshToken()
         if (isSuccess) {
-          if (config && config.headers) {
+          if (!config) {
+            return Promise.reject(error)
+          }
+
+          if (config.headers) {
             config.headers.Authorization = `Bearer ${authStore.userToken.accessToken}`
           }
           const response = await axios(config)
           return onResponse(response)
         } else {
-          try {
-            const AuthProvider = (await import('~/resource/provider/Auth.provider')).default
-            const authService = new AuthProvider()
-            await authService.logout()
-          } catch (logoutErr: any) {
-            console.error('[Interceptors] Force logout API call failed:', logoutErr)
-          }
-
-          clearPersistedAuth()
-          authStore.logout()
-          const router = useNuxtApp().$router
-          void router.push({ name: 'auth-verify' })
+          const { useBanStore } = await import('~/stores/Ban')
+          const banStore = useBanStore()
+          void banStore.triggerForceLogout('เซสชันหมดอายุ หรือบัญชีถูกระงับการใช้งาน')
           return Promise.reject(error)
         }
       } catch (err: any) {
         console.error('[Interceptors] Force refresh token failed:', err)
-        try {
-          const AuthProvider = (await import('~/resource/provider/Auth.provider')).default
-          const authService = new AuthProvider()
-          await authService.logout()
-        } catch (logoutErr: any) {
-          console.error('[Interceptors] Force logout API call failed in catch:', logoutErr)
-        }
-
-        const { clearPersistedAuth } = await import('~/utils/authRefresh')
-        clearPersistedAuth()
-        authStore.logout()
-        const router = useNuxtApp().$router
-        void router.push({ name: 'auth-verify' })
+        const { useBanStore } = await import('~/stores/Ban')
+        const banStore = useBanStore()
+        void banStore.triggerForceLogout('เซสชันหมดอายุ หรือบัญชีถูกระงับการใช้งาน')
         return Promise.reject(error)
       }
     } else {
-      const { clearPersistedAuth } = await import('~/utils/authRefresh')
-      clearPersistedAuth()
-      authStore.logout()
-      const router = useNuxtApp().$router
-      void router.push({ name: 'auth-verify' })
+      const { useBanStore } = await import('~/stores/Ban')
+      const banStore = useBanStore()
+      void banStore.triggerForceLogout('เซสชันหมดอายุ หรือไม่มีข้อมูลการเข้าสู่ระบบ')
       return Promise.reject(error)
     }
   }
 
   if (error.response?.status === 403) {
     const data = error.response.data as any
-    const message = data?.message || ''
+    const message = typeof data === 'string'
+      ? data
+      : (data?.message || data?.error || 'บัญชีของคุณถูกระงับการใช้งาน หรือไม่มีสิทธิ์เข้าถึง')
 
-    if (message.includes('ถูกระงับ')) {
-      const authStore = useAuthStore()
-      const { clearPersistedAuth } = await import('~/utils/authRefresh')
-      clearPersistedAuth()
-      authStore.logout()
-
-      const router = useNuxtApp().$router
-      void router.push({
-        name: 'auth-login',
-        query: { banned: 'true', reason: message }
-      })
-      return Promise.reject(error)
-    }
+    const { useBanStore } = await import('~/stores/Ban')
+    const banStore = useBanStore()
+    void banStore.triggerForceLogout(message)
+    return Promise.reject(error)
   }
 
   if (

@@ -61,5 +61,6 @@
       ringtoneAudio.play().catch((err: TErrorResponse): void => { ... })
       ```
 
-### if your test run using bun 
-- bun run lint or bun run test and bun lint when you want to check for linting errors
+### 6. การทดสอบและการรัน Lint / Build
+- ใช้ `bun run lint` เพื่อตรวจสอบ ESLint rules
+- ใช้ `bun run build` เพื่อตรวจสอบ TypeScript compilation & Nuxt build
