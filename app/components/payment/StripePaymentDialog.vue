@@ -152,21 +152,23 @@ async function createPaymentIntent (): Promise<void> {
       paymentMethod: PaymentMethodEnum.CREDIT_CARD
     })
 
-    clientSecret = response.clientSecret
+    clientSecret = response?.data?.clientSecret || (response as any)?.clientSecret || (response as any)?.client_secret || ''
 
     if (!clientSecret) {
       errorMessage.value = 'ไม่สามารถเตรียมการชำระเงินได้ กรุณาลองใหม่'
       return
     }
 
-    // Mount Stripe Payment Element
+    isCreatingIntent.value = false
     await nextTick()
     mountPaymentElement($stripe, clientSecret)
   } catch (err: any) {
     console.error('[StripePaymentDialog] createPaymentIntent error:', err)
     errorMessage.value = 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง'
   } finally {
-    isCreatingIntent.value = false
+    if (errorMessage.value) {
+      isCreatingIntent.value = false
+    }
   }
 }
 

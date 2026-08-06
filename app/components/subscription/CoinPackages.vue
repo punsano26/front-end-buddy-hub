@@ -24,26 +24,8 @@
             <span>ยอดเหรียญคงเหลือ</span>
           </div>
           <div class="flex items-baseline gap-2 mt-1">
-            <span class="text-4xl sm:text-5xl font-black tracking-tight tabular-nums">1,245</span>
+            <span class="text-4xl sm:text-5xl font-black tracking-tight tabular-nums">{{ userBalance.toLocaleString('th-TH') }}</span>
             <span class="text-sm sm:text-base font-semibold text-white/90">เหรียญ</span>
-          </div>
-        </div>
-
-        <!-- Right Side: Stats (Spent & Received) -->
-        <div class="flex items-center gap-6 sm:gap-8 border-t border-white/10 sm:border-t-0 pt-4 sm:pt-0">
-          <div class="flex flex-col sm:items-end gap-1">
-            <div class="flex items-center gap-1.5 text-white/70 text-xs font-semibold">
-              <i class="pi pi-arrow-down-right text-red-300" />
-              <span>ใช้ไปแล้ว</span>
-            </div>
-            <span class="text-xl sm:text-2xl font-bold tracking-tight tabular-nums">3,200</span>
-          </div>
-          <div class="flex flex-col sm:items-end gap-1">
-            <div class="flex items-center gap-1.5 text-white/70 text-xs font-semibold">
-              <i class="pi pi-arrow-up-right text-emerald-300" />
-              <span>ได้รับ</span>
-            </div>
-            <span class="text-xl sm:text-2xl font-bold tracking-tight tabular-nums">480</span>
           </div>
         </div>
       </div>
@@ -168,12 +150,7 @@
 
   <QRPaymentDialog
     v-model:visible="qrDialogVisible"
-    :coins="(selectedPackage?.coinAmount || 0) + (selectedPackage?.bonusCoin || 0)"
-    :price="selectedPackage?.price"
-    @back="handleBackToSelect" />
-
-  <WalletPaymentDialog
-    v-model:visible="walletDialogVisible"
+    :coin-package-id="selectedPackage?.id"
     :coins="(selectedPackage?.coinAmount || 0) + (selectedPackage?.bonusCoin || 0)"
     :price="selectedPackage?.price"
     @back="handleBackToSelect" />
@@ -187,12 +164,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import ChoosePaymentDialog from '~/components/payment/ChoosePaymentDialog.vue'
 import QRPaymentDialog from '~/components/payment/QRPaymentDialog.vue'
-import WalletPaymentDialog from '~/components/payment/WalletPaymentDialog.vue'
 import StripePaymentDialog from '~/components/payment/StripePaymentDialog.vue'
 import type { ICoinList } from '~/models/response/CoinRes.model'
+import WalletProvider from '~/resource/provider/Wallet.provider'
 
 interface Props {
   items?: ICoinList[]
@@ -204,10 +181,27 @@ const props = withDefaults(defineProps<Props>(), {
 
 const paymentDialogVisible = ref(false)
 const qrDialogVisible = ref(false)
-const walletDialogVisible = ref(false)
 const stripeDialogVisible = ref(false)
 
 const selectedPackage = ref<ICoinList | null>(null)
+const userBalance = ref<number>(0)
+
+const walletService = new WalletProvider()
+
+const fetchUserBalance = async (): Promise<void> => {
+  try {
+    const res = await walletService.findWalletBalance()
+    if (res?.data) {
+      userBalance.value = res.data.balance || 0
+    }
+  } catch (err: any) {
+    console.error('[CoinPackages] fetchUserBalance error:', err)
+  }
+}
+
+onMounted((): void => {
+  fetchUserBalance()
+})
 
 const calculateUnitPrice = (pkg: ICoinList): number => {
   const totalCoins = pkg.coinAmount + (pkg.bonusCoin || 0)
@@ -223,8 +217,6 @@ const handleProceedPayment = (methodId: string): void => {
   paymentDialogVisible.value = false
   if (methodId === 'promptpay') {
     qrDialogVisible.value = true
-  } else if (methodId === 'truemoney') {
-    walletDialogVisible.value = true
   } else if (methodId === 'card') {
     stripeDialogVisible.value = true
   }
@@ -232,7 +224,6 @@ const handleProceedPayment = (methodId: string): void => {
 
 const handleBackToSelect = (): void => {
   qrDialogVisible.value = false
-  walletDialogVisible.value = false
   stripeDialogVisible.value = false
   paymentDialogVisible.value = true
 }

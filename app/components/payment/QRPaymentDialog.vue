@@ -7,7 +7,7 @@
     pt:root:class="overflow-hidden rounded-[28px] shadow-2xl bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800"
     dismissable-mask
     modal>
-    <!-- Header with logo and back/close buttons (like auth page layout) -->
+    <!-- Header -->
     <div class="relative w-full flex flex-col items-center gap-4 px-[30px] pt-10 pb-2 text-center select-none">
       <!-- Back Button -->
       <button
@@ -25,81 +25,75 @@
         <i class="pi pi-times text-sm" />
       </button>
 
-
-      <!-- Title -->
       <h6 class="font-bold text-2xl text-surface-900 dark:text-white tracking-wide">
         ชำระด้วย PromptPay
       </h6>
-
-      <!-- Description -->
       <p class="text-xs sm:text-sm text-surface-500 dark:text-surface-400 max-w-[340px]">
-        สแกน QR Code ด้านล่างเพื่อชำระเงิน
+        สแกน QR Code ด้านล่างเพื่อชำระเงินผ่านแอปธนาคาร
       </p>
     </div>
 
-    <!-- QR Code Area -->
-    <div class="flex flex-col items-center px-6 py-2">
-      <!-- PromptPay Logo Wrapper -->
-      <div class="w-full max-w-[300px] bg-white rounded-2xl border border-surface-200 dark:border-surface-700 overflow-hidden shadow-sm flex flex-col items-center">
-        <!-- Thai QR Header -->
-        <div class="w-full bg-[#0d2a54] py-3 px-4 flex justify-between items-center text-white select-none">
-          <span class="text-xs font-bold tracking-wider">THAI QR PAYMENT</span>
-          <span class="text-xs font-bold text-sky-400">PromptPay</span>
-        </div>
-
-        <!-- QR Code Placeholder -->
-        <div class="p-6 bg-white flex flex-col items-center">
-          <div class="w-48 h-48 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center relative bg-gray-50">
-            <!-- Simulated QR Code SVG -->
-            <svg
-              class="w-40 h-40 text-surface-900"
-              fill="currentColor"
-              viewBox="0 0 100 100">
-              <path d="M5,5 h30 v30 h-30 z M10,10 h20 v20 h-20 z M15,15 h10 v10 h-10 z" />
-              <path d="M65,5 h30 v30 h-30 z M70,10 h20 v20 h-20 z M75,15 h10 v10 h-10 z" />
-              <path d="M5,65 h30 v30 h-30 z M10,70 h20 v20 h-20 z M15,75 h10 v10 h-10 z" />
-              <path d="M45,10 h10 v10 h-10 z M45,25 h15 v5 h-15 z M50,35 h5 v10 h-5 z" />
-              <path d="M10,45 h10 v10 h-10 z M25,45 h15 v5 h-15 z M35,55 h10 v5 h-10 z" />
-              <path d="M45,65 h10 v15 h-10 z M55,75 h15 v10 h-15 z M60,60 h10 v10 h-10 z" />
-              <path d="M75,45 h15 v5 h-15 z M80,55 h10 v25 h-10 z M70,80 h10 v10 h-10 z" />
-            </svg>
-            <div class="absolute inset-0 flex items-center justify-center">
-              <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-md">
-                <i class="pi pi-bitcoin text-amber-500 text-lg" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Account Info -->
-        <div class="w-full border-t border-gray-100 bg-gray-50/50 py-3 px-4 text-center text-xs text-gray-600 font-semibold select-none">
-          บัญชี: บจก. บัดดี้ ฮับ (Buddy Hub Co., Ltd.)
-        </div>
+    <!-- Amount Summary -->
+    <div class="flex items-center justify-between px-6 py-4 mx-6 my-2 bg-surface-50 dark:bg-surface-900/60 rounded-2xl border border-surface-200 dark:border-surface-800/80">
+      <div class="flex items-center gap-3">
+        <span class="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shadow-inner">
+          <i class="pi pi-bitcoin text-amber-500 text-xl animate-[pulse_3s_infinite]" />
+        </span>
+        <span class="text-base sm:text-lg font-bold text-surface-900 dark:text-surface-50">{{ coins }} เหรียญ</span>
       </div>
-
-      <!-- Payment details & timer -->
-      <div class="w-full max-w-[300px] mt-4 flex flex-col gap-2 text-center">
-        <div class="text-2xl font-black text-surface-900 dark:text-white">
-          ฿{{ price }}
-        </div>
-        <div class="text-[11px] text-surface-500 dark:text-surface-400 flex items-center justify-center gap-1.5 font-medium">
-          <i
-            class="pi pi-clock text-amber-500 animate-spin"
-            style="animation-duration: 4s" />
-          <span>QR Code จะหมดอายุใน</span>
-          <span class="text-red-500 font-bold font-mono">{{ timeLeftFormatted }}</span>
-        </div>
-      </div>
+      <span class="text-2xl font-black bg-gradient-to-r from-cyan-550 to-violet-550 dark:from-cyan-400 dark:to-violet-400 bg-clip-text text-transparent">
+        ฿{{ price }}
+      </span>
     </div>
 
-    <!-- Actions -->
-    <div class="px-6 mt-6 flex flex-col gap-2.5">
+    <!-- Loading State: Creating PaymentIntent -->
+    <div
+      v-if="isCreatingIntent"
+      class="flex flex-col items-center justify-center py-12 gap-3">
+      <i class="pi pi-spin pi-spinner text-3xl text-indigo-500" />
+      <span class="text-sm text-surface-500 dark:text-surface-400 font-medium">กำลังสร้าง PromptPay QR Code...</span>
+    </div>
+
+    <!-- Error State -->
+    <div
+      v-else-if="errorMessage"
+      class="px-6 py-8 flex flex-col items-center gap-4">
+      <div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center">
+        <i class="pi pi-exclamation-triangle text-2xl text-red-500" />
+      </div>
+      <p class="text-sm text-surface-600 dark:text-surface-400 text-center font-medium">
+        {{ errorMessage }}
+      </p>
       <button
-        class="w-full py-3.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 hover:opacity-95 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/10 transition-all duration-200 border-none text-base cursor-pointer"
+        class="px-6 py-2.5 bg-surface-100 dark:bg-surface-800 hover:bg-surface-200 dark:hover:bg-surface-700 text-surface-700 dark:text-surface-300 font-bold rounded-xl transition-all duration-200 border-none text-sm cursor-pointer"
         type="button"
-        @click="handlePaid">
-        ฉันชำระเงินเรียบร้อยแล้ว
+        @click="retryCreateIntent">
+        ลองอีกครั้ง
       </button>
+    </div>
+
+    <!-- Stripe Payment Element Container -->
+    <div
+      v-else
+      class="px-6 py-4">
+      <div
+        id="stripe-promptpay-element"
+        ref="paymentElementRef"
+        class="min-h-[220px]" />
+
+      <!-- Confirm Button -->
+      <div class="mt-4">
+        <button
+          :disabled="isConfirming"
+          class="w-full py-3.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 hover:opacity-95 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/10 transition-all duration-200 border-none text-base cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2"
+          type="button"
+          @click="handleConfirmPayment">
+          <i
+            v-if="isConfirming"
+            class="pi pi-spin pi-spinner" />
+          <span>{{ isConfirming ? 'กำลังดำเนินการ...' : 'ยืนยันการชำระเงิน' }}</span>
+        </button>
+      </div>
     </div>
 
     <div class="text-center text-[10px] text-surface-450 dark:text-surface-500 font-medium mt-4 mb-6 select-none">
@@ -109,18 +103,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import { ref, watch, nextTick, onUnmounted } from 'vue'
+import type { Stripe, StripeElements } from '@stripe/stripe-js'
 import Dialog from '~/volt/Dialog.vue'
+import PaymentProvider, { type IPaymentProvider } from '~/resource/provider/Payment.provider'
+import { PaymentMethodEnum } from '~/models/enums/Paymen.enum'
 
 interface Props {
+  coinPackageId?: number
   coins?: number
   price?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  coins: 50,
-  price: 35
+  coinPackageId: 0,
+  coins: 0,
+  price: 0
 })
 
 const visible = defineModel<boolean>('visible', { default: false })
@@ -128,67 +126,130 @@ const emit = defineEmits<{
   (e: 'back'): void
 }>()
 
-const toast = useToast()
+const { $stripe } = useNuxtApp()
+const config = useRuntimeConfig()
 
-// Countdown timer (15 minutes in seconds)
-const initialTime = 15 * 60
-const timeLeft = ref<number>(initialTime)
-let timerInterval: any = null
+const PaymentService: IPaymentProvider = new PaymentProvider()
 
-const timeLeftFormatted = computed((): string => {
-  const minutes = Math.floor(timeLeft.value / 60)
-  const seconds = timeLeft.value % 60
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-})
+const paymentElementRef = ref<HTMLElement | null>(null)
+const isCreatingIntent = ref(false)
+const isConfirming = ref(false)
+const errorMessage = ref<string>('')
 
-const startTimer = (): void => {
-  stopTimer()
-  timeLeft.value = initialTime
-  timerInterval = setInterval((): void => {
-    if (timeLeft.value > 0) {
-      timeLeft.value--
-    } else {
-      stopTimer()
+let stripeElements: StripeElements | null = null
+let clientSecret: string = ''
+
+async function createPaymentIntent (): Promise<void> {
+  if (!$stripe || !props.coinPackageId) return
+
+  isCreatingIntent.value = true
+  errorMessage.value = ''
+
+  try {
+    const response = await PaymentService.BuyCoinPackageWithStripe({
+      coinPackageId: props.coinPackageId,
+      paymentMethod: PaymentMethodEnum.PROMPTPAY
+    })
+
+    clientSecret = response?.data?.clientSecret || (response as any)?.clientSecret || (response as any)?.client_secret || ''
+
+    if (!clientSecret) {
+      errorMessage.value = 'ไม่สามารถเตรียมการชำระเงินได้ กรุณาลองใหม่'
+      return
     }
-  }, 1000)
+
+    isCreatingIntent.value = false
+    await nextTick()
+    mountPaymentElement($stripe, clientSecret)
+  } catch (err: any) {
+    console.error('[QRPaymentDialog] createPaymentIntent error:', err)
+    errorMessage.value = 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง'
+  } finally {
+    if (errorMessage.value) {
+      isCreatingIntent.value = false
+    }
+  }
 }
 
-const stopTimer = (): void => {
-  if (timerInterval) {
-    clearInterval(timerInterval)
-    timerInterval = null
+function mountPaymentElement (stripe: Stripe, secret: string): void {
+  destroyElements()
+
+  stripeElements = stripe.elements({
+    clientSecret: secret,
+    appearance: {
+      theme: 'stripe',
+      variables: {
+        colorPrimary: '#0284c7',
+        borderRadius: '12px',
+        fontFamily: '"Inter", sans-serif'
+      }
+    }
+  })
+
+  const paymentElement = stripeElements.create('payment')
+
+  if (paymentElementRef.value) {
+    paymentElement.mount(paymentElementRef.value)
   }
+}
+
+async function handleConfirmPayment (): Promise<void> {
+  if (!$stripe || !stripeElements || isConfirming.value) return
+
+  isConfirming.value = true
+
+  try {
+    const siteUrl = config.public.siteUrl as string
+    const { error } = await $stripe.confirmPayment({
+      elements: stripeElements,
+      confirmParams: {
+        return_url: `${siteUrl}/public/buddy-pay/successful`
+      }
+    })
+
+    if (error) {
+      if (error.type === 'card_error' || error.type === 'validation_error') {
+        errorMessage.value = error.message || 'ข้อมูลชำระเงินไม่ถูกต้อง'
+      } else {
+        errorMessage.value = 'เกิดข้อผิดพลาดในการชำระเงิน กรุณาลองใหม่'
+      }
+    }
+  } catch (err: any) {
+    console.error('[QRPaymentDialog] confirmPayment error:', err)
+    errorMessage.value = 'เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่'
+  } finally {
+    isConfirming.value = false
+  }
+}
+
+function retryCreateIntent (): void {
+  errorMessage.value = ''
+  createPaymentIntent()
+}
+
+function handleBack (): void {
+  emit('back')
+}
+
+function destroyElements (): void {
+  if (stripeElements) {
+    stripeElements = null
+  }
+  clientSecret = ''
 }
 
 watch(visible, (newVal: boolean): void => {
-  if (newVal) {
-    startTimer()
+  if (newVal && props.coinPackageId) {
+    createPaymentIntent()
   } else {
-    stopTimer()
-  }
-})
-
-onMounted((): void => {
-  if (visible.value) {
-    startTimer()
+    destroyElements()
+    errorMessage.value = ''
+    isCreatingIntent.value = false
+    isConfirming.value = false
   }
 })
 
 onUnmounted((): void => {
-  stopTimer()
+  destroyElements()
 })
-
-const handleBack = (): void => {
-  emit('back')
-}
-
-const handlePaid = (): void => {
-  toast.add({
-    severity: 'success',
-    summary: 'ชำระเงินสำเร็จ',
-    detail: `ระบบเติมเหรียญจำนวน ${props.coins} เหรียญ เข้าบัญชีของคุณเรียบร้อยแล้ว`,
-    life: 5000
-  })
-  visible.value = false
-}
 </script>

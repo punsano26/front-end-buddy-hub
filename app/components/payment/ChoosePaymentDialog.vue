@@ -128,12 +128,6 @@ const paymentMethods: PaymentMethod[] = [
     icon: 'pi pi-qrcode'
   },
   {
-    id: 'truemoney',
-    name: 'TrueMoney Wallet',
-    subtext: 'ชำระผ่านวอลเล็ตทรูมันนี่',
-    icon: 'pi pi-wallet'
-  },
-  {
     id: 'card',
     name: 'Credit / Debit Card',
     subtext: 'ชำระผ่านบัตรเครดิตหรือเดบิต',
