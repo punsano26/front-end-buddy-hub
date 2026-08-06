@@ -61,76 +61,96 @@
 
     <!-- Packages Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <Card
-        v-for="pkg in packages"
-        :key="pkg.id"
-        :pt="{
-          root: {
-            class: [
-              'relative flex flex-col items-center p-6 rounded-3xl border transition-all duration-300 group shadow-none',
-              pkg.popular
-                ? 'border-emerald-500/50 bg-emerald-50/5 dark:bg-emerald-950/5 ring-1 ring-emerald-500/20'
-                : pkg.bestValue
+      <template v-if="props.items && props.items.length > 0">
+        <Card
+          v-for="pkg in props.items"
+          :key="pkg.id"
+          :pt="{
+            root: {
+              class: [
+                'relative flex flex-col items-center p-6 rounded-3xl border transition-all duration-300 group shadow-none',
+                pkg.isBestValue
                   ? 'border-indigo-500/50 bg-indigo-50/5 dark:bg-indigo-950/5 ring-1 ring-indigo-500/20'
-                  : 'border-surface-200/70 dark:border-surface-800/80 bg-surface-0 dark:bg-surface-900/40 hover:border-indigo-400/40 dark:hover:border-indigo-500/30'
-            ].join(' ')
-          },
-          body: {
-            class: 'p-0 flex flex-col items-center h-full w-full'
-          },
-          content: {
-            class: 'p-0 flex flex-col items-center h-full w-full'
-          }
-        }">
-        <template #content>
-          <!-- Popular Badge -->
-          <div
-            v-if="pkg.popular"
-            class="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm tracking-wide">
-            ยอดนิยม
-          </div>
-
-          <!-- Best Value Badge -->
-          <div
-            v-if="pkg.bestValue"
-            class="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm tracking-wide">
-            คุ้มที่สุด
-          </div>
-
-          <!-- Package Emoji / Icon -->
-          <div class="h-16 w-16 rounded-2xl bg-surface-50 dark:bg-surface-800/80 flex items-center justify-center text-3xl mb-4 shadow-sm border border-surface-100 dark:border-surface-700/30 group-hover:scale-110 transition-transform duration-300">
-            {{ pkg.emoji }}
-          </div>
-
-          <!-- Amount & Bonus -->
-          <div class="text-center space-y-1">
-            <div class="flex items-baseline justify-center gap-1">
-              <span class="text-3xl font-black text-surface-900 dark:text-white">{{ pkg.coins.toLocaleString('th-TH') }}</span>
-              <span class="text-xs font-semibold text-surface-500 dark:text-slate-400">เหรียญ</span>
-            </div>
+                  : pkg.discount > 0
+                    ? 'border-emerald-500/50 bg-emerald-50/5 dark:bg-emerald-950/5 ring-1 ring-emerald-500/20'
+                    : 'border-surface-200/70 dark:border-surface-800/80 bg-surface-0 dark:bg-surface-900/40 hover:border-indigo-400/40 dark:hover:border-indigo-500/30'
+              ].join(' ')
+            },
+            body: {
+              class: 'p-0 flex flex-col items-center h-full w-full'
+            },
+            content: {
+              class: 'p-0 flex flex-col items-center h-full w-full'
+            }
+          }">
+          <template #content>
+            <!-- Best Value Badge -->
             <div
-              v-if="pkg.bonus"
-              class="text-xs font-bold text-emerald-500 dark:text-emerald-400 flex items-center justify-center gap-1">
-              + โบนัส {{ pkg.bonus.toLocaleString('th-TH') }} 🎁
+              v-if="pkg.isBestValue"
+              class="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm tracking-wide">
+              คุ้มที่สุด
             </div>
-          </div>
 
-          <!-- Price -->
-          <div class="text-center mt-6 mb-4">
-            <span class="text-2xl font-black text-surface-900 dark:text-white">฿{{ pkg.price.toLocaleString('th-TH') }}</span>
-            <p class="text-[10px] text-surface-400 dark:text-surface-500 font-semibold mt-1">
-              ≈ {{ pkg.unitPrice.toFixed(2) }} ฿/เหรียญ
-            </p>
-          </div>
+            <!-- Discount Badge if not Best Value -->
+            <div
+              v-else-if="pkg.discount > 0"
+              class="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm tracking-wide">
+              ลด {{ pkg.discount }}%
+            </div>
 
-          <!-- Button -->
-          <Button
-            label="เติมเลย"
-            pt:root:class="w-full mt-auto rounded-2xl bg-gradient-primary hover:opacity-95 text-white font-bold py-2.5 px-4 text-sm transition-all duration-200 active:scale-[0.98] border-none shadow-sm shadow-indigo-500/10 hover:shadow-indigo-500/20"
-            type="button"
-            @click="handleSelectPackage(pkg)" />
-        </template>
-      </Card>
+            <!-- Package Icon -->
+            <div class="h-16 w-16 rounded-2xl bg-surface-50 dark:bg-surface-800/80 flex items-center justify-center text-3xl mb-4 shadow-sm border border-surface-100 dark:border-surface-700/30 group-hover:scale-110 transition-transform duration-300 overflow-hidden">
+              <img
+                v-if="pkg.iconUrl"
+                :alt="pkg.name"
+                :src="pkg.iconUrl"
+                class="w-10 h-10 object-contain">
+              <i
+                v-else
+                class="pi pi-bitcoin text-amber-500 text-3xl" />
+            </div>
+
+            <!-- Package Name -->
+            <div class="text-center font-bold text-sm text-surface-700 dark:text-surface-300 mb-1">
+              {{ pkg.name }}
+            </div>
+
+            <!-- Amount & Bonus -->
+            <div class="text-center space-y-1">
+              <div class="flex items-baseline justify-center gap-1">
+                <span class="text-3xl font-black text-surface-900 dark:text-white">{{ pkg.coinAmount?.toLocaleString('th-TH') }}</span>
+                <span class="text-xs font-semibold text-surface-500 dark:text-slate-400">เหรียญ</span>
+              </div>
+              <div
+                v-if="pkg.bonusCoin && pkg.bonusCoin > 0"
+                class="text-xs font-bold text-emerald-500 dark:text-emerald-400 flex items-center justify-center gap-1">
+                + โบนัส {{ pkg.bonusCoin.toLocaleString('th-TH') }} 🎁
+              </div>
+            </div>
+
+            <!-- Price -->
+            <div class="text-center mt-6 mb-4">
+              <span class="text-2xl font-black text-surface-900 dark:text-white">฿{{ pkg.price?.toLocaleString('th-TH') }}</span>
+              <p class="text-[10px] text-surface-400 dark:text-surface-500 font-semibold mt-1">
+                ≈ {{ calculateUnitPrice(pkg).toFixed(2) }} ฿/เหรียญ
+              </p>
+            </div>
+
+            <!-- Button -->
+            <Button
+              label="เติมเลย"
+              pt:root:class="w-full mt-auto rounded-2xl bg-gradient-primary hover:opacity-95 text-white font-bold py-2.5 px-4 text-sm transition-all duration-200 active:scale-[0.98] border-none shadow-sm shadow-indigo-500/10 hover:shadow-indigo-500/20"
+              type="button"
+              @click="handleSelectPackage(pkg)" />
+          </template>
+        </Card>
+      </template>
+
+      <div
+        v-else
+        class="col-span-full py-12 text-center text-surface-400 dark:text-surface-500 font-medium">
+        ไม่พบแพ็กเกจเหรียญในขณะนี้
+      </div>
     </div>
 
     <Message
@@ -142,19 +162,19 @@
 
   <ChoosePaymentDialog
     v-model:visible="paymentDialogVisible"
-    :coins="selectedPackage?.coins"
+    :coins="(selectedPackage?.coinAmount || 0) + (selectedPackage?.bonusCoin || 0)"
     :price="selectedPackage?.price"
     @proceed="handleProceedPayment" />
 
   <QRPaymentDialog
     v-model:visible="qrDialogVisible"
-    :coins="selectedPackage?.coins"
+    :coins="(selectedPackage?.coinAmount || 0) + (selectedPackage?.bonusCoin || 0)"
     :price="selectedPackage?.price"
     @back="handleBackToSelect" />
 
   <WalletPaymentDialog
     v-model:visible="walletDialogVisible"
-    :coins="selectedPackage?.coins"
+    :coins="(selectedPackage?.coinAmount || 0) + (selectedPackage?.bonusCoin || 0)"
     :price="selectedPackage?.price"
     @back="handleBackToSelect" />
 </template>
@@ -164,14 +184,28 @@ import { ref } from 'vue'
 import ChoosePaymentDialog from '~/components/payment/ChoosePaymentDialog.vue'
 import QRPaymentDialog from '~/components/payment/QRPaymentDialog.vue'
 import WalletPaymentDialog from '~/components/payment/WalletPaymentDialog.vue'
+import type { ICoinList } from '~/models/response/CoinRes.model'
+
+interface Props {
+  items?: ICoinList[]
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  items: (): ICoinList[] => []
+})
 
 const paymentDialogVisible = ref(false)
 const qrDialogVisible = ref(false)
 const walletDialogVisible = ref(false)
 
-const selectedPackage = ref<Package | null>(null)
+const selectedPackage = ref<ICoinList | null>(null)
 
-const handleSelectPackage = (pkg: Package): void => {
+const calculateUnitPrice = (pkg: ICoinList): number => {
+  const totalCoins = pkg.coinAmount + (pkg.bonusCoin || 0)
+  return totalCoins > 0 ? pkg.price / totalCoins : 0
+}
+
+const handleSelectPackage = (pkg: ICoinList): void => {
   selectedPackage.value = pkg
   paymentDialogVisible.value = true
 }
@@ -190,24 +224,4 @@ const handleBackToSelect = (): void => {
   walletDialogVisible.value = false
   paymentDialogVisible.value = true
 }
-
-interface Package {
-  id: number
-  coins: number
-  bonus?: number
-  price: number
-  unitPrice: number
-  popular?: boolean
-  bestValue?: boolean
-  emoji: string
-}
-
-const packages = ref<Package[]>([
-  { id: 1, coins: 50, price: 35, unitPrice: 0.7, emoji: '🏛️' },
-  { id: 2, coins: 150, bonus: 15, price: 99, unitPrice: 0.6, emoji: '💰' },
-  { id: 3, coins: 350, bonus: 50, price: 219, unitPrice: 0.55, popular: true, emoji: '💎' },
-  { id: 4, coins: 800, bonus: 150, price: 499, unitPrice: 0.53, emoji: '👑' },
-  { id: 5, coins: 2000, bonus: 500, price: 1199, unitPrice: 0.48, bestValue: true, emoji: '🏆' },
-  { id: 6, coins: 5000, bonus: 1500, price: 2799, unitPrice: 0.43, emoji: '🚀' }
-])
 </script>
