@@ -1,6 +1,7 @@
 <template>
-  <div>
-    <Card>
+  <div class="mx-auto flex min-h-screen max-w-5xl items-center justify-center px-4 py-8 sm:px-6">
+    <div class="w-full">
+      <Card>
         <template #title>ชำระเงินสำเร็จ</template>
         <template #subtitle>คุณจะได้รับ coin หลังจากที่ชำระเงินเสร็จสิ้น</template>
         <template #content>
@@ -24,16 +25,17 @@
             </div>
           </div>
         </template>
-         <template #footer>
-            <div class="flex gap-4 mt-1">
-                <Button label="เริ่มใช้เหรียญเช่าคุย" severity="secondary" variant="outlined" class="w-full" />
-                <Button label="กลับที่หน้าซื้อเหรียญ" class="w-full" />
-            </div>
-            <p class="text-sm text-muted-foreground mt-2">
-              ขอบคุณที่ใช้บริการของเรา
-            </p>
+        <template #footer>
+          <div class="flex gap-4 mt-1">
+            <Button label="เริ่มใช้เหรียญเช่าคุย" severity="secondary" variant="outlined" class="w-full" />
+            <Button label="กลับที่หน้าซื้อเหรียญ" class="w-full" />
+          </div>
+          <p class="text-sm text-muted-foreground mt-2">
+            ขอบคุณที่ใช้บริการของเรา
+          </p>
         </template>
-    </Card>
+      </Card>
+    </div>
   </div>
 </template>
 
