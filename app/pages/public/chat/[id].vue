@@ -466,7 +466,7 @@ async function useFetch(): Promise<void> {
 
   const messages = Array.isArray(response?.data) ? response.data : [];
   chatRoomStore.setMessages(messages);
-  pagination.value = extractPagination(response?.pagination);
+  pagination.value = extractPagination(response);
   await markMessagesAsRead();
   await scrollToBottom();
 }

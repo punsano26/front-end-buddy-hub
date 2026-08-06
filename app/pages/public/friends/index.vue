@@ -51,7 +51,7 @@ async function useFetch (): Promise<void> {
   })
 
   itemsUserFriends.value = Array.isArray(response?.data) ? response.data : []
-  pagination.value = extractPagination(response?.pagination)
+  pagination.value = extractPagination(response)
 }
 
 function fetch (): void {

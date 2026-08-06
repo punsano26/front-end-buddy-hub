@@ -59,7 +59,7 @@ async function useFetch (): Promise<void> {
   })
 
   conversationsRent.value = response.data || []
-  pagination.value = extractPagination(response?.pagination)
+  pagination.value = extractPagination(response)
 }
 
 function fetch (): void {

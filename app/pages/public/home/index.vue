@@ -116,7 +116,7 @@ async function useFetchApi(): Promise<void> {
   });
 
   items.value = Array.isArray(response?.data) ? response.data : [];
-  pagination.value = extractPagination(response?.pagination);
+  pagination.value = extractPagination(response);
 }
 
 async function useFetchDetails(userId: number): Promise<void> {
