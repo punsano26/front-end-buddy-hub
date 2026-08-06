@@ -11,7 +11,7 @@ class PaymentProvider extends HttpRequest implements IPaymentProvider {
 
   public async BuyCoinPackageWithStripe (payload: IBuyCoinPackageWithStripePayload): Promise<IBuyCoinPackageWithStripeResponse> {
     this.setUserAuthHeader()
-    const response = await this.post(`${this.urlPrefix}/stripe`, payload)
+    const response = await this.post(`${this.urlPrefix}/coin-package`, payload)
     return response
   }
 }
