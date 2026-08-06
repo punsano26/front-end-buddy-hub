@@ -1,5 +1,4 @@
-import type { FriendRequestStatusEnum } from '../enums/Friend.enum'
-import type { PaymentMethodEnum } from '../enums/Paymen.enum'
+import type { PaymentMethodEnum, PaymentStatusEnum } from '../enums/Paymen.enum'
 
 export interface IBuyCoinPackageWithStripeData {
   id: number
@@ -8,9 +7,11 @@ export interface IBuyCoinPackageWithStripeData {
   coinPackageVersionId: number
   amount: number
   currency: string
-  status: FriendRequestStatusEnum
+  status: PaymentStatusEnum
   paymentMethod: PaymentMethodEnum
   ref1: string
+  clientSecret: string
+  paymentIntentId: string
   authorizeUri: string
   expiresAt: string | null
   paidAt: string | null
