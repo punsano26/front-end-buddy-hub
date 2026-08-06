@@ -103,7 +103,7 @@
     </div>
 
     <div class="text-center text-[10px] text-surface-450 dark:text-surface-500 font-medium mt-4 mb-6 select-none">
-      ความปลอดภัยขั้นสูง: เข้ารหัสด้วย SSL 256-bit และประมวลผลผ่าน Omise
+      ความปลอดภัยขั้นสูง: เข้ารหัสด้วย SSL 256-bit และประมวลผลผ่าน Stripe
     </div>
   </Dialog>
 </template>

@@ -1,22 +1,17 @@
 import type { PaymentMethodEnum, PaymentStatusEnum } from '../enums/Paymen.enum'
+import type { IApiResponse } from './Response.model'
 
 export interface IBuyCoinPackageWithStripeData {
-  id: number
-  userId: number
-  coinPackageId: number
-  coinPackageVersionId: number
+  orderId: number
+  ref1: string
   amount: number
   currency: string
-  status: PaymentStatusEnum
-  paymentMethod: PaymentMethodEnum
-  ref1: string
-  clientSecret: string
-  paymentIntentId: string
-  authorizeUri: string
+  paymentMethod: PaymentMethodEnum | null
+  clientSecret: string | null
+  paymentIntentId: string | null
+  authorizeUri: string | null
   expiresAt: string | null
-  paidAt: string | null
-  createdAt: string | null
-  updatedAt: string | null
+  status: PaymentStatusEnum
 }
 
-export interface IBuyCoinPackageWithStripeResponse extends IBuyCoinPackageWithStripeData {}
+export interface IBuyCoinPackageWithStripeResponse extends IApiResponse<IBuyCoinPackageWithStripeData> {}
