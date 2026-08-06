@@ -1,4 +1,4 @@
-import type { IBasePaginationResponse } from './Response.model'
+import type { IApiResponse, IBasePaginationResponse } from './Response.model'
 
 export interface ICoinList {
   id: number
@@ -16,4 +16,5 @@ export interface ICoinList {
   updatedAt: string
 }
 
+export interface IFindOneCoinByIdResponse extends IApiResponse<ICoinList> {}
 export interface IFindAllCoinsPaginateResponse extends IBasePaginationResponse<ICoinList> {}
