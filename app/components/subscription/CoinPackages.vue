@@ -177,6 +177,13 @@
     :coins="(selectedPackage?.coinAmount || 0) + (selectedPackage?.bonusCoin || 0)"
     :price="selectedPackage?.price"
     @back="handleBackToSelect" />
+
+  <StripePaymentDialog
+    v-model:visible="stripeDialogVisible"
+    :coin-package-id="selectedPackage?.id"
+    :coins="(selectedPackage?.coinAmount || 0) + (selectedPackage?.bonusCoin || 0)"
+    :price="selectedPackage?.price"
+    @back="handleBackToSelect" />
 </template>
 
 <script lang="ts" setup>
@@ -184,6 +191,7 @@ import { ref } from 'vue'
 import ChoosePaymentDialog from '~/components/payment/ChoosePaymentDialog.vue'
 import QRPaymentDialog from '~/components/payment/QRPaymentDialog.vue'
 import WalletPaymentDialog from '~/components/payment/WalletPaymentDialog.vue'
+import StripePaymentDialog from '~/components/payment/StripePaymentDialog.vue'
 import type { ICoinList } from '~/models/response/CoinRes.model'
 
 interface Props {
@@ -197,6 +205,7 @@ const props = withDefaults(defineProps<Props>(), {
 const paymentDialogVisible = ref(false)
 const qrDialogVisible = ref(false)
 const walletDialogVisible = ref(false)
+const stripeDialogVisible = ref(false)
 
 const selectedPackage = ref<ICoinList | null>(null)
 
@@ -216,12 +225,15 @@ const handleProceedPayment = (methodId: string): void => {
     qrDialogVisible.value = true
   } else if (methodId === 'truemoney') {
     walletDialogVisible.value = true
+  } else if (methodId === 'card') {
+    stripeDialogVisible.value = true
   }
 }
 
 const handleBackToSelect = (): void => {
   qrDialogVisible.value = false
   walletDialogVisible.value = false
+  stripeDialogVisible.value = false
   paymentDialogVisible.value = true
 }
 </script>
