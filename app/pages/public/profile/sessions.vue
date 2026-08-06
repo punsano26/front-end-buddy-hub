@@ -136,7 +136,7 @@ async function useFetch (): Promise<void> {
   })
   sessions.value = response.data || []
   pagination.value = {
-    ...extractPagination(response.pagination),
+    ...extractPagination(response),
     limit: 10
   }
 }
