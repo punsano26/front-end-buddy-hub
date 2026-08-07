@@ -1,19 +1,22 @@
 import { ref, type Ref } from 'vue'
 import type { IPagination } from '@/models/Global.model'
 
-export function useExtractPagination (input?: Partial<IPagination>): IPagination {
+type TPaginationInput = Partial<IPagination> | { pagination?: Partial<IPagination> }
+
+export function useExtractPagination (input?: TPaginationInput | null): IPagination {
+  const target = (input && 'pagination' in input && input.pagination) ? input.pagination : (input as Partial<IPagination>)
   return {
-    page: input?.page ?? 1,
-    limit: input?.limit ?? 20,
-    total: input?.total ?? 0,
-    lastPage: input?.lastPage ?? 1
+    page: target?.page ?? 1,
+    limit: target?.limit ?? 20,
+    total: target?.total ?? 0,
+    lastPage: target?.lastPage ?? 1
   }
 }
 
 interface IUsePagination {
   search: Ref<string>
   pagination: Ref<IPagination>
-  extractPagination: (input?: Partial<IPagination>) => IPagination
+  extractPagination: (input?: TPaginationInput | null) => IPagination
 }
 
 export function usePagination (): IUsePagination {

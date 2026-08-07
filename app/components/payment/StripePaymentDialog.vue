@@ -26,10 +26,10 @@
       </button>
 
       <h6 class="font-bold text-2xl text-surface-900 dark:text-white tracking-wide">
-        ชำระด้วย PromptPay
+        ชำระด้วยบัตร
       </h6>
       <p class="text-xs sm:text-sm text-surface-500 dark:text-surface-400 max-w-[340px]">
-        สแกน QR Code ด้านล่างเพื่อชำระเงินผ่านแอปธนาคาร
+        กรอกข้อมูลบัตรเพื่อชำระเงิน
       </p>
     </div>
 
@@ -51,7 +51,7 @@
       v-if="isCreatingIntent"
       class="flex flex-col items-center justify-center py-12 gap-3">
       <i class="pi pi-spin pi-spinner text-3xl text-indigo-500" />
-      <span class="text-sm text-surface-500 dark:text-surface-400 font-medium">กำลังสร้าง PromptPay QR Code...</span>
+      <span class="text-sm text-surface-500 dark:text-surface-400 font-medium">กำลังเตรียมการชำระเงิน...</span>
     </div>
 
     <!-- Error State -->
@@ -77,12 +77,12 @@
       v-else
       class="px-6 py-4">
       <div
-        id="stripe-promptpay-element"
+        id="stripe-payment-element"
         ref="paymentElementRef"
-        class="min-h-[220px]" />
+        class="min-h-[200px]" />
 
-      <!-- Confirm Button -->
-      <div class="mt-4">
+      <!-- Pay Button -->
+      <div class="mt-6">
         <button
           :disabled="isConfirming"
           class="w-full py-3.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 hover:opacity-95 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/10 transition-all duration-200 border-none text-base cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2"
@@ -91,7 +91,7 @@
           <i
             v-if="isConfirming"
             class="pi pi-spin pi-spinner" />
-          <span>{{ isConfirming ? 'กำลังดำเนินการ...' : 'ยืนยันการชำระเงิน' }}</span>
+          <span>{{ isConfirming ? 'กำลังดำเนินการ...' : 'ชำระเงิน' }}</span>
         </button>
       </div>
     </div>
@@ -139,6 +139,7 @@ const errorMessage = ref<string>('')
 let stripeElements: StripeElements | null = null
 let clientSecret: string = ''
 
+// Create PaymentIntent and mount Payment Element
 async function createPaymentIntent (): Promise<void> {
   if (!$stripe || !props.coinPackageId) return
 
@@ -148,7 +149,7 @@ async function createPaymentIntent (): Promise<void> {
   try {
     const response = await PaymentService.BuyCoinPackageWithStripe({
       coinPackageId: props.coinPackageId,
-      paymentMethod: PaymentMethodEnum.PROMPTPAY
+      paymentMethod: PaymentMethodEnum.CREDIT_CARD
     })
 
     clientSecret = response?.data?.clientSecret || (response as any)?.clientSecret || (response as any)?.client_secret || ''
@@ -162,7 +163,7 @@ async function createPaymentIntent (): Promise<void> {
     await nextTick()
     mountPaymentElement($stripe, clientSecret)
   } catch (err: any) {
-    console.error('[QRPaymentDialog] createPaymentIntent error:', err)
+    console.error('[StripePaymentDialog] createPaymentIntent error:', err)
     errorMessage.value = 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง'
   } finally {
     if (errorMessage.value) {
@@ -179,20 +180,23 @@ function mountPaymentElement (stripe: Stripe, secret: string): void {
     appearance: {
       theme: 'stripe',
       variables: {
-        colorPrimary: '#0284c7',
+        colorPrimary: '#6366f1',
         borderRadius: '12px',
         fontFamily: '"Inter", sans-serif'
       }
     }
   })
 
-  const paymentElement = stripeElements.create('payment')
+  const paymentElement = stripeElements.create('payment', {
+    layout: 'tabs'
+  })
 
   if (paymentElementRef.value) {
     paymentElement.mount(paymentElementRef.value)
   }
 }
 
+// Confirm payment
 async function handleConfirmPayment (): Promise<void> {
   if (!$stripe || !stripeElements || isConfirming.value) return
 
@@ -207,15 +211,17 @@ async function handleConfirmPayment (): Promise<void> {
       }
     })
 
+    // If error, Stripe did NOT redirect — show error inline
     if (error) {
       if (error.type === 'card_error' || error.type === 'validation_error') {
-        errorMessage.value = error.message || 'ข้อมูลชำระเงินไม่ถูกต้อง'
+        errorMessage.value = error.message || 'ข้อมูลบัตรไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง'
       } else {
         errorMessage.value = 'เกิดข้อผิดพลาดในการชำระเงิน กรุณาลองใหม่'
       }
     }
+    // If no error, Stripe redirected — this code won't execute
   } catch (err: any) {
-    console.error('[QRPaymentDialog] confirmPayment error:', err)
+    console.error('[StripePaymentDialog] confirmPayment error:', err)
     errorMessage.value = 'เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่'
   } finally {
     isConfirming.value = false
@@ -238,6 +244,7 @@ function destroyElements (): void {
   clientSecret = ''
 }
 
+// Watch dialog visibility to init/cleanup
 watch(visible, (newVal: boolean): void => {
   if (newVal && props.coinPackageId) {
     createPaymentIntent()

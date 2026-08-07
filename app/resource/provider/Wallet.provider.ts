@@ -1,9 +1,10 @@
 import HttpRequest from '../HttpRequest'
 import type { ISendCoinsToAnotherUserPayload } from '~/models/request/WalletReq.model'
-import type { IFindWalletBalanceResponse, ISendCoinsToAnotherUserResponse } from '~/models/response/WallRes.model'
+import type { IFindWalletBalanceResponse, ISendCoinsToAnotherUserResponse, IWalletTransactionsResponse } from '~/models/response/WallRes.model'
 
 export interface IWalletProvider {
   findWalletBalance (): Promise<IFindWalletBalanceResponse>
+  findWalletTransactions (params?: { page?: number, limit?: number }): Promise<IWalletTransactionsResponse>
   sendCoinsToAnotherUser (payload: ISendCoinsToAnotherUserPayload): Promise<ISendCoinsToAnotherUserResponse>
 }
 
@@ -13,6 +14,12 @@ class WalletProvider extends HttpRequest implements IWalletProvider {
   public async findWalletBalance (): Promise<IFindWalletBalanceResponse> {
     this.setUserAuthHeader()
     const response = await this.get(`${this.urlPrefix}`)
+    return response
+  }
+
+  public async findWalletTransactions (params?: { page?: number, limit?: number }): Promise<IWalletTransactionsResponse> {
+    this.setUserAuthHeader()
+    const response = await this.get(`${this.urlPrefix}/transactions`, params)
     return response
   }
 

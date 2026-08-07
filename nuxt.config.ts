@@ -79,7 +79,8 @@ export default defineNuxtConfig({
     public: {
       siteUrl: normalizedSiteUrl,
       siteName: 'Buddy Hub',
-      defaultOgImage: '/png/logo-buddy-hub.png'
+      defaultOgImage: '/png/logo-buddy-hub.png',
+      stripePublishableKey: import.meta.env.NUXT_PUBLIC_STRIPE_PK
     }
   },
 

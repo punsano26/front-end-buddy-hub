@@ -92,7 +92,7 @@
     </div>
 
     <div class="text-center text-[10px] text-surface-450 dark:text-surface-500 font-medium mt-4 mb-6">
-      สบายใจได้! การชำระเงินของคุณจะถูกเข้ารหัสและปลอดภัยด้วย Omise
+      สบายใจได้! การชำระเงินของคุณจะถูกเข้ารหัสและปลอดภัย
     </div>
   </Dialog>
 </template>
@@ -128,10 +128,10 @@ const paymentMethods: PaymentMethod[] = [
     icon: 'pi pi-qrcode'
   },
   {
-    id: 'truemoney',
-    name: 'TrueMoney Wallet',
-    subtext: 'ชำระผ่านวอลเล็ตทรูมันนี่',
-    icon: 'pi pi-wallet'
+    id: 'card',
+    name: 'Credit / Debit Card',
+    subtext: 'ชำระผ่านบัตรเครดิตหรือเดบิต',
+    icon: 'pi pi-credit-card'
   }
 ]
 
