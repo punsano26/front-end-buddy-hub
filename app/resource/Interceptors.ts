@@ -38,8 +38,18 @@ export async function onResponseError (error: AxiosError): Promise<any> {
   // 🔄 Handle 401 Unauthorized by attempting to refresh token
   if (error.response?.status === 401) {
     const config = error.config
-    // Avoid infinite loop if refreshing fails
-    if (config && config.url && config.url.includes('/auth/sessions/refresh')) {
+
+    // Do not attempt refresh or force logout for authentication endpoints (e.g. login, register, account lookup, password reset)
+    const isAuthEndpoint = Boolean(
+      config?.url
+      && (
+        config.url.includes('/auth/sessions')
+        || config.url.includes('/auth/account-lookups')
+        || config.url.includes('/auth/registrations')
+        || config.url.includes('/auth/password')
+      )
+    )
+    if (isAuthEndpoint) {
       return Promise.reject(error)
     }
 
