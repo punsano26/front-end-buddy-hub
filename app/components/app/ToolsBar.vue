@@ -131,7 +131,7 @@
           <CoinBalance
             v-if="authStore.user.id"
             class=""
-            @topup="router.push({ name: 'public-vip' })" />
+            @topup="router.push({ name: 'public-coin' })" />
           <div class="hidden md:flex items-center">
             <ToggleSwitchMode class="pt-1" />
           </div>
