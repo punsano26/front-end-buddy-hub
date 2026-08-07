@@ -177,8 +177,9 @@ const setupWebSocketListener = (): void => {
 
       const isCoinEvent = payload.event && coinEvents.includes(payload.event as CoinGrantedEvent)
       const isCoinMessage = payload.event === 'new_message' && payload.data?.messageType === 'COIN_GRANTED'
+      const isWalletTransaction = payload.event === 'wallet:transaction'
 
-      if (isCoinEvent || isCoinMessage) {
+      if (isCoinEvent || isCoinMessage || isWalletTransaction) {
         fetchBalance()
       }
     } catch (err: any) {
