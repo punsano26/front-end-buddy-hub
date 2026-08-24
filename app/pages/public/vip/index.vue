@@ -40,38 +40,50 @@
 
         <div class="space-y-4 rounded-3xl border border-slate-200/70 bg-white/80 p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5">
           <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">สถานะของคุณ</p>
-          <StatusPackage />
+          <StatusPackage ref="statusPackageRef" />
         </div>
       </div>
 
       <div class="space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <p class="text-xl font-semibold">เลือกแพ็คเกจ VIP</p>
-          <p class="text-sm text-slate-500 dark:text-slate-400">ชำระครั้งเดียว ไม่มีต่ออัตโนมัติ</p>
+          <p class="text-sm text-slate-500 dark:text-slate-400">สมัครด้วยเหรียญ ชำระครั้งเดียว ไม่มีต่ออัตโนมัติ</p>
+        </div>
+
+        <!-- Alert Banner for subscription actions -->
+        <div
+          v-if="actionMessage"
+          class="p-4 rounded-2xl flex items-center justify-between text-sm font-semibold"
+          :class="isError ? 'bg-red-500/10 text-red-500 border border-red-500/30' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'">
+          <span>{{ actionMessage }}</span>
+          <button
+            class="text-xs underline border-none bg-transparent cursor-pointer font-bold"
+            type="button"
+            @click="actionMessage = ''">
+            ปิด
+          </button>
         </div>
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div class="relative">
-            <span class="absolute -top-3 left-4 z-10 rounded-full border border-amber-200/80 bg-amber-100/90 px-3 py-1 text-xs font-semibold text-amber-700 shadow-sm dark:border-amber-400/40 dark:bg-amber-400/20 dark:text-amber-200">
-              ลองก่อน
-            </span>
-            <Package :package="vipPackage1" />
-          </div>
-
-          <div class="relative">
-            <span class="absolute -top-3 left-4 z-10 rounded-full border border-rose-200/20 bg-rose-100/90 px-3 py-1 text-xs font-semibold text-rose-700 shadow-sm dark:border-rose-500 dark:bg-rose-400/90 dark:text-rose-900/80">
+          <div
+            v-for="(pkg, idx) in packagesList"
+            :key="pkg.id || idx"
+            class="relative">
+            <span
+              v-if="pkg.isBestValue"
+              class="absolute -top-3 left-4 z-10 rounded-full border border-rose-200/20 bg-rose-100/90 px-3 py-1 text-xs font-semibold text-rose-700 shadow-sm dark:border-rose-500 dark:bg-rose-400/90 dark:text-rose-900/80">
               คุ้มสุด
             </span>
-            <div class="rounded-3xl ring-2 ring-amber-400/60 dark:ring-amber-400/50">
-              <Package :package="vipPackage2" />
-            </div>
-          </div>
-
-          <div class="relative">
-            <span class="absolute -top-3 left-4 z-10 rounded-full border border-sky-200/80 bg-sky-100/90 px-3 py-1 text-xs font-semibold text-sky-700 shadow-sm dark:border-sky-400/40 dark:bg-sky-400/20 dark:text-sky-200">
-              ประหยัดสุด
+            <span
+              v-else-if="idx === 0"
+              class="absolute -top-3 left-4 z-10 rounded-full border border-amber-200/80 bg-amber-100/90 px-3 py-1 text-xs font-semibold text-amber-700 shadow-sm dark:border-amber-400/40 dark:bg-amber-400/20 dark:text-amber-200">
+              ลองก่อน
             </span>
-            <Package :package="vipPackage3" />
+            <div :class="{ 'rounded-3xl ring-2 ring-amber-400/60 dark:ring-amber-400/50': pkg.isBestValue }">
+              <Package
+                :package="pkg"
+                @select="handleSelectPackage" />
+            </div>
           </div>
         </div>
       </div>
@@ -92,7 +104,7 @@
           <p>
             VIP ต่ออายุไม่อัตโนมัติ — ระบบจะเตือนก่อนหมดอายุ ·
             สามารถยกเลิกได้ทุกเมื่อ ·
-            ยอดที่ชำระไม่สามารถขอคืนได้หลังเริ่มใช้งานแล้ว
+            ยอดเหรียญที่ชำระไม่สามารถขอคืนได้หลังเริ่มใช้งานแล้ว
           </p>
         </div>
       </div>
@@ -101,46 +113,86 @@
 </template>
 
 <script lang="ts" setup>
+import { ref, onMounted } from 'vue'
 import Package from '~/components/subscription/Package.vue'
 import SpacialDescription from '~/components/subscription/SpacialDescription.vue'
 import StatusPackage from '~/components/subscription/StatusPackage.vue'
+import PackageProvider, { type IPackageProvider } from '~/resource/provider/Package.provider'
+import type { IPackageData } from '~/models/response/PackageRes.model'
 
 definePageMeta({ layout: "navbar" });
-const vipPackage1 = ref({
-  name: 'VIP รายวัน',
-  price: 15,
-  smallDescription: 'ใช้งาน 1 วัน · ≈ ฿15.00/วัน',
-  features: [
-    'Find Match 50 ครั้ง/วัน',
-    'VIP Badge สีทอง',
-    'โปรไฟล์ติดอันดับต้น',
-    'ไม่มีโฆษณา'
-  ]
+
+useSeoMeta({
+  title: 'BuddyHub VIP',
+  description: 'ปลดล็อกประสบการณ์เต็มรูปแบบ Find Match ได้มากขึ้น 10 เท่า'
 })
 
-const vipPackage2 = ref({
-  name: 'VIP รายสัปดาห์',
-  price: 39,
-  smallDescription: 'ใช้งาน 7 วัน · ≈ ฿5.57/วัน',
-  features: [
-    'Find Match 50 ครั้ง/วัน',
-    'VIP Badge สีทอง',
-    'โปรไฟล์ติดอันดับต้น',
-    'ไม่มีโฆษณา'
-  ]
-})
+const packageService: IPackageProvider = new PackageProvider()
+const statusPackageRef = ref<any>(null)
 
-const vipPackage3 = ref({
-  name: 'VIP รายเดือน',
-  price: 99,
-  smallDescription: 'ใช้งาน 30 วัน · ≈ ฿3.30/วัน',
-  features: [
-    'Find Match 50 ครั้ง/วัน',
-    'VIP Badge สีทอง',
-    'โปรไฟล์ติดอันดับต้น',
-    'ไม่มีโฆษณา'
-  ]
-})
+const actionMessage = ref<string>('')
+const isError = ref<boolean>(false)
+
+const fallbackPackages = [
+  {
+    id: 1,
+    name: 'VIP รายวัน',
+    coinPrice: 15,
+    smallDescription: 'ใช้งาน 1 วัน · 15 เหรียญ',
+    features: ['Find Match 50 ครั้ง/วัน', 'VIP Badge สีทอง', 'โปรไฟล์ติดอันดับต้น', 'ไม่มีโฆษณา']
+  },
+  {
+    id: 2,
+    name: 'VIP รายสัปดาห์',
+    coinPrice: 39,
+    isBestValue: true,
+    smallDescription: 'ใช้งาน 7 วัน · 39 เหรียญ',
+    features: ['Find Match 50 ครั้ง/วัน', 'VIP Badge สีทอง', 'โปรไฟล์ติดอันดับต้น', 'ไม่มีโฆษณา']
+  },
+  {
+    id: 3,
+    name: 'VIP รายเดือน',
+    coinPrice: 99,
+    smallDescription: 'ใช้งาน 30 วัน · 99 เหรียญ',
+    features: ['Find Match 50 ครั้ง/วัน', 'VIP Badge สีทอง', 'โปรไฟล์ติดอันดับต้น', 'ไม่มีโฆษณา']
+  }
+]
+
+const packagesList = ref<any[]>(fallbackPackages)
+
+async function fetchPackages (): Promise<void> {
+  try {
+    const res = await packageService.listPackages({ page: 1, limit: 10 })
+    if (res?.data && res.data.length > 0) {
+      packagesList.value = res.data.map((p: IPackageData) => ({
+        ...p,
+        smallDescription: `ใช้งาน ${p.durationDays} วัน · ${p.coinPrice} เหรียญ`
+      }))
+    }
+  } catch (err: any) {
+    console.log('[VIP Index] Using fallback packages list:', err)
+  }
+}
+
+async function handleSelectPackage (pkg: any): Promise<void> {
+  if (!pkg.id) return
+  actionMessage.value = ''
+  isError.value = false
+
+  try {
+    const res = await packageService.subscribePackage(pkg.id)
+    if (res?.message) {
+      actionMessage.value = res.message || `สมัครสมาชิก ${pkg.name} สำเร็จแล้ว!`
+      if (statusPackageRef.value?.fetchMySubscription) {
+        statusPackageRef.value.fetchMySubscription()
+      }
+    }
+  } catch (err: any) {
+    console.error('[VIP Index] subscribePackage error:', err)
+    isError.value = true
+    actionMessage.value = err?.response?._data?.message || err?.message || 'เหรียญของคุณไม่เพียงพอ กรุณาเติมเหรียญก่อนสมัคร'
+  }
+}
 
 const spacialDescriptions = ref([
   {
@@ -169,8 +221,8 @@ const spacialDescriptions = ref([
     description: 'ใช้งานลื่นไหลแบบไม่มีรบกวน'
   }
 ])
+
+onMounted((): void => {
+  fetchPackages()
+})
 </script>
-
-<style scoped>
-
-</style>
