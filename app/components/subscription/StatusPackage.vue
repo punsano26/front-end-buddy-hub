@@ -42,11 +42,11 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
-import PackageProvider, { type IPackageProvider } from '~/resource/provider/Package.provider'
-import type { ISubscriptionData } from '~/models/response/PackageRes.model'
 import dayjs from 'dayjs'
+import SubscriptionProvider, { type ISubscriptionProvider } from '~/resource/provider/Subscription.provider'
+import type { ISubscriptionData } from '~/models/response/SubscriptionRes.model'
 
-const packageService: IPackageProvider = new PackageProvider()
+const subscriptionService: ISubscriptionProvider = new SubscriptionProvider()
 const activeSubscription = ref<ISubscriptionData | null>(null)
 const isCancelling = ref(false)
 
@@ -56,7 +56,7 @@ function formatDate (dateStr: string): string {
 
 async function fetchMySubscription (): Promise<void> {
   try {
-    const res = await packageService.listMySubscriptions({ status: 'ACTIVE', limit: 1 })
+    const res = await subscriptionService.findAllMySubscriptionsPaginate({ status: 'ACTIVE', limit: 1 })
     if (res?.data && res.data.length > 0) {
       activeSubscription.value = res.data[0]
     } else {
@@ -71,7 +71,7 @@ async function handleCancel (): Promise<void> {
   if (!activeSubscription.value || isCancelling.value) return
   isCancelling.value = true
   try {
-    await packageService.cancelSubscription(activeSubscription.value.id)
+    await subscriptionService.cancelSubscription(activeSubscription.value.id)
     activeSubscription.value = null
   } catch (err: any) {
     console.error('[StatusPackage] cancelSubscription error:', err)
