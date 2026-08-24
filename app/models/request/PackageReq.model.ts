@@ -1,11 +1,11 @@
-export interface IListPackagesQuery {
-  search?: string
-  page?: number
-  limit?: number
-}
+import type { IBasePaginationRequest } from './Request.model'
 
-export interface IListSubscriptionsQuery {
+export interface IFindPackageFilters {}
+export interface IFindAllPackagesPaginateQuery extends IBasePaginationRequest, IFindPackageFilters {}
+export type IListPackagesQuery = IFindAllPackagesPaginateQuery
+
+export interface IFindSubscriptionFilters {
   status?: string
-  page?: number
-  limit?: number
 }
+export interface IFindAllSubscriptionsPaginateQuery extends IBasePaginationRequest, IFindSubscriptionFilters {}
+export type IListSubscriptionsQuery = IFindAllSubscriptionsPaginateQuery

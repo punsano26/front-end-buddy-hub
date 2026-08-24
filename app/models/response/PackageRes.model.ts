@@ -37,7 +37,15 @@ export interface IPackage {
   description: string | null
 }
 
-export interface IPackageSuccessResponse extends IApiResponse<IPackageData> {}
-export interface IPackagePaginatedResponse extends IBasePaginationResponse<IPackageData> {}
-export interface ISubscriptionSuccessResponse extends IApiResponse<ISubscriptionData> {}
-export interface ISubscriptionPaginatedResponse extends IBasePaginationResponse<ISubscriptionData> {}
+export interface IFindOnePackageByIdResponse extends IApiResponse<IPackageData> {}
+export interface IFindAllPackagesPaginateResponse extends IBasePaginationResponse<IPackageData> {}
+export interface ISubscribePackageResponse extends IApiResponse<ISubscriptionData> {}
+export interface IFindOneSubscriptionByIdResponse extends IApiResponse<ISubscriptionData> {}
+export interface IFindAllSubscriptionsPaginateResponse extends IBasePaginationResponse<ISubscriptionData> {}
+export interface ICancelSubscriptionResponse extends IApiResponse<ISubscriptionData> {}
+
+// Aliases for backwards compatibility
+export type IPackageSuccessResponse = IFindOnePackageByIdResponse
+export type IPackagePaginatedResponse = IFindAllPackagesPaginateResponse
+export type ISubscriptionSuccessResponse = IFindOneSubscriptionByIdResponse
+export type ISubscriptionPaginatedResponse = IFindAllSubscriptionsPaginateResponse
