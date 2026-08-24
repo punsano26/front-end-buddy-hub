@@ -1,6 +1,3 @@
-import type { PaymentMethodEnum } from '../enums/Paymen.enum'
-
-export interface IBuyCoinPackageWithStripePayload {
+export interface IBuyCoinPackagePayload {
   coinPackageId: number
-  paymentMethod: PaymentMethodEnum
 }
