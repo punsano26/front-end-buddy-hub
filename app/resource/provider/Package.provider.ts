@@ -1,57 +1,55 @@
 import HttpRequest from '../HttpRequest'
-import type { IListPackagesQuery, IListSubscriptionsQuery } from '~/models/request/PackageReq.model'
+import type {
+  IFindAllPackagesPaginateQuery,
+  IListPackagesQuery
+} from '~/models/request/PackageReq.model'
 import type { TBaseParamsId } from '~/models/request/Request.model'
 import type {
+  IFindAllPackagesPaginateResponse,
+  IFindOnePackageByIdResponse,
   IPackagePaginatedResponse,
   IPackageSuccessResponse,
-  ISubscriptionPaginatedResponse,
-  ISubscriptionSuccessResponse
+  ISubscribePackageResponse
 } from '~/models/response/PackageRes.model'
 
 export interface IPackageProvider {
+  findAllPackagesPaginate (query?: IFindAllPackagesPaginateQuery): Promise<IFindAllPackagesPaginateResponse>
+  findOnePackageById (id: TBaseParamsId): Promise<IFindOnePackageByIdResponse>
+  subscribePackage (id: TBaseParamsId): Promise<ISubscribePackageResponse>
+
+  // Aliases for backwards compatibility
   listPackages (query?: IListPackagesQuery): Promise<IPackagePaginatedResponse>
   getPackageById (id: TBaseParamsId): Promise<IPackageSuccessResponse>
-  subscribePackage (id: TBaseParamsId): Promise<ISubscriptionSuccessResponse>
-  listMySubscriptions (query?: IListSubscriptionsQuery): Promise<ISubscriptionPaginatedResponse>
-  getMySubscriptionById (id: TBaseParamsId): Promise<ISubscriptionSuccessResponse>
-  cancelSubscription (id: TBaseParamsId): Promise<ISubscriptionSuccessResponse>
 }
 
 class PackageProvider extends HttpRequest implements IPackageProvider {
-  public async listPackages (query?: IListPackagesQuery): Promise<IPackagePaginatedResponse> {
+  private urlPrefix: string = '/packages'
+
+  public async findAllPackagesPaginate (query?: IFindAllPackagesPaginateQuery): Promise<IFindAllPackagesPaginateResponse> {
     this.setUserAuthHeader()
-    const response = await this.get('/packages', query)
+    const response = await this.get(`${this.urlPrefix}`, query)
     return response
   }
 
-  public async getPackageById (id: TBaseParamsId): Promise<IPackageSuccessResponse> {
+  public async findOnePackageById (id: TBaseParamsId): Promise<IFindOnePackageByIdResponse> {
     this.setUserAuthHeader()
-    const response = await this.get(`/packages/${id}`)
+    const response = await this.get(`${this.urlPrefix}/${id}`)
     return response
   }
 
-  public async subscribePackage (id: TBaseParamsId): Promise<ISubscriptionSuccessResponse> {
+  public async subscribePackage (id: TBaseParamsId): Promise<ISubscribePackageResponse> {
     this.setUserAuthHeader()
-    const response = await this.post(`/packages/${id}/subscribe`, {})
+    const response = await this.post(`${this.urlPrefix}/${id}/subscribe`, {})
     return response
   }
 
-  public async listMySubscriptions (query?: IListSubscriptionsQuery): Promise<ISubscriptionPaginatedResponse> {
-    this.setUserAuthHeader()
-    const response = await this.get('/subscriptions', query)
-    return response
+  // Aliases for backwards compatibility
+  public listPackages (query?: IListPackagesQuery): Promise<IPackagePaginatedResponse> {
+    return this.findAllPackagesPaginate(query)
   }
 
-  public async getMySubscriptionById (id: TBaseParamsId): Promise<ISubscriptionSuccessResponse> {
-    this.setUserAuthHeader()
-    const response = await this.get(`/subscriptions/${id}`)
-    return response
-  }
-
-  public async cancelSubscription (id: TBaseParamsId): Promise<ISubscriptionSuccessResponse> {
-    this.setUserAuthHeader()
-    const response = await this.post(`/subscriptions/${id}/cancel`, {})
-    return response
+  public getPackageById (id: TBaseParamsId): Promise<IPackageSuccessResponse> {
+    return this.findOnePackageById(id)
   }
 }
 
