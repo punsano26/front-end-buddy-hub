@@ -2,56 +2,59 @@
   <Dialog
     v-model:visible="visible"
     :show-header="false"
-    class="w-11/12 sm:max-w-[480px]"
+    class="w-11/12 sm:max-w-[490px]"
     pt:content:class="p-0"
     pt:root:class="overflow-hidden rounded-[28px] shadow-2xl bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800"
     dismissable-mask
     modal>
     <!-- Header -->
-    <div class="relative w-full flex flex-col items-center gap-3 px-6 pt-8 pb-2 text-center select-none">
+    <div class="relative w-full flex flex-col items-center gap-3 px-6 pt-8 pb-3 text-center select-none">
       <!-- Back Button -->
       <button
-        class="absolute left-6 top-6 text-surface-400 hover:text-surface-900 dark:hover:text-white transition-colors duration-200 cursor-pointer w-8 h-8 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800/40 flex items-center justify-center border-none bg-transparent"
+        class="absolute left-5 top-5 text-surface-400 hover:text-surface-900 dark:hover:text-white transition-colors duration-200 cursor-pointer w-8 h-8 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800 flex items-center justify-center border-none bg-transparent"
         type="button"
         @click="handleBack">
-        <i class="pi pi-chevron-left text-lg" />
+        <i class="pi pi-chevron-left text-base" />
       </button>
 
       <!-- Close Button -->
       <button
-        class="absolute right-6 top-6 text-surface-400 hover:text-surface-900 dark:hover:text-white transition-colors duration-200 cursor-pointer w-8 h-8 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800/40 flex items-center justify-center border-none bg-transparent"
+        class="absolute right-5 top-5 text-surface-400 hover:text-surface-900 dark:hover:text-white transition-colors duration-200 cursor-pointer w-8 h-8 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800 flex items-center justify-center border-none bg-transparent"
         type="button"
         @click="visible = false">
         <i class="pi pi-times text-sm" />
       </button>
 
-      <div class="flex items-center justify-center gap-2 bg-indigo-500/10 dark:bg-indigo-400/20 text-indigo-600 dark:text-indigo-300 text-xs font-bold px-3.5 py-1.5 rounded-full border border-indigo-500/20">
-        <i class="pi pi-qrcode text-sm" />
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 dark:bg-indigo-400/20 text-indigo-600 dark:text-indigo-300 text-xs font-bold border border-indigo-500/20">
+        <i class="pi pi-qrcode text-xs" />
         <span>PromptPay QR Payment</span>
       </div>
 
       <h6 class="font-extrabold text-2xl text-surface-900 dark:text-white tracking-wide">
-        ชำระเงินด้วย PromptPay
+        สแกน QR ชำระเงิน
       </h6>
-      <p class="text-xs sm:text-sm text-surface-500 dark:text-surface-400 max-w-[360px]">
-        สแกน QR Code เพื่อชำระเงินและแนบภาพสลิปโอนเงินเพื่อยืนยัน
+      <p class="text-xs text-surface-500 dark:text-surface-400 max-w-[360px]">
+        สแกน QR Code ผ่านแอปพลิเคชันธนาคารและแนบสลิปเพื่อรับเหรียญทันที
       </p>
     </div>
 
     <!-- Summary Box -->
-    <div class="flex items-center justify-between px-5 py-3.5 mx-6 my-2 bg-surface-50 dark:bg-surface-900/60 rounded-2xl border border-surface-200 dark:border-surface-800/80">
+    <div class="flex items-center justify-between px-5 py-3.5 mx-6 my-1 bg-surface-50 dark:bg-surface-800/60 rounded-2xl border border-surface-200/80 dark:border-surface-700/60">
       <div class="flex items-center gap-3">
-        <span class="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shadow-inner">
+        <span class="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shadow-inner">
           <i class="pi pi-bitcoin text-amber-500 text-xl animate-[pulse_3s_infinite]" />
         </span>
-        <div class="flex flex-col">
-          <span class="text-xs text-surface-400 font-medium">จำนวนเหรียญที่จะได้รับ</span>
-          <span class="text-base sm:text-lg font-bold text-surface-900 dark:text-surface-50">{{ coins.toLocaleString('th-TH') }} เหรียญ</span>
+        <div class="flex flex-col text-left">
+          <span class="text-[11px] font-semibold text-surface-400">เหรียญที่จะได้รับ</span>
+          <span class="text-base font-extrabold text-surface-900 dark:text-surface-50 tabular-nums">
+            {{ coins.toLocaleString('th-TH') }} เหรียญ
+          </span>
         </div>
       </div>
+
       <div class="flex flex-col items-end">
-        <span class="text-xs text-surface-400 font-medium">ยอดชำระ</span>
-        <span class="text-2xl font-black bg-gradient-to-r from-cyan-550 to-violet-550 dark:from-cyan-400 dark:to-violet-400 bg-clip-text text-transparent">
+        <span class="text-[11px] font-semibold text-surface-400">ยอดชำระ</span>
+        <span class="text-2xl font-black bg-gradient-primary bg-clip-text text-transparent tabular-nums">
           ฿{{ price.toLocaleString('th-TH') }}
         </span>
       </div>
@@ -60,23 +63,28 @@
     <!-- Loading State -->
     <div
       v-if="isLoading"
-      class="flex flex-col items-center justify-center py-12 gap-3">
-      <i class="pi pi-spin pi-spinner text-3xl text-indigo-500" />
-      <span class="text-sm text-surface-500 dark:text-surface-400 font-medium">กำลังเตรียม PromptPay QR Code...</span>
+      class="flex flex-col items-center justify-center py-16 gap-3">
+      <div class="relative flex items-center justify-center">
+        <span class="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-primary-400/30 opacity-75" />
+        <i class="pi pi-spin pi-spinner text-3xl text-primary-500" />
+      </div>
+      <span class="text-xs font-semibold text-surface-500 dark:text-surface-400">
+        กำลังสร้าง PromptPay QR Code...
+      </span>
     </div>
 
     <!-- Error State -->
     <div
       v-else-if="errorMessage && !orderData"
-      class="px-6 py-8 flex flex-col items-center gap-4">
-      <div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center">
-        <i class="pi pi-exclamation-triangle text-2xl text-red-500" />
+      class="px-6 py-10 flex flex-col items-center gap-4 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500">
+        <i class="pi pi-exclamation-triangle text-2xl" />
       </div>
-      <p class="text-sm text-surface-600 dark:text-surface-400 text-center font-medium">
+      <p class="text-xs font-medium text-surface-600 dark:text-surface-300 max-w-xs">
         {{ errorMessage }}
       </p>
       <button
-        class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all duration-200 border-none text-sm cursor-pointer"
+        class="px-6 py-2.5 bg-gradient-primary hover:opacity-95 text-white font-bold rounded-xl transition-all duration-200 border-none text-xs cursor-pointer shadow-md shadow-indigo-500/15"
         type="button"
         @click="initOrder">
         ลองอีกครั้ง
@@ -86,44 +94,64 @@
     <!-- Order Display Container -->
     <div
       v-else-if="orderData"
-      class="px-6 py-3 flex flex-col items-center gap-4">
-      <!-- QR Image Container -->
-      <div class="relative flex flex-col items-center justify-center p-4 bg-white rounded-3xl border-2 border-indigo-500/20 shadow-md">
-        <!-- PromptPay Header Banner inside QR -->
-        <div class="flex items-center gap-2 mb-2 bg-blue-900 text-white px-4 py-1 rounded-lg text-[11px] font-bold">
-          <i class="pi pi-check-circle text-cyan-400" />
-          <span>PROMPTPAY QR CODE</span>
+      class="px-6 py-2 flex flex-col items-center gap-4">
+      <!-- QR Frame Container -->
+      <div class="relative flex flex-col items-center justify-center p-5 bg-white rounded-3xl border border-surface-200 shadow-md">
+        <!-- Thai QR / PromptPay Header Banner -->
+        <div class="flex items-center gap-2 mb-3 bg-[#003057] text-white px-4 py-1.5 rounded-xl text-[11px] font-extrabold tracking-wider shadow-sm">
+          <i class="pi pi-qrcode text-cyan-300" />
+          <span>THAI QR PAYMENT · PROMPTPAY</span>
         </div>
 
-        <img
-          v-if="orderData.qrImageBase64"
-          :src="orderData.qrImageBase64"
-          alt="PromptPay QR Code"
-          class="w-52 h-52 object-contain">
+        <!-- QR Code Image -->
+        <div class="relative p-2 bg-white rounded-2xl border border-slate-100 shadow-inner">
+          <img
+            v-if="orderData.qrImageBase64"
+            :src="orderData.qrImageBase64"
+            alt="PromptPay QR Code"
+            class="w-48 h-48 sm:w-52 sm:h-52 object-contain">
+        </div>
 
-        <!-- Reference & Timer -->
-        <div class="mt-2 text-center space-y-1">
-          <p class="text-[11px] font-semibold text-slate-500">
-            อ้างอิง: <span class="font-mono font-bold text-slate-700">{{ orderData.ref1 }}</span>
-          </p>
+        <!-- Reference & Expiration -->
+        <div class="mt-3 text-center space-y-2 w-full">
+          <!-- Ref Number & Copy Button -->
+          <div class="flex items-center justify-center gap-2 bg-slate-50 px-3 py-1 rounded-xl border border-slate-200/60">
+            <span class="text-[11px] font-semibold text-slate-500">อ้างอิง:</span>
+            <span class="font-mono text-xs font-bold text-slate-800 tracking-wider">{{ orderData.ref1 }}</span>
+            <button
+              :title="copiedRef ? 'คัดลอกแล้ว' : 'คัดลอกเลขอ้างอิง'"
+              class="text-slate-400 hover:text-indigo-600 transition-colors border-none bg-transparent p-0.5 cursor-pointer ml-1"
+              type="button"
+              @click="handleCopyRef(orderData.ref1)">
+              <i :class="copiedRef ? 'pi pi-check text-emerald-500' : 'pi pi-copy text-xs'" />
+            </button>
+          </div>
+
+          <!-- Countdown Timer -->
           <div
             v-if="qrRemainingSeconds > 0"
-            class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+            :class="[
+              'inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border transition-colors',
+              qrRemainingSeconds <= 60
+                ? 'text-rose-600 bg-rose-50 border-rose-200 animate-pulse'
+                : 'text-amber-600 bg-amber-50 border-amber-200'
+            ]">
             <i class="pi pi-clock text-xs" />
             <span>QR หมดอายุใน {{ formatSeconds(qrRemainingSeconds) }}</span>
           </div>
+
           <div
             v-else
-            class="flex flex-col items-center gap-1">
-            <span class="text-xs font-bold text-red-500">QR Code หมดอายุแล้ว</span>
+            class="flex flex-col items-center gap-1.5">
+            <span class="text-xs font-bold text-rose-500">QR Code หมดอายุแล้ว</span>
             <button
               :disabled="isRefreshing"
-              class="px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 border-none cursor-pointer"
+              class="px-3.5 py-1.5 bg-gradient-primary text-white text-xs font-bold rounded-xl hover:opacity-95 border-none cursor-pointer flex items-center gap-1.5 shadow-sm shadow-indigo-500/20"
               type="button"
               @click="handleRefreshQr">
               <i
                 v-if="isRefreshing"
-                class="pi pi-spin pi-spinner mr-1" />
+                class="pi pi-spin pi-spinner text-xs" />
               <span>ขอ QR Code ใหม่</span>
             </button>
           </div>
@@ -131,15 +159,15 @@
       </div>
 
       <!-- Slip Upload Section -->
-      <div class="w-full space-y-3 pt-2">
-        <label class="block text-xs font-bold text-surface-700 dark:text-surface-300 uppercase tracking-wider">
+      <div class="w-full space-y-2.5 pt-1">
+        <label class="block text-xs font-bold text-surface-700 dark:text-surface-300 uppercase tracking-wider text-left">
           แนบสลิปโอนเงินเพื่อตรวจสอบ
         </label>
 
         <!-- Dropzone / File Picker -->
         <div
           :class="selectedFile ? 'border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/20' : 'border-surface-300 dark:border-surface-700 hover:border-indigo-400 bg-surface-50/50 dark:bg-surface-800/40'"
-          class="relative border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-colors duration-200"
+          class="relative border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200"
           @click="triggerFileInput">
           <input
             ref="fileInputRef"
@@ -155,13 +183,13 @@
                 v-if="previewUrl"
                 :src="previewUrl"
                 alt="Slip preview"
-                class="w-12 h-16 object-cover rounded-lg border border-emerald-400 shadow-sm">
+                class="w-12 h-16 object-cover rounded-xl border border-emerald-400 shadow-sm">
               <div class="flex flex-col text-left overflow-hidden">
                 <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 truncate">{{ selectedFile.name }}</span>
-                <span class="text-[10px] text-surface-400">{{ (selectedFile.size / 1024).toFixed(1) }} KB</span>
+                <span class="text-[10px] text-surface-400 font-medium">{{ (selectedFile.size / 1024).toFixed(1) }} KB</span>
               </div>
               <button
-                class="ml-auto text-surface-400 hover:text-red-500 border-none bg-transparent p-1 cursor-pointer"
+                class="ml-auto text-surface-400 hover:text-red-500 border-none bg-transparent p-1.5 cursor-pointer rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
                 type="button"
                 @click.stop="clearFile">
                 <i class="pi pi-trash text-sm" />
@@ -170,12 +198,14 @@
           </template>
 
           <template v-else>
-            <i class="pi pi-upload text-2xl text-indigo-500 mb-1" />
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-primary-500 mb-1.5">
+              <i class="pi pi-upload text-xl" />
+            </div>
             <p class="text-xs font-bold text-surface-700 dark:text-surface-200">
-              คลิกเพื่อเลือกไฟล์สลิป หรือลากไฟล์มาวาง
+              คลิกเพื่อเลือกภาพสลิป หรือลากไฟล์มาวาง
             </p>
             <p class="text-[10px] text-surface-400 mt-0.5">
-              รองรับไฟล์ JPG, PNG, WEBP (ไม่เกิน 10MB)
+              รองรับไฟล์ JPG, PNG, WEBP (สูงสุด 10MB)
             </p>
           </template>
         </div>
@@ -183,7 +213,7 @@
         <!-- Verification Error Message -->
         <div
           v-if="errorMessage"
-          class="p-3 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-2 text-xs text-red-500 font-medium">
+          class="p-3 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-2 text-xs text-red-500 font-medium">
           <i class="pi pi-exclamation-circle text-base flex-shrink-0" />
           <span>{{ errorMessage }}</span>
         </div>
@@ -191,13 +221,13 @@
         <!-- Verification Success Message -->
         <div
           v-if="verificationSuccess"
-          class="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
-          <i class="pi pi-check-circle text-base flex-shrink-0" />
-          <span>ตรวจสอบสลิปสำเร็จ! เติม {{ coins }} เหรียญเรียบร้อยแล้ว</span>
+          class="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center gap-2.5 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
+          <i class="pi pi-check-circle text-lg flex-shrink-0 text-emerald-500" />
+          <span>ตรวจสอบสลิปสำเร็จ! ได้รับ {{ coins.toLocaleString('th-TH') }} เหรียญเข้ากระเป๋าเรียบร้อยแล้ว</span>
         </div>
 
-        <!-- Action Button -->
-        <div class="flex gap-2 pt-1">
+        <!-- Action Buttons -->
+        <div class="flex gap-2.5 pt-2">
           <button
             class="w-1/3 py-3 bg-surface-100 dark:bg-surface-800 hover:bg-surface-200 dark:hover:bg-surface-700 text-surface-700 dark:text-surface-300 font-bold rounded-2xl transition-all duration-200 border-none text-xs cursor-pointer"
             type="button"
@@ -207,7 +237,7 @@
 
           <button
             :disabled="!selectedFile || isVerifying || verificationSuccess"
-            class="w-2/3 py-3 bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 hover:opacity-95 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/10 transition-all duration-200 border-none text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            class="w-2/3 py-3 bg-gradient-primary hover:opacity-95 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/20 transition-all duration-200 border-none text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             type="button"
             @click="handleVerifySlip">
             <i
@@ -219,8 +249,10 @@
       </div>
     </div>
 
-    <div class="text-center text-[10px] text-surface-450 dark:text-surface-500 font-medium mt-3 mb-5 select-none">
-      ความปลอดภัยขั้นสูง: เข้ารหัสด้วย SSL และระบบยืนยันสลิป SlipOK
+    <!-- Security Footer -->
+    <div class="flex items-center justify-center gap-1.5 text-center text-[10px] text-surface-400 dark:text-surface-500 font-medium mt-3 mb-5 select-none px-6">
+      <i class="pi pi-shield-check text-emerald-500 text-xs" />
+      <span>ความปลอดภัยขั้นสูง: เข้ารหัสด้วย SSL และระบบยืนยันสลิปอัตโนมัติ</span>
     </div>
   </Dialog>
 </template>
@@ -255,6 +287,7 @@ const isVerifying = ref(false)
 const isRefreshing = ref(false)
 const errorMessage = ref<string>('')
 const verificationSuccess = ref(false)
+const copiedRef = ref<boolean>(false)
 
 const orderData = ref<IBuyCoinPackageData | IValidOrderData | null>(null)
 const qrRemainingSeconds = ref<number>(0)
@@ -286,6 +319,19 @@ function stopCountdown (): void {
   if (timerInterval) {
     clearInterval(timerInterval)
     timerInterval = null
+  }
+}
+
+async function handleCopyRef (refText: string): Promise<void> {
+  if (!refText) return
+  try {
+    await navigator.clipboard.writeText(refText)
+    copiedRef.value = true
+    setTimeout((): void => {
+      copiedRef.value = false
+    }, 2000)
+  } catch (err: any) {
+    console.error('[QRPaymentDialog] copy error:', err)
   }
 }
 

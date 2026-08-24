@@ -1,7 +1,14 @@
 <template>
-  <div class="mx-auto max-w-5xl px-4 py-8 space-y-10 sm:px-6">
-    <CoinPackages :items="items" />
-    <TransactionCoinHistory />
+  <div class="relative min-h-screen overflow-hidden">
+    <!-- Ambient background glow elements -->
+    <div class="pointer-events-none absolute -top-24 right-[-10%] h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl dark:bg-cyan-400/5" />
+    <div class="pointer-events-none absolute top-1/3 left-[-10%] h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl dark:bg-indigo-500/5" />
+    <div class="pointer-events-none absolute bottom-10 right-[15%] h-80 w-80 rounded-full bg-purple-500/10 blur-3xl dark:bg-purple-500/5" />
+
+    <div class="relative mx-auto max-w-5xl px-4 py-8 space-y-12 sm:px-6">
+      <CoinPackages :items="items" />
+      <TransactionCoinHistory />
+    </div>
   </div>
 </template>
 

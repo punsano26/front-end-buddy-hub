@@ -2,29 +2,31 @@
   <Dialog
     v-model:visible="visible"
     :show-header="false"
-    class="w-11/12 sm:max-w-[446px]"
+    class="w-11/12 sm:max-w-[460px]"
     pt:content:class="p-0"
     pt:root:class="overflow-hidden rounded-[28px] shadow-2xl bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800"
     dismissable-mask
     modal>
-    <!-- Header with logo and close button (like auth page layout) -->
-    <div class="relative w-full flex flex-col items-center gap-4 px-[30px] pt-10 pb-2 text-center select-none">
+    <!-- Header -->
+    <div class="relative w-full flex flex-col items-center gap-3 px-6 pt-8 pb-3 text-center select-none">
       <!-- Close Button -->
       <button
-        class="absolute right-6 top-6 text-surface-400 hover:text-surface-900 dark:hover:text-white transition-colors duration-200 cursor-pointer w-8 h-8 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800/40 flex items-center justify-center border-none bg-transparent"
+        class="absolute right-5 top-5 text-surface-400 hover:text-surface-900 dark:hover:text-white transition-colors duration-200 cursor-pointer w-8 h-8 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800 flex items-center justify-center border-none bg-transparent"
         type="button"
         @click="visible = false">
         <i class="pi pi-times text-sm" />
       </button>
 
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 text-xs font-bold border border-primary-500/20">
+        <i class="pi pi-building-columns text-xs" />
+        <span>ข้อมูลบัญชีธนาคาร</span>
+      </div>
 
-      <!-- Title -->
-      <h6 class="font-bold text-2xl text-surface-900 dark:text-white tracking-wide">
+      <h6 class="font-extrabold text-2xl text-surface-900 dark:text-white tracking-wide">
         ผูกบัญชีธนาคาร
       </h6>
 
-      <!-- Description -->
-      <p class="text-xs sm:text-sm text-surface-500 dark:text-surface-400 max-w-[340px]">
+      <p class="text-xs text-surface-500 dark:text-surface-400 max-w-[340px]">
         โปรดเลือกธนาคารและกรอกข้อมูลบัญชีเพื่อใช้รับเงินจากการให้บริการ
       </p>
     </div>
