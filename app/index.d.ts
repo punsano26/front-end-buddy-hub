@@ -1,10 +1,8 @@
 import type { handleLoading } from './plugins/HandleLoading'
-import type { Stripe } from '@stripe/stripe-js'
 
 // Define an interface for all your plugin injections
 interface PluginsInjections {
   $handleLoading: typeof handleLoading
-  $stripe: Stripe | null
 }
 
 // Extend the #app module's NuxtApp interface

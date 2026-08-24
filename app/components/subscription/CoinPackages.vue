@@ -153,21 +153,14 @@
     :coin-package-id="selectedPackage?.id"
     :coins="(selectedPackage?.coinAmount || 0) + (selectedPackage?.bonusCoin || 0)"
     :price="selectedPackage?.price"
-    @back="handleBackToSelect" />
-
-  <StripePaymentDialog
-    v-model:visible="stripeDialogVisible"
-    :coin-package-id="selectedPackage?.id"
-    :coins="(selectedPackage?.coinAmount || 0) + (selectedPackage?.bonusCoin || 0)"
-    :price="selectedPackage?.price"
-    @back="handleBackToSelect" />
+    @back="handleBackToSelect"
+    @success="handlePaymentSuccess" />
 </template>
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
 import ChoosePaymentDialog from '~/components/payment/ChoosePaymentDialog.vue'
 import QRPaymentDialog from '~/components/payment/QRPaymentDialog.vue'
-import StripePaymentDialog from '~/components/payment/StripePaymentDialog.vue'
 import type { ICoinList } from '~/models/response/CoinRes.model'
 import WalletProvider from '~/resource/provider/Wallet.provider'
 
@@ -181,7 +174,6 @@ const props = withDefaults(defineProps<Props>(), {
 
 const paymentDialogVisible = ref(false)
 const qrDialogVisible = ref(false)
-const stripeDialogVisible = ref(false)
 
 const selectedPackage = ref<ICoinList | null>(null)
 const userBalance = ref<number>(0)
@@ -213,18 +205,17 @@ const handleSelectPackage = (pkg: ICoinList): void => {
   paymentDialogVisible.value = true
 }
 
-const handleProceedPayment = (methodId: string): void => {
+const handleProceedPayment = (_methodId: string): void => {
   paymentDialogVisible.value = false
-  if (methodId === 'promptpay') {
-    qrDialogVisible.value = true
-  } else if (methodId === 'card') {
-    stripeDialogVisible.value = true
-  }
+  qrDialogVisible.value = true
 }
 
 const handleBackToSelect = (): void => {
   qrDialogVisible.value = false
-  stripeDialogVisible.value = false
   paymentDialogVisible.value = true
+}
+
+const handlePaymentSuccess = (): void => {
+  fetchUserBalance()
 }
 </script>
