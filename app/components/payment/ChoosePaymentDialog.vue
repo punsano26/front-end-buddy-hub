@@ -7,7 +7,7 @@
     pt:root:class="overflow-hidden rounded-[28px] shadow-2xl bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800"
     dismissable-mask
     modal>
-    <!-- Header with logo and back/close buttons (like auth page layout) -->
+    <!-- Header with logo and back/close buttons -->
     <div class="relative w-full flex flex-col items-center gap-4 px-[30px] pt-10 pb-2 text-center select-none">
       <!-- Close Button -->
       <button
@@ -44,7 +44,7 @@
 
     <!-- Section Title -->
     <div class="px-6 pt-3 pb-2 text-xs font-bold text-surface-450 dark:text-surface-500 tracking-wider uppercase">
-      เลือกช่องทางการชำระเงิน
+      ช่องทางการชำระเงิน
     </div>
 
     <!-- Payment Methods List -->
@@ -87,12 +87,12 @@
         class="w-full py-3.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 hover:opacity-95 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/10 transition-all duration-200 border-none text-base cursor-pointer"
         type="button"
         @click="handleProceed">
-        ดำเนินการต่อ
+        สแกน PromptPay QR & แนบสลิป
       </button>
     </div>
 
     <div class="text-center text-[10px] text-surface-450 dark:text-surface-500 font-medium mt-4 mb-6">
-      สบายใจได้! การชำระเงินของคุณจะถูกเข้ารหัสและปลอดภัย
+      สบายใจได้! ระบบตรวจสอบสลิปอัตโนมัติรวดเร็วและปลอดภัย
     </div>
   </Dialog>
 </template>
@@ -107,8 +107,8 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-  coins: 50,
-  price: 35
+  coins: 0,
+  price: 0
 })
 
 const visible = defineModel<boolean>('visible', { default: false })
@@ -123,15 +123,9 @@ interface PaymentMethod {
 const paymentMethods: PaymentMethod[] = [
   {
     id: 'promptpay',
-    name: 'PromptPay QR',
-    subtext: 'สแกนจ่ายผ่านแอปธนาคาร',
+    name: 'PromptPay QR Code',
+    subtext: 'สแกนจ่ายผ่านแอปธนาคาร และแนบสลิปโอนเงิน',
     icon: 'pi pi-qrcode'
-  },
-  {
-    id: 'card',
-    name: 'Credit / Debit Card',
-    subtext: 'ชำระผ่านบัตรเครดิตหรือเดบิต',
-    icon: 'pi pi-credit-card'
   }
 ]
 
