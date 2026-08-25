@@ -55,7 +55,7 @@
       <div class="flex flex-col items-end">
         <span class="text-[11px] font-semibold text-surface-400">ยอดชำระ</span>
         <span class="text-2xl font-black bg-gradient-primary bg-clip-text text-transparent tabular-nums">
-          ฿{{ price.toLocaleString('th-TH') }}
+          ฿{{ (orderData?.amount ?? price).toLocaleString('th-TH') }}
         </span>
       </div>
     </div>
@@ -258,7 +258,7 @@
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import type { IBuyCoinPackageData, IValidOrderData } from '~/models/response/PaymentRes.model'
 import PaymentProvider, { type IPaymentProvider } from '~/resource/provider/Payment.provider'
 import Dialog from '~/volt/Dialog.vue'
@@ -296,6 +296,11 @@ let timerInterval: any = null
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const selectedFile = ref<File | null>(null)
 const previewUrl = ref<string>('')
+
+const currentOrderId = computed<number>((): number => {
+  if (!orderData.value) return 0
+  return 'orderId' in orderData.value ? orderData.value.orderId : (orderData.value as IValidOrderData).id
+})
 
 function formatSeconds (sec: number): string {
   const m = Math.floor(sec / 60)
@@ -335,41 +340,6 @@ async function handleCopyRef (refText: string): Promise<void> {
   }
 }
 
-async function initOrder (): Promise<void> {
-  if (!props.coinPackageId) return
-
-  isLoading.value = true
-  errorMessage.value = ''
-  verificationSuccess.value = false
-
-  try {
-    // Check if user already has a valid order first
-    const validRes = await PaymentService.getValidOrder().catch((err: any): null => {
-      console.log('[QRPaymentDialog] No existing valid order found:', err)
-      return null
-    })
-
-    if (validRes?.data) {
-      orderData.value = validRes.data
-      startCountdown(validRes.data.qrRemainingSeconds || 0)
-    } else {
-      // Create new order for coin package
-      const createRes = await PaymentService.buyCoinPackage({ coinPackageId: props.coinPackageId })
-      if (createRes?.data) {
-        orderData.value = createRes.data
-        startCountdown(createRes.data.qrRemainingSeconds || 0)
-      } else {
-        errorMessage.value = createRes?.message || 'ไม่สามารถสร้างคำสั่งซื้อได้'
-      }
-    }
-  } catch (err: any) {
-    console.error('[QRPaymentDialog] initOrder error:', err)
-    errorMessage.value = err?.response?._data?.message || err?.message || 'เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ'
-  } finally {
-    isLoading.value = false
-  }
-}
-
 async function handleRefreshQr (): Promise<void> {
   isRefreshing.value = true
   errorMessage.value = ''
@@ -387,11 +357,72 @@ async function handleRefreshQr (): Promise<void> {
   }
 }
 
+async function initOrder (): Promise<void> {
+  if (!props.coinPackageId) return
+
+  isLoading.value = true
+  errorMessage.value = ''
+  verificationSuccess.value = false
+
+  try {
+    // 1. Check if user already has a pending valid order
+    const validRes = await PaymentService.getValidOrder().catch((err: any): null => {
+      console.log('[QRPaymentDialog] No existing valid order found:', err)
+      return null
+    })
+
+    const existingOrder = validRes?.data
+
+    // 2. Check if the existing order matches the newly selected coin package
+    if (existingOrder && existingOrder.coinPackageId === props.coinPackageId) {
+      // Same coin package -> reuse existing order or refresh if QR expired
+      if (existingOrder.qrRemainingSeconds > 0) {
+        orderData.value = existingOrder
+        startCountdown(existingOrder.qrRemainingSeconds)
+      } else {
+        // QR expired -> refresh QR code for current order
+        await handleRefreshQr()
+      }
+    } else {
+      // Different coin package or no pending order -> request new order
+      // Backend automatically cancels old order if coinPackageId is different
+      const createRes = await PaymentService.buyCoinPackage({
+        coinPackageId: props.coinPackageId
+      })
+
+      if (createRes?.data) {
+        orderData.value = createRes.data
+        startCountdown(createRes.data.qrRemainingSeconds || 0)
+      } else {
+        errorMessage.value = createRes?.message || 'ไม่สามารถสร้างคำสั่งซื้อได้'
+      }
+    }
+  } catch (err: any) {
+    console.error('[QRPaymentDialog] initOrder error:', err)
+
+    // Handle 409 Conflict fallback by retrying to get valid order
+    if (err?.response?.status === 409) {
+      const retryRes = await PaymentService.getValidOrder().catch((_e: any): null => null)
+      if (retryRes?.data) {
+        orderData.value = retryRes.data
+        if (retryRes.data.qrRemainingSeconds > 0) {
+          startCountdown(retryRes.data.qrRemainingSeconds)
+        } else {
+          await handleRefreshQr()
+        }
+        return
+      }
+    }
+
+    errorMessage.value = err?.response?._data?.message || err?.message || 'เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ'
+  } finally {
+    isLoading.value = false
+  }
+}
+
 async function handleCancelOrder (): Promise<void> {
-  const currentOrder = orderData.value
-  if (currentOrder) {
-    const id = 'orderId' in currentOrder ? currentOrder.orderId : currentOrder.id
-    await PaymentService.cancelOrder(id).catch((err: any): void => {
+  if (currentOrderId.value) {
+    await PaymentService.cancelOrder(currentOrderId.value).catch((err: any): void => {
       console.error('[QRPaymentDialog] cancelOrder error:', err)
     })
   }
@@ -454,10 +485,10 @@ function handleBack (): void {
   emit('back')
 }
 
-watch(visible, (newVal: boolean): void => {
-  if (newVal && props.coinPackageId) {
+watch([visible, (): number => props.coinPackageId], ([newVisible, newPkgId]: [boolean, number]): void => {
+  if (newVisible && newPkgId) {
     initOrder()
-  } else {
+  } else if (!newVisible) {
     stopCountdown()
     orderData.value = null
     clearFile()
