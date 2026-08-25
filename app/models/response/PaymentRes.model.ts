@@ -25,12 +25,15 @@ export interface IValidOrderData {
   currency: string
   ref1: string
   qrPayload: string
-  qrExpiresAt: string
-  expiresAt: string
-  status: string
   qrImageBase64: string
+  qrExpiresAt: string
   qrRemainingSeconds: number
+  expiresAt: string
   orderRemainingSeconds: number
+  status: string
+  paidAt: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface IValidOrderResponse extends IApiResponse<IValidOrderData> {}
@@ -45,6 +48,10 @@ export interface IVerifySlipData {
   transDate: string | null
   transRef: string | null
   slipImageKey: string | null
+  orderId: number | null
+  coinsAdded: number | null
+  bonusCoins: number | null
+  newBalance: number | null
 }
 
 export interface IVerifySlipResponse extends IApiResponse<IVerifySlipData> {}
