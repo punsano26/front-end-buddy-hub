@@ -15,11 +15,29 @@
       </div>
       <Button
         label="ถอนเงิน"
-        pt:root:class="bg-gradient-primary border-none rounded-xl text-white font-semibold shadow-md shadow-indigo-500/20 hover:scale-[1.02] hover:opacity-90 active:scale-[0.98] transition-all duration-200 px-4 py-2 flex items-center gap-2">
+        pt:root:class="bg-surface-200 dark:bg-surface-800 border-none rounded-xl text-surface-500 dark:text-surface-400 font-semibold hover:bg-surface-300 dark:hover:bg-surface-700 transition-all duration-200 px-4 py-2 flex items-center gap-2 cursor-pointer"
+        @click="handleWithdrawClick">
         <template #icon>
           <Icon name="lucide:download" class="text-base" />
         </template>
       </Button>
+    </div>
+
+    <!-- Maintenance Notice Banner -->
+    <div class="p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 flex items-center justify-between gap-3 text-amber-900 dark:text-amber-200 shadow-xs">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
+          <Icon name="ph:wrench-fill" class="text-lg" />
+        </div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+          <span class="text-xs font-bold text-amber-900 dark:text-amber-200">แจ้งเตือนระบบ:</span>
+          <span class="text-xs font-medium text-amber-800 dark:text-amber-300">ระบบการถอนเงินอยู่ในช่วงปรับปรุง ขออภัยในความไม่สะดวก </span>
+        </div>
+      </div>
+      <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-[10px] font-bold text-amber-700 dark:text-amber-300 flex-shrink-0">
+        <Icon name="ph:clock-countdown-bold" class="text-xs" />
+        <span>กำลังปรับปรุง</span>
+      </div>
     </div>
 
     <!-- Quick Stats Grid (Mobile-first) -->
@@ -150,10 +168,19 @@
               </div>
             </div>
 
+            <!-- Notice: Maintenance -->
+            <div class="p-3 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 flex items-start gap-2.5 text-amber-800 dark:text-amber-300">
+              <Icon name="ph:warning-circle-fill" class="text-base flex-shrink-0 text-amber-500 mt-0.5" />
+              <p class="text-xs font-medium leading-relaxed">
+                ระบบการถอนเงินอยู่ในช่วงปรับปรุง ขออภัยในความไม่สะดวก ตัวเลขที่ท่านเห็นเป็นเพียงตัวเลขจำลองเท่านั้น ไม่สามารถถอนเงินได้จริง
+              </p>
+            </div>
+
             <!-- Withdraw Button -->
             <Button
               label="ถอนเงิน"
-              pt:root:class="w-full bg-gradient-primary border-none rounded-xl text-white font-semibold py-2.5 shadow-md shadow-indigo-500/10 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 mt-2 flex items-center justify-center gap-2">
+              pt:root:class="w-full bg-surface-200 dark:bg-surface-800 border-none rounded-xl text-surface-500 dark:text-surface-400 font-semibold py-2.5 mt-2 flex items-center justify-center gap-2 hover:bg-surface-300 dark:hover:bg-surface-700 transition-all duration-200 cursor-pointer"
+              @click="handleWithdrawClick">
               <template #icon>
                 <Icon name="lucide:download" class="text-base" />
               </template>
@@ -229,16 +256,27 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useToast } from 'primevue/usetoast'
 import type { IFindAllRentStatisticsData } from '~/models/response/DasboardRes.model'
 import DashboardProvider from '~/resource/provider/Dashboard.provider'
 
+const toast = useToast()
 const visible = ref<boolean>(false)
 const bankerInfo = ref<{ bankName: string, accountNumber: string, accountName: string } | null>(null)
 const dashboardService = new DashboardProvider()
 const { $handleLoading } = useNuxtApp()
 const stats = ref<IFindAllRentStatisticsData | null>(null)
 const isLoading = ref<boolean>(false)
+
+const handleWithdrawClick = (): void => {
+  toast.add({
+    severity: 'warn',
+    summary: 'แจ้งเตือนระบบ',
+    detail: 'ระบบการถอนเงินอยู่ในช่วงปรับปรุง ขออภัยในความไม่สะดวก',
+    life: 5000
+  })
+}
 
 const fetchStats = (): void => {
   $handleLoading(
