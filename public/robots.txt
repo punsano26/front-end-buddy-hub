@@ -5,4 +5,4 @@ Disallow: /public/chat/
 Disallow: /public/friends/
 Disallow: /public/profile/
 
-Sitemap: /sitemap.xml
+Sitemap: https://www.buddyhubbeta.space/sitemap.xml
