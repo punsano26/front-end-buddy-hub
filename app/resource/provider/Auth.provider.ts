@@ -121,15 +121,7 @@ class AuthProvider extends HttpRequest implements IAuthProvider {
   }
 
   public async verifyEmail (token?: string): Promise<IMessageResponse> {
-    if (token) {
-      this.setHeader({
-        key: 'Authorization',
-        value: `Bearer ${token}`
-      })
-    } else {
-      this.setUserAuthHeader()
-    }
-    const response = await this.patch(`${this.urlPrefix}/email/verification`, {})
+    const response = await this.patch(`${this.urlPrefix}/email/verification`, { token: token || '' })
     return response
   }
 }
