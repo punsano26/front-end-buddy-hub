@@ -12,17 +12,18 @@ export default defineNuxtRouteMiddleware(async (to: RouteLocationNormalized): Pr
   const isPolicyPath = to.path === '/policy' || to.path.startsWith('/policy/')
   const isPublicHome = to.path === '/public/home'
   const isLandingPage = to.path === '/'
+  const isVerifyEmailPath = to.path === '/verify-email' || to.path.startsWith('/verify-email')
   const hasTokenData
     = !!authStore.userToken.accessToken
       && !!authStore.userToken.refreshToken
       && authStore.userToken.tokenExpiresIn !== null
 
   // 🔒 If not a public path and no valid token, redirect to verification.
-  if (!isAuthPath && !isPolicyPath && !isPublicHome && !hasTokenData && !isLandingPage) {
+  if (!isAuthPath && !isPolicyPath && !isPublicHome && !isVerifyEmailPath && !hasTokenData && !isLandingPage) {
     return navigateTo('/auth/verify') as any
   }
 
-  const isProtectedPath = !isAuthPath && !isPolicyPath && !isPublicHome && !isLandingPage
+  const isProtectedPath = !isAuthPath && !isPolicyPath && !isPublicHome && !isVerifyEmailPath && !isLandingPage
 
   // 🔄 Refresh token only on protected pages.
   if (hasTokenData && isProtectedPath) {
