@@ -11,6 +11,7 @@ export interface IFindOneCurrentUserData {
   bannerImg: string | null
   isOnline: boolean
   isBanned: boolean
+  isVerified: boolean
   description: string | null
   gender: genderEnum
   dateOfBirth: string
