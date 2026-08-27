@@ -1,7 +1,6 @@
 <template>
   <div class="flex justify-center items-center py-10 px-8">
     <DataLoadingState :is-loading="isLoading">
-
       <template #skeleton>
         <MyProfilePageSkeleton />
       </template>
@@ -11,6 +10,31 @@
           <UploadImageProfile :value="items" @update="fetch" />
         </template>
         <template #content>
+          <!-- Unverified Email Alert Banner -->
+          <div
+            v-if="items && !items.isVerified"
+            class="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-600 dark:text-amber-400"
+          >
+            <div class="flex items-center gap-2">
+              <i class="pi pi-exclamation-circle text-lg shrink-0" />
+              <div class="text-sm">
+                <p class="font-semibold">อีเมลยังไม่ได้รับการยืนยัน</p>
+                <p class="text-xs text-surface-500 dark:text-surface-400">
+                  กรุณายืนยันอีเมลของคุณเพื่อความปลอดภัย
+                </p>
+              </div>
+            </div>
+            <Button
+              :loading="isSendingVerification"
+              size="small"
+              class="shrink-0 bg-amber-500 hover:bg-amber-600 border-none text-white text-xs font-semibold px-3 py-1.5"
+              @click="handleSendEmailVerification"
+            >
+              <i class="pi pi-send text-xs mr-1" />
+              ส่งอีเมลยืนยัน
+            </Button>
+          </div>
+
           <div class="flex flex-col md:flex-row md:items-start gap-4 md:gap-2">
             <div class="flex flex-col gap-2 flex-1 min-w-0">
               <div class="flex gap-2 items-center">
@@ -37,6 +61,18 @@
                   <p class="text-sm text-surface-500 truncate">
                     {{ items?.email }}
                   </p>
+                  <Tag
+                    v-if="items?.isVerified"
+                    severity="success"
+                    value="ยืนยันแล้ว"
+                    class="text-[10px] py-0.5 px-1.5 shrink-0"
+                  />
+                  <Tag
+                    v-else
+                    severity="warn"
+                    value="ยังไม่ยืนยัน"
+                    class="text-[10px] py-0.5 px-1.5 shrink-0"
+                  />
                 </div>
 
                 <div class="flex gap-1 items-center min-w-0">
@@ -117,50 +153,80 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
+import Button from '~/volt/Button.vue'
+import Card from '~/volt/Card.vue'
+import Divider from '~/volt/Divider.vue'
+import Tag from '~/volt/Tag.vue'
 import UploadImageProfile from '~/components/input/UploadImageProfile.vue'
 import DataLoadingState from '~/components/skeleton/DataLoadingState.vue'
 import MyProfilePageSkeleton from '~/components/skeleton/profile/MyProfilePageSkeleton.vue'
 import UserEditDetailDialog from '~/components/user/UserEditDetailDialog.vue'
 import { genderEnum } from '~/models/enums/User.enum'
 import type { IFindOneCurrentUserData } from '~/models/response/UserRes.model'
+import AuthProvider, { type IAuthProvider } from '~/resource/provider/Auth.provider'
 import UserProvider, { type IUserProvider } from '~/resource/provider/User.provider'
 
-definePageMeta({ layout: "navbar" });
-const visible = ref(false);
-const userService: IUserProvider = new UserProvider();
-const { $handleLoading } = useNuxtApp();
-const router = useRouter();
-const dayjs = useDayjs();
-const items = ref<IFindOneCurrentUserData>();
-const isLoading = ref<boolean>(true);
+definePageMeta({ layout: 'navbar' })
+
+const toast = useToast()
+const visible = ref<boolean>(false)
+const userService: IUserProvider = new UserProvider()
+const authService: IAuthProvider = new AuthProvider()
+const { $handleLoading } = useNuxtApp()
+const router = useRouter()
+const dayjs = useDayjs()
+const items = ref<IFindOneCurrentUserData>()
+const isLoading = ref<boolean>(true)
+const isSendingVerification = ref<boolean>(false)
 
 const changeIconGender = computed((): string => {
   if (items.value?.gender === genderEnum.MALE) {
-    return "pi pi-mars";
+    return 'pi pi-mars'
   }
 
   if (items.value?.gender === genderEnum.FEMALE) {
-    return "pi pi-venus";
+    return 'pi pi-venus'
   }
 
-  return "pi pi-genderless";
-});
+  return 'pi pi-genderless'
+})
 
-async function getMyProfileData(): Promise<void> {
-  const response = await userService.findOneCurrentUser();
-  const data = response?.data;
-  if (!data) return;
+async function getMyProfileData (): Promise<void> {
+  const response = await userService.findOneCurrentUser()
+  const data = response?.data
+  if (!data) return
 
-  items.value = data;
+  items.value = data
 }
 
-function fetch(): void {
-  $handleLoading(getMyProfileData, { loadingUnit: isLoading }); 
+function fetch (): void {
+  $handleLoading(getMyProfileData, { loadingUnit: isLoading })
+}
+
+async function onSendEmailVerification (): Promise<void> {
+  await authService.sendEmailVerification()
+}
+
+function handleSendEmailVerification (): void {
+  $handleLoading(onSendEmailVerification, {
+    loadingUnit: isSendingVerification,
+    toast: {
+      instance: toast,
+      success: {
+        summary: 'ส่งอีเมลยืนยันสำเร็จ',
+        detail: 'ส่งอีเมลยืนยันแล้ว กรุณาตรวจสอบกล่องข้อความในอีเมลของคุณ',
+        life: 4000
+      }
+    }
+  })
 }
 
 onMounted(() => {
-  fetch();
-});
+  fetch()
+})
 </script>
 
-<style scoped></style>
+<style scoped></style>
