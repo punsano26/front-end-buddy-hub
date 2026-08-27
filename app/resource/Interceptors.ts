@@ -39,7 +39,7 @@ export async function onResponseError (error: AxiosError): Promise<any> {
   if (error.response?.status === 401) {
     const config = error.config
 
-    // Do not attempt refresh or force logout for authentication endpoints (e.g. login, register, account lookup, password reset)
+    // Do not attempt refresh or force logout for authentication endpoints (e.g. login, register, account lookup, password reset, email verification)
     const isAuthEndpoint = Boolean(
       config?.url
       && (
@@ -47,6 +47,7 @@ export async function onResponseError (error: AxiosError): Promise<any> {
         || config.url.includes('/auth/account-lookups')
         || config.url.includes('/auth/registrations')
         || config.url.includes('/auth/password')
+        || config.url.includes('/auth/email/verification')
       )
     )
     if (isAuthEndpoint) {

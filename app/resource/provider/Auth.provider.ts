@@ -23,7 +23,7 @@ export interface IAuthProvider {
   resetForgotPassword (payload: IResetPasswordPayload): Promise<IMessageResponse>
   refreshToken (payload: IReFreshTokenPayload): Promise<IAuthLoginResponse>
   sendEmailVerification (): Promise<IMessageResponse>
-  verifyEmail (): Promise<IMessageResponse>
+  verifyEmail (token?: string): Promise<IMessageResponse>
   logout (): Promise<IMessageResponse>
   listSessions (query: IFindAllSessionsPaginateQuery): Promise<IFindAllSessionsPaginateResponse>
   revokeSession (refreshToken: string): Promise<IMessageResponse>
@@ -120,8 +120,15 @@ class AuthProvider extends HttpRequest implements IAuthProvider {
     return response
   }
 
-  public async verifyEmail (): Promise<IMessageResponse> {
-    this.setUserAuthHeader()
+  public async verifyEmail (token?: string): Promise<IMessageResponse> {
+    if (token) {
+      this.setHeader({
+        key: 'Authorization',
+        value: `Bearer ${token}`
+      })
+    } else {
+      this.setUserAuthHeader()
+    }
     const response = await this.patch(`${this.urlPrefix}/email/verification`, {})
     return response
   }
