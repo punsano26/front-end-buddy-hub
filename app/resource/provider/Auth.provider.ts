@@ -10,7 +10,7 @@ import type {
   IReFreshTokenPayload,
   IResetPasswordPayload
 } from '~/models/request/AuthReq.model'
-import type { IAuthLoginResponse, ICheckAuthResponse, IFindAllSessionsPaginateResponse, IForgotPasswordResponse } from '~/models/response/AuthRes.model'
+import type { IAuthLoginResponse, ICheckAuthResponse, IFindAllSessionsPaginateResponse } from '~/models/response/AuthRes.model'
 import type { IMessageResponse } from '~/models/response/Response.model'
 
 export interface IAuthProvider {
@@ -19,7 +19,7 @@ export interface IAuthProvider {
   changePassword (payload: IChangePasswordPayload): Promise<IMessageResponse>
   login (payload: IAuthLoginPayload): Promise<IAuthLoginResponse>
   register (payload: IAuthRegisterPayload): Promise<IAuthLoginResponse>
-  forgotPassword (payload: IForgotPasswordPayload): Promise<IForgotPasswordResponse>
+  forgotPassword (payload: IForgotPasswordPayload): Promise<IMessageResponse>
   resetForgotPassword (payload: IResetPasswordPayload): Promise<IMessageResponse>
   refreshToken (payload: IReFreshTokenPayload): Promise<IAuthLoginResponse>
   sendEmailVerification (): Promise<IMessageResponse>
@@ -48,13 +48,12 @@ class AuthProvider extends HttpRequest implements IAuthProvider {
     return response
   }
 
-  public async forgotPassword (payload: IForgotPasswordPayload): Promise<IForgotPasswordResponse> {
+  public async forgotPassword (payload: IForgotPasswordPayload): Promise<IMessageResponse> {
     const response = await this.post(`${this.urlPrefix}/password-reset-requests`, payload)
     return response
   }
 
   public async resetForgotPassword (payload: IResetPasswordPayload): Promise<IMessageResponse> {
-    this.setAuthResetHeader()
     const response = await this.patch(`${this.urlPrefix}/password/reset`, payload)
     return response
   }
