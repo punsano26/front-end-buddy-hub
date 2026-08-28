@@ -35,6 +35,7 @@ export interface IForgotPasswordPayload {
 }
 
 export interface IResetPasswordPayload {
+  token: string
   newPassword: string
   confirmNewPassword: string
 }
