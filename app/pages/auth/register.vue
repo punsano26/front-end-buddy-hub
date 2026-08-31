@@ -69,6 +69,7 @@ import type { IAuthRegisterPayload } from '~/models/request/AuthReq.model'
 import { validate, validateForm } from '~/plugins/Validate'
 import type { IAuthProvider } from '~/resource/provider/Auth.provider'
 import AuthProvider from '~/resource/provider/Auth.provider'
+import PolicyProvider, { type IPolicyProvider } from '~/resource/provider/Policy.provider'
 
 definePageMeta({
   title: 'สมัครสมาชิก',
@@ -76,6 +77,7 @@ definePageMeta({
 })
 
 const authService: IAuthProvider = new AuthProvider()
+const policyService: IPolicyProvider = new PolicyProvider()
 const toast = useToast()
 const { $handleLoading } = useNuxtApp()
 const authStore = useAuthStore()
@@ -148,6 +150,13 @@ async function onRegister (): Promise<void> {
   }
   const response = await authService.register(payload)
   authStore.userLogin(response.data, response.accessToken, response.refreshToken, Number(response.tokenExpiresIn))
+
+  try {
+    await policyService.recordConsent()
+  } catch (err: any) {
+    console.warn('Failed to record policy consent during registration:', err)
+  }
+
   router.push({ name: 'public-home' })
 }
 
