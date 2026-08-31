@@ -25,7 +25,8 @@ export default defineNuxtConfig({
     dirs: [
       {
         path: '~/volt',
-        global: true
+        global: false,
+        pathPrefix: false
       },
       '~/components'
     ]
@@ -133,11 +134,75 @@ export default defineNuxtConfig({
     plugins: [
       tailwindcss()
     ],
+    optimizeDeps: {
+      include: [
+        'primevue/config',
+        'primevue/confirmationservice',
+        'primevue/toastservice',
+        'primevue/styleclass',
+        'primevue/animateonscroll',
+        'primevue/usetoast',
+        'primevue/avatar',
+        'primevue/badge',
+        'primevue/button',
+        'primevue/buttongroup',
+        'primevue/card',
+        'primevue/checkbox',
+        'primevue/datepicker',
+        'primevue/dialog',
+        'primevue/divider',
+        'primevue/inputnumber',
+        'primevue/inputtext',
+        'primevue/menu',
+        'primevue/message',
+        'primevue/paginator',
+        'primevue/password',
+        'primevue/popover',
+        'primevue/progressbar',
+        'primevue/progressspinner',
+        'primevue/select',
+        'primevue/selectbutton',
+        'primevue/skeleton',
+        'primevue/step',
+        'primevue/stepitem',
+        'primevue/steplist',
+        'primevue/steppanel',
+        'primevue/steppanels',
+        'primevue/stepper',
+        'primevue/tag',
+        'primevue/textarea',
+        'primevue/toast',
+        'primevue/toggleswitch',
+        'primevue/toolbar',
+        '@primevue/icons/angledoubleleft',
+        '@primevue/icons/angledoubleright',
+        '@primevue/icons/angledown',
+        '@primevue/icons/angleleft',
+        '@primevue/icons/angleright',
+        '@primevue/icons/angleup',
+        '@primevue/icons/calendar',
+        '@primevue/icons/check',
+        '@primevue/icons/chevrondown',
+        '@primevue/icons/chevronleft',
+        '@primevue/icons/chevronright',
+        '@primevue/icons/chevronup',
+        '@primevue/icons/eye',
+        '@primevue/icons/eyeslash',
+        '@primevue/icons/minus',
+        '@primevue/icons/search',
+        '@primevue/icons/spinner',
+        '@primevue/icons/times',
+        '@primevue/icons/windowmaximize',
+        '@primevue/icons/windowminimize',
+        'tailwind-merge',
+        'axios',
+        'socket.io-client',
+        'chart.js',
+        'humps'
+      ]
+    },
     build: {
-      sourcemap: false,
-      rollupOptions: {
-        maxParallelFileOps: 2
-      }
+      sourcemap: false
     }
   },
   dayjs: {
