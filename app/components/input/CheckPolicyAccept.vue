@@ -8,7 +8,8 @@
       <p class="text-sm sm:text-base">
         ฉันได้อ่านและยอมรับ <NuxtLink
           :to="{ path: '/policy/protect', query: route.query }"
-          class="text-blue-500 underline font-medium">ข้อกำหนดและนโยบายความปลอดภัย</NuxtLink> ของ BuddyHub แล้ว
+          class="text-blue-500 underline font-medium"
+          target="_blank">ข้อกำหนดและนโยบายความปลอดภัย</NuxtLink> ของ BuddyHub แล้ว
       </p>
     </div>
   </div>
