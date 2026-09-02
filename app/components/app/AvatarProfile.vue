@@ -65,6 +65,11 @@ const items = ref<IMenuItem[]>([
     command: goSessions
   },
   {
+    label: 'ดูข้อมูล policy',
+    icon: 'pi pi-file',
+    command: goPolicy
+  },
+  {
     label: 'logout',
     icon: 'pi pi-sign-out',
     command: onLogout
@@ -90,6 +95,11 @@ function goProfile (): void {
 function goSessions (): void {
   router.push({ name: 'public-profile-sessions' })
 }
+
+function goPolicy (): void {
+  window.open('/policy/protect', '_blank')
+}
+
 const toggle = (event: Event): void => {
   menu.value?.toggle(event)
 }
