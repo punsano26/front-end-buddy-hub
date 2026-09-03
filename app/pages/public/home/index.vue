@@ -1,16 +1,20 @@
 <template>
   <div>
     <Card
-      pt:root:class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-black dark:via-slate-950 dark:to-black rounded-none">
+      :pt="{
+        root: {
+          class: 'border-b border-slate-200/80 bg-gradient-to-r from-sky-50/70 via-white to-indigo-50/70 shadow-xs dark:border-slate-800/80 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 rounded-none'
+        }
+      }">
       <template #content>
         <div class="p-6 flex flex-col gap-4 justify-center items-center">
           <div class="flex gap-1">
-            <p class="font-bold text-3xl text-white">ค้นหาเพื่อนรักของ</p>
+            <p class="font-bold text-3xl text-slate-800 dark:text-white">ค้นหาเพื่อนรักของ</p>
             <p class="font-bold text-3xl bg-gradient-to-r from-sky-500 to-indigo-600 bg-clip-text text-transparent">
               คุณ
             </p>
           </div>
-          <p class="text-sm text-surface-300 sm:text-xl mx-auto text-center">
+          <p class="text-sm text-slate-600 dark:text-slate-300 sm:text-xl mx-auto text-center">
             พบกับความแปลกใหม่และสังคมใหม่ๆที่ทุกคนในนี้ต่างเฝ้ารอที่จะคุยและสนุกกับคุณ
           </p>
           <div class="flex w-full flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
@@ -18,12 +22,15 @@
             <div class="flex items-center gap-4">
               <div class="flex items-center gap-2">
                 <Badge severity="success" />
-                <span class="text-white">{{ onlineCount }} ออนไลน์</span>
+                <span class="text-slate-700 dark:text-slate-200">{{ onlineCount }} ออนไลน์</span>
               </div>
               <div class="flex items-center gap-2">
-                <img src="/svg/solar--user-circle-linear.svg" alt="User Icon" class="w-5 h-5" />
-                <span class="text-white font-bold">{{ memberCountIncludeSelf }}</span>
-                <span class="text-white">สมาชิก</span>
+                <img
+                  src="/svg/solar--user-circle-linear.svg"
+                  alt="User Icon"
+                  class="w-5 h-5 brightness-0 opacity-70 dark:brightness-100 dark:opacity-100" />
+                <span class="text-slate-800 dark:text-white font-bold">{{ memberCountIncludeSelf }}</span>
+                <span class="text-slate-700 dark:text-slate-200">สมาชิก</span>
               </div>
             </div>
           </div>
