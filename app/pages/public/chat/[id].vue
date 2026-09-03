@@ -114,6 +114,18 @@
               </div>
             </div>
           </div>
+          <Transition name="fade">
+            <div v-if="isPartnerTyping" class="flex justify-start">
+              <div class="bg-white border border-slate-200/85 flex gap-2 items-center px-4 py-3 rounded-2xl shadow-sm dark:bg-slate-900 dark:border-slate-800">
+                <span class="text-slate-400 text-xs dark:text-slate-500">กำลังพิมพ์</span>
+                <div class="flex gap-1">
+                  <span class="animate-bounce bg-blue-500 h-1.5 rounded-full w-1.5" style="animation-delay: 0s" />
+                  <span class="animate-bounce bg-blue-500 h-1.5 rounded-full w-1.5" style="animation-delay: 0.15s" />
+                  <span class="animate-bounce bg-blue-500 h-1.5 rounded-full w-1.5" style="animation-delay: 0.3s" />
+                </div>
+              </div>
+            </div>
+          </Transition>
           <div v-if="sendError" class="text-center text-xs text-red-500 font-medium">
             <span>{{ sendError }}</span>
           </div>
@@ -163,6 +175,23 @@ const { messages: chatData } = storeToRefs(chatRoomStore);
 const sendError = computed((): string => chatRoomStore.getSendError(id.value));
 const id = computed(() => Number(useRoute().params.id));
 definePageMeta({ layout: "chat" });
+
+const isPartnerTyping = ref(false);
+let typingClearTimer: ReturnType<typeof setTimeout> | null = null;
+
+function handleTypingEvent(event: Event): void {
+  const detail = (event as CustomEvent).detail;
+  if (!detail || detail.userId !== id.value) return;
+
+  isPartnerTyping.value = detail.isTyping;
+
+  if (typingClearTimer) clearTimeout(typingClearTimer);
+  if (detail.isTyping) {
+    typingClearTimer = setTimeout((): void => {
+      isPartnerTyping.value = false;
+    }, 3000);
+  }
+}
 
 const form = ref<ICreateMessagePayload>({
   receiverId: id.value,
@@ -426,6 +455,11 @@ const { removeSocketListener, startSocketSync, stopSocketSync } =
         message.senderId === id.value &&
         message.receiverId === authStore.user.id
       ) {
+        isPartnerTyping.value = false;
+        if (typingClearTimer) {
+          clearTimeout(typingClearTimer);
+          typingClearTimer = null;
+        }
         void markMessagesAsRead();
       }
 
@@ -538,6 +572,7 @@ async function sendMediaMessage(message: string | ICreateMessageData): Promise<v
 }
 
 onMounted((): void => {
+  window.addEventListener('ws:typing', handleTypingEvent);
   fetch();
   startSocketSync(200);
 
@@ -571,6 +606,8 @@ onMounted((): void => {
 });
 
 onUnmounted((): void => {
+  window.removeEventListener('ws:typing', handleTypingEvent);
+  if (typingClearTimer) clearTimeout(typingClearTimer);
   stopSocketSync();
   removeSocketListener();
 });
@@ -578,6 +615,11 @@ onUnmounted((): void => {
 watch(
   (): number => id.value,
   (nextId: number, previousId?: number): void => {
+    isPartnerTyping.value = false;
+    if (typingClearTimer) {
+      clearTimeout(typingClearTimer);
+      typingClearTimer = null;
+    }
     cancelEditMessage();
     activeMenuMessageId.value = null;
     if (typeof previousId === 'number') {
@@ -592,6 +634,15 @@ watch(
   (): number => orderedChatData.value.length,
   (): void => {
     void scrollToBottom();
+  },
+);
+
+watch(
+  (): boolean => isPartnerTyping.value,
+  (isTyping: boolean): void => {
+    if (isTyping) {
+      void scrollToBottom();
+    }
   },
 );
 </script>
