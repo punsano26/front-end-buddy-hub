@@ -32,6 +32,7 @@ type TWebSocketEvent
     | 'notification_read'
     | 'notification_deleted'
     | 'user:banned'
+    | 'typing'
     | MatchEvent
     | RentEvent
     | RentSessionsEvent
@@ -554,6 +555,18 @@ export default defineNuxtPlugin((): any => {
         case 'notification_read':
         case 'notification_deleted': {
           // Notifications are consumed by the notification components/pages directly.
+          break
+        }
+
+        case 'typing': {
+          if (!isRecord(payload.data)) break
+          const typingUserId = toNumber(payload.data.userId)
+          const typingIsTyping = payload.data.isTyping === true
+          if (typingUserId && typingUserId !== currentUserId) {
+            window.dispatchEvent(new CustomEvent('ws:typing', {
+              detail: { userId: typingUserId, isTyping: typingIsTyping }
+            }))
+          }
           break
         }
 

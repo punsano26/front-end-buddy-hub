@@ -169,7 +169,7 @@ interface IProps {
   allowMedia?: boolean
   allowCoin?: boolean
 }
-const { $handleLoading } = useNuxtApp()
+const { $handleLoading, $ws } = useNuxtApp()
 const emit = defineEmits<{
   'update:modelValue': [message: string]
   'createMessage': [message: string]
@@ -195,6 +195,40 @@ const messageModel = computed({
     emit('update:modelValue', value)
   }
 })
+
+const ws = typeof $ws === 'function' ? $ws : useWebSocket()
+let typingDebounceTimer: ReturnType<typeof setTimeout> | null = null
+let lastTypingSent = false
+
+watch(messageModel, (val: string): void => {
+  const isTyping = val.trim().length > 0
+
+  if (isTyping === lastTypingSent) return
+
+  if (typingDebounceTimer) clearTimeout(typingDebounceTimer)
+
+  if (isTyping) {
+    // Send immediately on start typing
+    sendTypingEvent(true)
+    lastTypingSent = true
+  } else {
+    // Debounce stop-typing
+    typingDebounceTimer = setTimeout((): void => {
+      sendTypingEvent(false)
+      lastTypingSent = false
+    }, 500)
+  }
+})
+
+function sendTypingEvent (isTyping: boolean): void {
+  const socket = ws?.()
+  if (!socket || socket.readyState !== WebSocket.OPEN) return
+  if (!props.partnerId) return
+  socket.send(JSON.stringify({
+    event: 'typing',
+    data: { receiverId: props.partnerId, isTyping }
+  }))
+}
 const formSendCoins = ref<ISendCoinsToAnotherUserPayload>({
   receiverId: props.partnerId || 0,
   amount: 10, // Example amount
@@ -253,6 +287,10 @@ const canSend = computed((): boolean => {
 })
 
 function handleSend (): void {
+  sendTypingEvent(false)
+  lastTypingSent = false
+  if (typingDebounceTimer) clearTimeout(typingDebounceTimer)
+
   const trimmedMessage = messageModel.value.trim()
   const file = allowMedia.value ? selectedFile.value : null
 
@@ -326,6 +364,9 @@ async function handleUpload (file: File, category: UploadCategoryEnum): Promise<
   return result
 }
 function handleCancelEdit (): void {
+  sendTypingEvent(false)
+  lastTypingSent = false
+  if (typingDebounceTimer) clearTimeout(typingDebounceTimer)
   emit('cancelEdit')
 }
 
@@ -368,6 +409,11 @@ function onSendCoins (): void {
     }
   })
 }
+
+onUnmounted((): void => {
+  if (typingDebounceTimer) clearTimeout(typingDebounceTimer)
+  sendTypingEvent(false)
+})
 </script>
 
 <style scoped>
