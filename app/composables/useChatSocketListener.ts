@@ -1,15 +1,10 @@
-import type { ICreateMessageData, IMessageReadStatus } from '~/models/response/ChatRes.model'
+import type { ICreateMessageData } from '~/models/response/ChatRes.model'
 
 interface IUseChatSocketListenerOptions {
   onReceiveMessage: (message: ICreateMessageData) => void
   onMessagesRead: (messageIds: number[]) => void
   onMessageDeleted: (messageId: number) => void
   onMessageEdited: (message: ICreateMessageData) => void
-}
-
-interface IWebSocketEventPayload {
-  event?: string
-  data?: unknown
 }
 
 function isRecord (value: unknown): value is Record<string, unknown> {
@@ -23,17 +18,7 @@ function isChatMessageLike (value: unknown): value is ICreateMessageData {
     && typeof value.senderId === 'number'
     && typeof value.receiverId === 'number'
     && typeof value.messageType === 'string'
-    && typeof value.messageText === 'string'
-}
-
-function extractMessageReadIds (value: unknown): number[] {
-  if (!Array.isArray(value)) return []
-
-  return value
-    .filter((item: unknown): item is IMessageReadStatus => {
-      return isRecord(item) && typeof item.id === 'number'
-    })
-    .map((item: IMessageReadStatus): number => item.id)
+    && (typeof value.messageText === 'string' || value.messageText === null || value.messageText === undefined)
 }
 
 export const useChatSocketListener = (options: IUseChatSocketListenerOptions): {
@@ -42,97 +27,68 @@ export const useChatSocketListener = (options: IUseChatSocketListenerOptions): {
   startSocketSync: (intervalMs?: number) => void
   stopSocketSync: () => void
 } => {
-  const { $ws } = useNuxtApp()
+  let isWindowEventsBound = false
 
-  const wsListener = ref<((event: MessageEvent) => void) | null>(null)
-  const currentSocket = ref<WebSocket | null>(null)
-  const socketSyncInterval = ref<ReturnType<typeof setInterval> | null>(null)
+  const handleWindowNewMessage = (event: Event): void => {
+    const detail = (event as CustomEvent).detail
+    if (isChatMessageLike(detail)) {
+      options.onReceiveMessage(detail)
+    }
+  }
+
+  const handleWindowMessagesRead = (event: Event): void => {
+    const detail = (event as CustomEvent).detail
+    if (Array.isArray(detail)) {
+      options.onMessagesRead(detail)
+    }
+  }
+
+  const handleWindowMessageDeleted = (event: Event): void => {
+    const detail = (event as CustomEvent).detail
+    if (typeof detail === 'number') {
+      options.onMessageDeleted(detail)
+    }
+  }
+
+  const handleWindowMessageUpdated = (event: Event): void => {
+    const detail = (event as CustomEvent).detail
+    if (isChatMessageLike(detail)) {
+      options.onMessageEdited(detail)
+    }
+  }
+
+  function bindWindowEvents (): void {
+    if (typeof window === 'undefined' || isWindowEventsBound) return
+    window.addEventListener('ws:new_message', handleWindowNewMessage)
+    window.addEventListener('ws:message_read', handleWindowMessagesRead)
+    window.addEventListener('ws:message_deleted', handleWindowMessageDeleted)
+    window.addEventListener('ws:message_updated', handleWindowMessageUpdated)
+    isWindowEventsBound = true
+  }
+
+  function unbindWindowEvents (): void {
+    if (typeof window === 'undefined' || !isWindowEventsBound) return
+    window.removeEventListener('ws:new_message', handleWindowNewMessage)
+    window.removeEventListener('ws:message_read', handleWindowMessagesRead)
+    window.removeEventListener('ws:message_deleted', handleWindowMessageDeleted)
+    window.removeEventListener('ws:message_updated', handleWindowMessageUpdated)
+    isWindowEventsBound = false
+  }
 
   function removeSocketListener (): void {
-    if (currentSocket.value && wsListener.value) {
-      currentSocket.value.removeEventListener('message', wsListener.value)
-    }
-
-    currentSocket.value = null
-    wsListener.value = null
+    unbindWindowEvents()
   }
 
   function setupSocketListener (): void {
-    const socket = $ws()
-
-    if (!socket) {
-      removeSocketListener()
-      return
-    }
-
-    if (currentSocket.value === socket && wsListener.value) return
-
-    removeSocketListener()
-
-    const onMessage = (event: MessageEvent): void => {
-      let payload: IWebSocketEventPayload
-      try {
-        payload = JSON.parse(event.data) as IWebSocketEventPayload
-      } catch {
-        return
-      }
-
-      if (!payload || typeof payload.event !== 'string') return
-
-      switch (payload.event) {
-        case 'new_message': {
-          if (isChatMessageLike(payload.data)) {
-            options.onReceiveMessage(payload.data)
-          }
-          break
-        }
-
-        case 'message_read': {
-          const messageIds = extractMessageReadIds(payload.data)
-          if (messageIds.length > 0) {
-            options.onMessagesRead(messageIds)
-          }
-          break
-        }
-
-        case 'message_deleted': {
-          if (isChatMessageLike(payload.data)) {
-            options.onMessageDeleted(payload.data.id)
-          }
-          break
-        }
-
-        case 'message_updated': {
-          if (isChatMessageLike(payload.data)) {
-            options.onMessageEdited(payload.data)
-          }
-          break
-        }
-
-        default: {
-          break
-        }
-      }
-    }
-
-    socket.addEventListener('message', onMessage)
-    currentSocket.value = socket
-    wsListener.value = onMessage
+    bindWindowEvents()
   }
 
-  function startSocketSync (intervalMs: number = 200): void {
-    stopSocketSync()
-    setupSocketListener()
-    socketSyncInterval.value = setInterval((): void => {
-      setupSocketListener()
-    }, intervalMs)
+  function startSocketSync (_intervalMs?: number): void {
+    bindWindowEvents()
   }
 
   function stopSocketSync (): void {
-    if (socketSyncInterval.value) {
-      clearInterval(socketSyncInterval.value)
-      socketSyncInterval.value = null
-    }
+    unbindWindowEvents()
   }
 
   return {

@@ -16,6 +16,7 @@ import { useUserStore } from '~/stores/User'
 import { useChatRoomStore } from '~/stores/ChatRoom'
 
 import { useBanStore, type IBanEventData } from '~/stores/Ban'
+import { shouldRefreshToken, tryRefreshToken } from '~/utils/authRefresh'
 
 type TWebSocketEvent
   = 'users:list'
@@ -63,8 +64,7 @@ function isMessageLike (value: unknown): value is ICreateMessageData {
     && typeof value.senderId === 'number'
     && typeof value.receiverId === 'number'
     && typeof value.messageType === 'string'
-    && typeof value.messageText === 'string'
-    && typeof value.createdAt === 'string'
+    && (typeof value.messageText === 'string' || value.messageText === null || value.messageText === undefined)
 }
 
 function extractMessageReadIds (value: unknown): number[] {
@@ -127,8 +127,8 @@ export default defineNuxtPlugin((): any => {
     try {
       audio.currentTime = 0
       await audio.play()
-    } catch {
-      // Autoplay can be blocked; ignore and keep realtime updates.
+    } catch (err: any) {
+      console.warn('[WS] Autoplay prevented notification sound:', err)
     }
   }
 
@@ -184,20 +184,55 @@ export default defineNuxtPlugin((): any => {
 
       chatStore.setConversationUnreadCounts(unreadCounts, currentUserId)
       unreadSyncedUserId = currentUserId
-    } catch {
-      // Ignore login unread sync failures and keep realtime updates via websocket.
+    } catch (err: any) {
+      console.warn('[WS] Sync unread count error:', err)
     } finally {
       isSyncingUnreadOnLogin = false
     }
   }
 
-  const connect = (): void => {
+  let lastHeartbeatAt = Date.now()
+  let heartbeatCheckTimer: ReturnType<typeof setInterval> | null = null
+
+  const stopHeartbeatWatchdog = (): void => {
+    if (heartbeatCheckTimer) {
+      clearInterval(heartbeatCheckTimer)
+      heartbeatCheckTimer = null
+    }
+  }
+
+  const startHeartbeatWatchdog = (): void => {
+    stopHeartbeatWatchdog()
+    lastHeartbeatAt = Date.now()
+    heartbeatCheckTimer = setInterval((): void => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return
+      // Server pings every 30s. If we don't receive any message for 75s, reconnect.
+      if (Date.now() - lastHeartbeatAt > 75000) {
+        console.warn('[WS] Heartbeat timeout detected (no messages for >75s). Reconnecting...')
+        try {
+          ws.close()
+        } catch (err: any) {
+          console.warn('[WS] Error closing websocket on timeout:', err)
+        }
+      }
+    }, 20000)
+  }
+
+  const connect = async (): Promise<void> => {
     const userId = authStore.user.id
-    const accessToken = authStore.userToken.accessToken
 
     if (!Number.isFinite(userId) || userId <= 0) return
     if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return
 
+    if (authStore.userToken.refreshToken && shouldRefreshToken()) {
+      try {
+        await tryRefreshToken({ showSpinner: false })
+      } catch (err: any) {
+        console.warn('[WS] Proactive token refresh failed before connect:', err)
+      }
+    }
+
+    const accessToken = authStore.userToken.accessToken
     const wsUrl = accessToken
       ? `${import.meta.env.VITE_ENV_BASE_WS_API}?token=${accessToken}`
       : `${import.meta.env.VITE_ENV_BASE_WS_API}?id=${userId}`
@@ -206,9 +241,19 @@ export default defineNuxtPlugin((): any => {
 
     ws.onopen = (): void => {
       console.log('WS connected')
+      lastHeartbeatAt = Date.now()
+      startHeartbeatWatchdog()
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('ws:reconnected'))
+      }
+    }
+
+    ws.onerror = (err: Event): void => {
+      console.warn('[WS] Connection error:', err)
     }
 
     ws.onmessage = (event: MessageEvent): void => {
+      lastHeartbeatAt = Date.now()
       let payload: IWebSocketPayload
       try {
         payload = JSON.parse(event.data) as IWebSocketPayload
@@ -246,8 +291,8 @@ export default defineNuxtPlugin((): any => {
           if (ws && ws.readyState === WebSocket.OPEN) {
             try {
               ws.send(JSON.stringify({ event: 'pong', data: {} }))
-            } catch {
-              // Ignore sending errors
+            } catch (err: any) {
+              console.warn('[WS] Error sending pong:', err)
             }
           }
           break
@@ -278,6 +323,10 @@ export default defineNuxtPlugin((): any => {
           if (isIncoming) {
             void playNotificationSound(message.senderId)
           }
+
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('ws:new_message', { detail: message }))
+          }
           break
         }
 
@@ -288,6 +337,10 @@ export default defineNuxtPlugin((): any => {
           chatStore.removeUnreadMessageIds(messageIds, currentUserId)
           const chatRoomStore = useChatRoomStore()
           chatRoomStore.markMessagesAsRead(messageIds)
+
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('ws:message_read', { detail: messageIds }))
+          }
           break
         }
 
@@ -300,11 +353,17 @@ export default defineNuxtPlugin((): any => {
             : message.senderId
 
           chatStore.removeUnreadMessageId(message.id, currentUserId, friendId)
+
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('ws:message_deleted', { detail: message.id }))
+          }
           break
         }
 
         case 'message_updated': {
-          // Updates are applied in-room via useChatSocketListener.
+          if (isMessageLike(payload.data) && typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('ws:message_updated', { detail: payload.data }))
+          }
           break
         }
 
@@ -577,6 +636,7 @@ export default defineNuxtPlugin((): any => {
     }
 
     ws.onclose = (closeEvent: CloseEvent): void => {
+      stopHeartbeatWatchdog()
       console.log('WS disconnected', closeEvent.code, closeEvent.reason)
 
       const wasManualClose = ws?.__manualClose === true
@@ -590,7 +650,7 @@ export default defineNuxtPlugin((): any => {
           .then(async (m: any): Promise<void> => {
             const isSuccess = await m.forceRefreshToken()
             if (isSuccess) {
-              connect()
+              void connect()
             } else {
               const { useBanStore } = await import('~/stores/Ban')
               const banStore = useBanStore()
@@ -604,7 +664,7 @@ export default defineNuxtPlugin((): any => {
       }
 
       setTimeout((): void => {
-        connect()
+        void connect()
       }, 3000)
     }
   }
@@ -616,7 +676,7 @@ export default defineNuxtPlugin((): any => {
     }
 
     if (token && (!ws || ws.readyState === WebSocket.CLOSED)) {
-      connect()
+      void connect()
     }
 
     if (!token && oldToken) {
@@ -641,13 +701,13 @@ export default defineNuxtPlugin((): any => {
     void syncUnreadCountOnLogin()
 
     if (!ws || ws.readyState === WebSocket.CLOSED) {
-      connect()
+      void connect()
     }
   }, { immediate: true })
 
   onNuxtReady((): void => {
     if (authStore.userToken.accessToken && (!ws || ws.readyState !== WebSocket.OPEN)) {
-      connect()
+      void connect()
     }
   })
 
@@ -656,7 +716,7 @@ export default defineNuxtPlugin((): any => {
       ws: (): any => ws,
       wsConnect: (): void => {
         if (!ws || ws.readyState === WebSocket.CLOSED) {
-          connect()
+          void connect()
         }
       }
     }

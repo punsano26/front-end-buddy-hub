@@ -251,6 +251,8 @@ import { useCallStore } from '~/stores/Call'
 
 definePageMeta({ layout: 'fullscreen' })
 
+const { $handleLoading, $ws } = useNuxtApp()
+
 useHead({
   title: 'สาย - BuddyHub',
   meta: [{ name: 'description', content: 'หน้าโทรด้วยเสียง BuddyHub Voice Call' }]
@@ -265,7 +267,6 @@ const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
 // ─── Route: callData comes as a JSON query param ──────────────────────────────
 const route = useRoute()
 const router = useRouter()
-const { $handleLoading, $ws } = useNuxtApp()
 
 // ─── WebRTC state ─────────────────────────────────────────────────────────────
 const remoteAudioRef = ref<HTMLAudioElement | null>(null)
@@ -384,12 +385,58 @@ function stopTimer (): void {
 }
 
 // ─── WebRTC functions ─────────────────────────────────────────────────────────
+let peerDisconnectTimer: ReturnType<typeof setTimeout> | null = null
+
+function clearPeerDisconnectTimer (): void {
+  if (peerDisconnectTimer !== null) {
+    clearTimeout(peerDisconnectTimer)
+    peerDisconnectTimer = null
+  }
+}
+
+function handlePeerDisconnectState (): void {
+  if (callStatus.value !== CallStatusEnum.ACCEPTED) return
+  if (peerDisconnectTimer !== null) return
+
+  // Give a 2-second grace period for potential network glitch/reconnection
+  peerDisconnectTimer = setTimeout((): void => {
+    peerDisconnectTimer = null
+    const connState = peerConnection?.connectionState
+    const iceState = peerConnection?.iceConnectionState
+    const isDisconnected = connState === 'disconnected' || connState === 'failed' || connState === 'closed'
+      || iceState === 'disconnected' || iceState === 'failed' || iceState === 'closed'
+
+    if (isDisconnected && callStatus.value === CallStatusEnum.ACCEPTED) {
+      console.log('[WebRTC] Remote peer disconnected. Transitioning to ENDED status.')
+      callStore.setCallStatus(CallStatusEnum.ENDED)
+    }
+  }, 2000)
+}
+
 async function initPeerConnection (): Promise<void> {
   peerConnection = new RTCPeerConnection({ iceServers })
 
+  peerConnection.onconnectionstatechange = (): void => {
+    const state = peerConnection?.connectionState
+    if (state === 'disconnected' || state === 'failed' || state === 'closed') {
+      handlePeerDisconnectState()
+    } else if (state === 'connected') {
+      clearPeerDisconnectTimer()
+    }
+  }
+
+  peerConnection.oniceconnectionstatechange = (): void => {
+    const iceState = peerConnection?.iceConnectionState
+    if (iceState === 'disconnected' || iceState === 'failed' || iceState === 'closed') {
+      handlePeerDisconnectState()
+    } else if (iceState === 'connected') {
+      clearPeerDisconnectTimer()
+    }
+  }
+
   peerConnection.onicecandidate = (event: RTCPeerConnectionIceEvent): void => {
     if (event.candidate && callData.value) {
-      const socket = $ws()
+      const socket = typeof $ws === 'function' ? $ws() : null
       if (socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({
           event: 'call:ice-candidate',
@@ -437,7 +484,7 @@ async function sendOfferOnce (): Promise<void> {
     const offer = await peerConnection.createOffer()
     await peerConnection.setLocalDescription(offer)
 
-    const socket = $ws()
+    const socket = typeof $ws === 'function' ? $ws() : null
     if (socket && socket.readyState === WebSocket.OPEN && callData.value) {
       socket.send(JSON.stringify({
         event: 'call:offer',
@@ -488,7 +535,7 @@ async function handleIncomingOffer (offer: { sdp: { type: string, sdp: string },
     const answer = await peerConnection.createAnswer()
     await peerConnection.setLocalDescription(answer)
 
-    const socket = $ws()
+    const socket = typeof $ws === 'function' ? $ws() : null
     if (socket && socket.readyState === WebSocket.OPEN && callData.value) {
       socket.send(JSON.stringify({
         event: 'call:answer',
@@ -548,6 +595,7 @@ async function processQueuedIceCandidates (): Promise<void> {
 
 function cleanupWebRTC (): void {
   stopTimer()
+  clearPeerDisconnectTimer()
 
   if (peerConnection) {
     peerConnection.ontrack = null
@@ -581,8 +629,12 @@ function cleanupWebRTC (): void {
 }
 
 // ─── End call ─────────────────────────────────────────────────────────────────
+async function onEndCall (): Promise<void> {
+  await callStore.endCall(callData.value?.id ?? 0)
+}
+
 function handleEndCall (): void {
-  $handleLoading((): Promise<void> => callStore.endCall(callData.value?.id ?? 0))
+  $handleLoading(onEndCall)
 }
 
 // ─── Watchers ─────────────────────────────────────────────────────────────────
@@ -730,6 +782,36 @@ onMounted(async (): Promise<void> => {
     startTimer()
     void startCallFlow()
   }
+
+  const handleBeforeUnload = (): void => {
+    if (callData.value?.id && callStatus.value !== CallStatusEnum.ENDED) {
+      const baseURL = import.meta.env.VITE_ENV_BASE_API?.toString() || ''
+      const token = authStore.userToken.accessToken
+      if (baseURL && token) {
+        try {
+          fetch(`${baseURL}/calls/${callData.value.id}/end`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            keepalive: true
+          }).catch((err: any): void => {
+            console.warn('Failed to end call on beforeunload:', err)
+          })
+        } catch (err: any) {
+          console.warn('Error in beforeunload end call:', err)
+        }
+      }
+      void callStore.endCall(callData.value.id)
+    }
+  }
+
+  window.addEventListener('beforeunload', handleBeforeUnload)
+
+  onUnmounted((): void => {
+    window.removeEventListener('beforeunload', handleBeforeUnload)
+  })
 })
 
 onUnmounted((): void => {
