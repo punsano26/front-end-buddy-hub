@@ -161,6 +161,7 @@ import { useChatStore } from '~/stores/Chat'
 import { useCallStore } from '~/stores/Call'
 import { type IChatMessageItem, useChatRoomStore } from '~/stores/ChatRoom'
 
+const { $handleLoading } = useNuxtApp();
 const authStore = useAuthStore();
 const chatStore = useChatStore();
 const callStore = useCallStore();
@@ -169,7 +170,6 @@ const chatRoomStore = useChatRoomStore();
 const chatService: IChatProvider = new ChatProvider();
 const dayjs = useDayjs();
 const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/';
-const { $handleLoading } = useNuxtApp();
 const { pagination, extractPagination } = usePagination();
 const { messages: chatData } = storeToRefs(chatRoomStore);
 const sendError = computed((): string => chatRoomStore.getSendError(id.value));
@@ -376,7 +376,7 @@ function clickCall(): void {
       `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes`,
     );
   } else {
-    $handleLoading(async (): Promise<void> => {
+    async function onInitiateCallMobile (): Promise<void> {
       await callStore.initiateCall(targetId);
       if (callStore.callData) {
         void useRouter().push({
@@ -384,7 +384,8 @@ function clickCall(): void {
           query: { callData: JSON.stringify(callStore.callData) },
         });
       }
-    });
+    }
+    $handleLoading(onInitiateCallMobile);
   }
 }
 
@@ -492,17 +493,21 @@ const { removeSocketListener, startSocketSync, stopSocketSync } =
   });
 
 async function useFetch(): Promise<void> {
-  const response = await chatService.findOneMessagePaginate({
-    partnerId: id.value,
-    page: pagination.value.page,
-    limit: pagination.value.limit,
-  });
+  try {
+    const response = await chatService.findOneMessagePaginate({
+      partnerId: id.value,
+      page: pagination.value.page,
+      limit: pagination.value.limit,
+    });
 
-  const messages = Array.isArray(response?.data) ? response.data : [];
-  chatRoomStore.setMessages(messages);
-  pagination.value = extractPagination(response);
-  await markMessagesAsRead();
-  await scrollToBottom();
+    const messages = Array.isArray(response?.data) ? response.data : [];
+    chatRoomStore.setMessages(messages);
+    pagination.value = extractPagination(response);
+    await markMessagesAsRead();
+    await scrollToBottom();
+  } catch (err: any) {
+    console.warn('[Chat] Failed to sync messages:', err);
+  }
 }
 function fetch(): void {
   $handleLoading(useFetch);
@@ -591,17 +596,24 @@ onMounted((): void => {
   const handleWindowFocus = (): void => {
     if (document.visibilityState === 'visible') {
       void markMessagesAsRead();
+      void useFetch();
     }
+  };
+
+  const handleWsReconnected = (): void => {
+    void useFetch();
   };
 
   window.addEventListener('focus', handleWindowFocus);
   document.addEventListener('visibilitychange', handleWindowFocus);
+  window.addEventListener('ws:reconnected', handleWsReconnected);
 
   onUnmounted((): void => {
     screenQuery?.removeEventListener('change', handleScreenChange);
     screenQuery = null;
     window.removeEventListener('focus', handleWindowFocus);
     document.removeEventListener('visibilitychange', handleWindowFocus);
+    window.removeEventListener('ws:reconnected', handleWsReconnected);
   });
 });
 

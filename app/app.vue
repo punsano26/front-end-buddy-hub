@@ -23,9 +23,9 @@ import { useTokenRefresh } from '~/composables/useTokenRefresh'
 import type { IInitiateCallData } from '~/models/response/CallRes.model'
 import { useCallStore } from '~/stores/Call'
 
+const { $handleLoading } = useNuxtApp()
 const route = useRoute()
 const router = useRouter()
-const { $handleLoading } = useNuxtApp()
 const runtimeConfig = useRuntimeConfig()
 
 useTokenRefresh()
@@ -80,7 +80,7 @@ function clickAcceptCall (): void {
       newWin.focus()
     }
   } else {
-    $handleLoading(async (): Promise<void> => {
+    async function onAcceptCall (): Promise<void> {
       await callStore.acceptIncomingCall(callId)
       if (callStore.callData) {
         void router.push({
@@ -88,7 +88,8 @@ function clickAcceptCall (): void {
           query: { callData: JSON.stringify(callStore.callData) }
         })
       }
-    })
+    }
+    $handleLoading(onAcceptCall)
   }
 }
 
@@ -144,6 +145,7 @@ const updateAppHeight = (): void => {
 }
 
 onMounted((): void => {
+  callStore.initBroadcastListener()
   updateAppHeight()
   window.addEventListener('resize', updateAppHeight)
   window.visualViewport?.addEventListener('resize', updateAppHeight)
