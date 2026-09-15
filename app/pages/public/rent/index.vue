@@ -65,6 +65,7 @@
   <SuccessHireModal
     v-model:visible="successModalVisible"
     :item="successModalItem"
+    :session-id="currentSessionId"
     :duration-minutes="successModalDuration"
     :coin-cost="successModalCost"
     @chat="goToChatPage" />
@@ -84,6 +85,7 @@ import type { IFindWalletBalanceData } from '~/models/response/WallRes.model'
 import RentCustomerProvider, { type IRentCustomerProvider } from '~/resource/provider/RentCustomer.provider'
 import WalletProvider, { type IWalletProvider } from '~/resource/provider/Wallet.provider'
 import { useRentStore } from '~/stores/Rent'
+import { useNotificationStore } from '~/stores/Notification'
 
 const router = useRouter()
 const rentModalVisible = ref(false)
@@ -91,6 +93,7 @@ const successModalVisible = ref(false)
 const successModalDuration = ref(15)
 const successModalCost = ref(0)
 const successModalItem = ref<IFindAllRentPostList | null>(null)
+const currentSessionId = ref<number | null>(null)
 
 const { $handleLoading } = useNuxtApp()
 const toast = useToast()
@@ -134,6 +137,7 @@ function fetch (): void {
 }
 
 async function onSelectedRentPost (id: TBaseParamsId): Promise<void> {
+  currentSessionId.value = null
   await rentStore.fetchPostById(id)
   rentModalVisible.value = true
 }
@@ -175,46 +179,55 @@ function getMyWalletBalance (): void {
   $handleLoading(onGetMyWalletBalance)
 }
 
-function goToChatPage (): void {
-  if (!successModalItem.value) return
-  router.push({ name: 'public-rent-chat-id', params: { id: successModalItem.value.provider.id } })
+function goToChatPage (sessionId?: number | null): void {
+  const targetId = sessionId || currentSessionId.value
+  if (!targetId) return
+  router.push({ name: 'public-rent-chat-id', params: { id: targetId } })
 }
 
 async function onConfirmRent (payload: IRentAPostPayload): Promise<void> {
   if (!rentStore.selectedPost) return
   const provider = rentStore.selectedPost.provider
 
-  await rentCustomerService.rentAPost(payload)
+  const response = await rentCustomerService.rentAPost(payload)
+  const createdSession = response?.data
+  const sessionId = createdSession?.id || (response as any)?.id
+
+  if (sessionId) {
+    currentSessionId.value = sessionId
+  }
 
   myWalletBalance.value.balance -= payload.durationMinutes * rentStore.selectedPost.coinRatePerMinute
 
-  const existing = conversationsRent.value?.find((c: any): boolean => c.id === provider.id)
-  if (existing) {
-    existing.sessionStatus = 'pending'
-    existing.maxDurationMinutes = payload.durationMinutes
-  } else {
-    conversationsRent.value?.unshift({
-      id: provider.id,
-      nickname: provider.nickname || provider.username,
-      username: provider.username,
-      profileImg: provider.profileImg,
-      status: provider.isOnline ? 'online' : 'offline',
-      category: rentStore.selectedPost.category?.name || 'เพื่อนคุย',
-      rating: String(provider.rating?.averageRating || '5.0'),
-      rate: String(rentStore.selectedPost.coinRatePerMinute),
-      rateHour: String(rentStore.selectedPost.coinRatePerMinute * 60),
-      lastMessageText: 'ส่งคำขอเช่าคุยแล้ว รอการตอบรับ...',
-      lastMessageCreatedAt: new Date(),
-      welcomeMessage: rentStore.selectedPost.description || 'สวัสดีค่ะ ยินดีต้อนรับนะคะ!',
-      sessionStatus: 'pending',
-      maxDurationMinutes: payload.durationMinutes
-    })
+  if (createdSession && sessionId) {
+    const existingIndex = conversationsRent.value?.findIndex(
+      (c: any): boolean => c.id === sessionId || c.id === provider.id
+    )
+    if (existingIndex !== -1 && existingIndex !== undefined) {
+      conversationsRent.value[existingIndex] = {
+        ...conversationsRent.value[existingIndex],
+        ...createdSession,
+        id: sessionId,
+        sessionStatus: 'pending',
+        maxDurationMinutes: payload.durationMinutes
+      }
+    } else {
+      conversationsRent.value?.unshift({
+        ...createdSession,
+        id: sessionId,
+        sessionStatus: 'pending',
+        maxDurationMinutes: payload.durationMinutes
+      })
+    }
   }
 
   successModalDuration.value = payload.durationMinutes
   successModalCost.value = payload.durationMinutes * rentStore.selectedPost.coinRatePerMinute
   successModalItem.value = rentStore.selectedPost
   
+  const notificationStore = useNotificationStore()
+  void notificationStore.fetchNotifications()
+
   rentModalVisible.value = false
   successModalVisible.value = true
 }
