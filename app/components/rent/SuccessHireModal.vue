@@ -111,19 +111,27 @@ import Dialog from '~/volt/Dialog.vue'
 const imageBaseUrl = import.meta.env.VITE_ENV_BASE_FILE_URL + '/'
 const visible = defineModel<boolean>('visible', { default: false })
 
-defineProps<{
+const props = defineProps<{
   item: IFindAllRentPostList | null
+  sessionId?: number | null
   durationMinutes: number
   coinCost: number
 }>()
 
 const emit = defineEmits<{
-  (e: 'chat'): void
+  (e: 'chat', sessionId?: number | null): void
 }>()
 
+let isNavigating = false
+
 const handleGoToChat = (): void => {
-  emit('chat')
+  if (isNavigating) return
+  isNavigating = true
   visible.value = false
+  emit('chat', props.sessionId)
+  setTimeout((): void => {
+    isNavigating = false
+  }, 500)
 }
 </script>
 
