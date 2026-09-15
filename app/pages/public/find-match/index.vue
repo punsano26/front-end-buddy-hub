@@ -13,6 +13,7 @@
     </div>
     <MatchingFilter
       v-model:payload="payload"
+      :show-error="submitted"
       class="w-full max-w-md" />
     <Button
       @click="handleMatch"
@@ -68,6 +69,7 @@ import UserProvider from '~/resource/provider/User.provider'
 import { useAuthStore } from '~/stores/Auth'
 import { useUserStore } from '~/stores/User'
 import type { TErrorResponse } from '~/models/response/Response.model'
+import { validate, validateForm } from '~/plugins/Validate'
 
 interface IUserPresence {
   id?: number
@@ -83,12 +85,37 @@ const toast = useToast()
 const router = useRouter()
 const authStore = useAuthStore()
 const userStore = useUserStore()
+const submitted = ref(false)
 
 const payload = ref<IJoinTheRandomMatchQueuePayload>({
   gender: genderQueryEnum.ALL,
   minAge: 16,
   maxAge: 26
 })
+
+const formRules = computed((): Record<string, ((v: any) => boolean | string)[]> => ({
+  gender: [validate.required],
+  minAge: [
+    validate.required,
+    (v: any): boolean | string => validate.minValue(v, 16),
+    (v: any): boolean | string => {
+      if (payload.value.maxAge && Number(v) > Number(payload.value.maxAge)) {
+        return 'อายุต่ำสุดต้องไม่มากกว่าอายุสูงสุด'
+      }
+      return true
+    }
+  ],
+  maxAge: [
+    validate.required,
+    (v: any): boolean | string => validate.maxValue(v, 100),
+    (v: any): boolean | string => {
+      if (payload.value.minAge && Number(v) < Number(payload.value.minAge)) {
+        return 'อายุสูงสุดต้องไม่น้อยกว่าอายุต่ำสุด'
+      }
+      return true
+    }
+  ]
+}))
 
 // --- Real-time online count (via WebSocket) ---
 const safeUsers = computed<IUserPresence[]>((): IUserPresence[] => {
@@ -259,6 +286,11 @@ async function onMatch (): Promise<void> {
 }
 
 function handleMatch (): void {
+  submitted.value = true
+  if (!validateForm(payload.value, formRules.value)) {
+    return
+  }
+
   $handleLoading(onMatch, {
     toast: {
       instance: toast
