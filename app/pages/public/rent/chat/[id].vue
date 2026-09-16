@@ -161,6 +161,7 @@ watch(
   (): void => {
     store.cancelEditMessage()
     userMessageText.value = ''
+    store.clear()
     fetch()
     fetchMessages()
   }

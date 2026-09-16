@@ -33,16 +33,32 @@
             <InputLabelField label="อายุต่ำสุด">
               <InputNumber
                 v-model="minAge"
-                :min="16"
+                :allow-empty="false"
+                :invalid="!!minAgeError"
                 class="w-full" />
+              <template #message>
+                <p
+                  v-if="minAgeError"
+                  class="mt-1 text-xs text-red-500">
+                  {{ minAgeError }}
+                </p>
+              </template>
             </InputLabelField>
 
 
             <InputLabelField label="อายุสูงสุด">
               <InputNumber
                 v-model="maxAge"
-                :max="100"
+                :allow-empty="false"
+                :invalid="!!maxAgeError"
                 class="w-full" />
+              <template #message>
+                <p
+                  v-if="maxAgeError"
+                  class="mt-1 text-xs text-red-500">
+                  {{ maxAgeError }}
+                </p>
+              </template>
             </InputLabelField>
           </div>
         </div>
@@ -52,12 +68,21 @@
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
 import { genderQueryEnum } from '~/models/enums/User.enum'
 import type { IJoinTheRandomMatchQueuePayload } from '~/models/request/MatchReq.model'
+import { validate } from '~/plugins/Validate'
 
-const props = defineProps<{
+interface IProps {
   payload: IJoinTheRandomMatchQueuePayload
-}>()
+  showError?: boolean
+  rules?: Partial<Record<keyof IJoinTheRandomMatchQueuePayload, ((v: any) => boolean | string)[]>>
+}
+
+const props = withDefaults(defineProps<IProps>(), {
+  showError: false,
+  rules: undefined
+})
 
 const emit = defineEmits<{
   (event: 'update:payload', value: IJoinTheRandomMatchQueuePayload): void
@@ -82,19 +107,62 @@ const genderValue = computed<genderQueryEnum>({
 const minAge = computed<number | null>({
   get: (): number => props.payload.minAge,
   set: (value: number | null): void => {
-    if (typeof value === 'number') {
-      updatePayload({ minAge: value })
-    }
+    updatePayload({ minAge: typeof value === 'number' && !Number.isNaN(value) ? value : (value as any) })
   }
 })
 
 const maxAge = computed<number | null>({
   get: (): number => props.payload.maxAge,
   set: (value: number | null): void => {
-    if (typeof value === 'number') {
-      updatePayload({ maxAge: value })
-    }
+    updatePayload({ maxAge: typeof value === 'number' && !Number.isNaN(value) ? value : (value as any) })
   }
+})
+
+const defaultRules = computed((): Record<string, ((v: any) => boolean | string)[]> => ({
+  minAge: [
+    validate.required,
+    (val: any): boolean | string => validate.minValue(val, 16),
+    (val: any): boolean | string => {
+      if (props.payload.maxAge && Number(val) > Number(props.payload.maxAge)) {
+        return 'อายุต่ำสุดต้องไม่มากกว่าอายุสูงสุด'
+      }
+      return true
+    }
+  ],
+  maxAge: [
+    validate.required,
+    (val: any): boolean | string => validate.maxValue(val, 100),
+    (val: any): boolean | string => {
+      if (props.payload.minAge && Number(val) < Number(props.payload.minAge)) {
+        return 'อายุสูงสุดต้องไม่น้อยกว่าอายุต่ำสุด'
+      }
+      return true
+    }
+  ]
+}))
+
+const activeRules = computed((): Record<string, ((v: any) => boolean | string)[]> => {
+  return (props.rules as Record<string, ((v: any) => boolean | string)[]>) || defaultRules.value
+})
+
+const minAgeError = computed((): string => {
+  if (!props.showError) return ''
+  const rules = activeRules.value.minAge || []
+  for (const rule of rules) {
+    const res = rule(props.payload.minAge)
+    if (res !== true) return res as string
+  }
+  return ''
+})
+
+const maxAgeError = computed((): string => {
+  if (!props.showError) return ''
+  const rules = activeRules.value.maxAge || []
+  for (const rule of rules) {
+    const res = rule(props.payload.maxAge)
+    if (res !== true) return res as string
+  }
+  return ''
 })
 </script>
 

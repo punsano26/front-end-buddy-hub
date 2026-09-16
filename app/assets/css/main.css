@@ -39,4 +39,16 @@
   }
 }
 
+/* Toast mobile responsive styling to ensure it fits screen edges perfectly */
+@media (max-width: 639.98px) {
+  .p-toast,
+  [data-pc-name="toast"] {
+    left: 1rem !important;
+    right: 1rem !important;
+    width: auto !important;
+    max-width: calc(100vw - 2rem) !important;
+    box-sizing: border-box !important;
+  }
+}
+
 

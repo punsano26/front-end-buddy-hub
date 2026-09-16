@@ -206,8 +206,16 @@ function handleMarkAllRead (): void {
 }
 
 function handleMarkNotification (item: INotificationList): void {
-  if (item.isRead) return
-  $handleLoading((): Promise<void> => notificationStore.markAsRead(item.id))
+  if (!item.isRead) {
+    void notificationStore.markAsRead(item.id)
+  }
+  if (item.hireSessionId) {
+    op.value?.hide?.()
+    router.push({ name: 'public-rent-chat-id', params: { id: item.hireSessionId } })
+  } else if (item.notificationType === NotificationTypeEnum.MESSAGE && item.relatedUserId) {
+    op.value?.hide?.()
+    router.push({ name: 'public-chat-id', params: { id: item.relatedUserId } })
+  }
 }
 
 function getNotificationItems (item: INotificationList): IItems[] {
@@ -242,11 +250,13 @@ function resolveAvatar (path?: string | null): string {
 
 function onClickUserDetail (userId?: number | null): void {
   if (!userId || userId <= 0) return
+  op.value?.hide?.()
   router.push({ name: 'public-profile-id', params: { id: userId } })
 }
 
 async function onClickAcceptRentSession (sessionId: number): Promise<void> {
   await rentCustomerService.acceptAHireRequest(sessionId)
+  op.value?.hide?.()
   router.push({ name: 'public-rent-chat-id', params: { id: sessionId } })
 }
 
