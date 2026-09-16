@@ -35,6 +35,8 @@
                 v-model="minAge"
                 :allow-empty="false"
                 :invalid="!!minAgeError"
+                :max="maxAge || 100"
+                :min="16"
                 class="w-full" />
               <template #message>
                 <p
@@ -51,6 +53,8 @@
                 v-model="maxAge"
                 :allow-empty="false"
                 :invalid="!!maxAgeError"
+                :max="100"
+                :min="minAge || 16"
                 class="w-full" />
               <template #message>
                 <p
