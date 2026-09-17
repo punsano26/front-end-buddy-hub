@@ -113,6 +113,17 @@
       </div>
     </div>
 
+    <!-- Email verification notice before submission -->
+    <div
+      v-if="isVerified === false"
+      class="p-4 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-xl sm:rounded-2xl text-xs text-amber-700 dark:text-amber-300 flex items-center gap-3 shadow-3xs">
+      <i class="pi pi-exclamation-triangle text-amber-500 text-lg shrink-0" />
+      <div>
+        <span class="font-bold">ต้องยืนยันอีเมลก่อน:</span>
+        บัญชีของคุณยังไม่ได้ยืนยันอีเมล กรุณายืนยันอีเมลเพื่อเปิดรับเช่าเพื่อนคุย
+      </div>
+    </div>
+
     <Divider class="!my-2 border-slate-200/50 dark:border-slate-800/60" />
 
     <!-- Actions block -->
@@ -154,6 +165,7 @@ defineProps<{
   expertises: string[]
   price: number | null
   responseTime: number
+  isVerified?: boolean
 }>()
 
 defineEmits<{

@@ -129,15 +129,52 @@
           </div>
         </div>
 
+        <!-- Unverified Email Warning Banner -->
+        <div
+          v-if="!authStore.user.isVerified"
+          class="p-4 sm:p-5 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-2xl sm:rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-amber-700 dark:text-amber-300 shadow-sm"
+        >
+          <div class="flex items-start sm:items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+              <i class="pi pi-exclamation-triangle text-lg sm:text-xl text-amber-600 dark:text-amber-400" />
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <p class="font-bold text-sm sm:text-base text-slate-800 dark:text-slate-100">
+                คุณยังไม่ได้ยืนยันอีเมล
+              </p>
+              <p class="text-xs text-slate-600 dark:text-slate-400">
+                จำเป็นต้องยืนยันอีเมลให้เรียบร้อยก่อนเปิดรับเช่าเพื่อนคุย เพื่อความปลอดภัยและความน่าเชื่อถือ
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+            <Button
+              :loading="isSendingVerification"
+              size="small"
+              pt:root:class="bg-amber-500 hover:bg-amber-600 border-none text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer flex items-center gap-1.5 shadow-sm"
+              @click="handleSendEmailVerification"
+            >
+              <i class="pi pi-send text-xs" />
+              ส่งอีเมลยืนยันอีกครั้ง
+            </Button>
+          </div>
+        </div>
+
         <!-- Premium Glassmorphic Stepper Form Card -->
         <div class="w-full bg-white/70 dark:bg-slate-900/75 backdrop-blur-xl border border-white/20 dark:border-slate-800/80 rounded-3xl p-4 sm:p-6 lg:p-8 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.04)] dark:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.4)] transition-all duration-500">
           <StepperRent
             v-model="activeStep"
             :services="rentCategories"
+            :is-verified="authStore.user.isVerified"
             @submit="onFormSubmit" />
         </div>
       </div>
     </div>
+
+    <VerifyEmailModal
+      v-model:visible="showVerifyEmailDialog"
+      :loading="isSendingVerification"
+      @send="handleSendEmailVerification" />
   </div>
 </template>
 
@@ -145,10 +182,15 @@
 import { onMounted, ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import StepperRent from '~/components/rent/StepperRent.vue'
+import VerifyEmailModal from '~/components/rent/VerifyEmailModal.vue'
 import type { ICreateRentPostPayload } from '~/models/request/RentReq.model'
 import type { IFindAllRentCategoriesData } from '~/models/response/RentRes.model'
+import AuthProvider, { type IAuthProvider } from '~/resource/provider/Auth.provider'
+import UserProvider, { type IUserProvider } from '~/resource/provider/User.provider'
+import { useAuthStore } from '~/stores/Auth'
 import { useRentStore } from '~/stores/Rent'
-import Button from '~/volt/Button.vue'
+
+const { $handleLoading } = useNuxtApp()
 
 definePageMeta({
   layout: 'navbar',
@@ -194,11 +236,47 @@ const submittedData = ref<RentFormSubmitData | null>(null)
 const rentCategories = ref<RentServiceOption[]>([])
 const toast = useToast()
 const router = useRouter()
+const authStore = useAuthStore()
+const rentStore = useRentStore()
+const authService: IAuthProvider = new AuthProvider()
+const userService: IUserProvider = new UserProvider()
+const isSendingVerification = ref(false)
+const showVerifyEmailDialog = ref(false)
+
 function navigateToRent (): void {
   router.push({ name: 'public-rent' })
 }
 
+async function onSendEmailVerification (): Promise<void> {
+  await authService.sendEmailVerification()
+}
+
+function handleSendEmailVerification (): void {
+  $handleLoading(onSendEmailVerification, {
+    loadingUnit: isSendingVerification,
+    toast: {
+      instance: toast,
+      success: {
+        summary: 'ส่งอีเมลยืนยันสำเร็จ',
+        detail: 'ส่งอีเมลยืนยันแล้ว กรุณาตรวจสอบกล่องข้อความในอีเมลของคุณ',
+        life: 5000
+      }
+    }
+  })
+}
+
 function onFormSubmit (data: RentFormSubmitData): void {
+  if (!authStore.user.isVerified) {
+    showVerifyEmailDialog.value = true
+    toast.add({
+      severity: 'warn',
+      summary: 'ยังไม่ได้ยืนยันอีเมล',
+      detail: 'คุณจำเป็นต้องยืนยันอีเมลก่อนเปิดรับเช่าเพื่อนคุย',
+      life: 4000
+    })
+    return
+  }
+
   const payload: ICreateRentPostPayload = {
     categoryId: Number(data.service?.id || 0),
     tagline: data.tagline,
@@ -210,9 +288,17 @@ function onFormSubmit (data: RentFormSubmitData): void {
 
   $handleLoading(
     async (): Promise<void> => {
-      await rentStore.createPost(payload)
-      submittedData.value = data
-      isSubmitted.value = true
+      try {
+        await rentStore.createPost(payload)
+        submittedData.value = data
+        isSubmitted.value = true
+      } catch (err: any) {
+        const message = err?.response?.data?.message || err?.message || ''
+        if (err?.response?.status === 403 && /email|verify|verification|ยืนยันอีเมล/i.test(message)) {
+          showVerifyEmailDialog.value = true
+        }
+        throw err
+      }
     },
     {
       toast: {
@@ -225,14 +311,25 @@ function onFormSubmit (data: RentFormSubmitData): void {
   )
 }
 
-const { $handleLoading } = useNuxtApp()
-const rentStore = useRentStore()
 onMounted((): void => {
   $handleLoading(async (): Promise<void> => {
     if (rentStore.rentPostAlreadyExists?.data?.hasPost) {
       router.replace({ name: 'public-rent-my-post' })
       return
     }
+
+    try {
+      const me = await userService.findOneCurrentUser()
+      if (me?.data && typeof me.data.isVerified === 'boolean') {
+        authStore.updateUser({
+          ...authStore.user,
+          isVerified: me.data.isVerified
+        })
+      }
+    } catch (err: any) {
+      console.warn('[RentCreate] Failed to refresh current user verification status:', err)
+    }
+
     await rentStore.fetchCategories()
     rentCategories.value = rentStore.categories.map((category: IFindAllRentCategoriesData): RentServiceOption => {
       const name = category.name

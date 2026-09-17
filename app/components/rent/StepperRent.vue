@@ -112,6 +112,7 @@
             v-if="panel.value === 4"
             :bio="bio"
             :expertises="selectedExpertises"
+            :is-verified="isVerified"
             :price="price"
             :response-time="responseTime"
             :service="selectedService"
@@ -155,11 +156,13 @@ interface RentServiceOption {
 interface Props {
   modelValue?: number
   services?: RentServiceOption[]
+  isVerified?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: 1,
-  services: (): RentServiceOption[] => []
+  services: (): RentServiceOption[] => [],
+  isVerified: true
 })
 
 const emit = defineEmits<{
