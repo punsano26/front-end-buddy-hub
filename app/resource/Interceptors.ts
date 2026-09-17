@@ -92,9 +92,15 @@ export async function onResponseError (error: AxiosError): Promise<any> {
 
   if (error.response?.status === 403) {
     const data = error.response.data as any
-    const message = typeof data === 'string'
+    const rawMsg = typeof data === 'string'
       ? data
-      : (data?.message || data?.error || 'บัญชีของคุณถูกระงับการใช้งาน หรือไม่มีสิทธิ์เข้าถึง')
+      : (Array.isArray(data?.message) ? data.message.join(', ') : (data?.message || data?.error || ''))
+    const message = rawMsg || 'บัญชีของคุณถูกระงับการใช้งาน หรือไม่มีสิทธิ์เข้าถึง'
+
+    const isEmailVerificationError = (/email|verify|verification|ยืนยันอีเมล/i).test(rawMsg)
+    if (isEmailVerificationError) {
+      return Promise.reject(error)
+    }
 
     const { useBanStore } = await import('~/stores/Ban')
     const banStore = useBanStore()
