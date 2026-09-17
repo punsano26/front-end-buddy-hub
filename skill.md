@@ -1,66 +1,56 @@
-# Nuxt 4 + TypeScript + Volt + PrimeVue + Pinia + Tailwind Debugging Skill
+---
+name: nuxt-debugging
+description: Surgical debugging guide for Nuxt 4, Volt, PrimeVue, and Pinia. Use when fixing runtime errors, store reactivity issues, or lint failures in Buddy Hub.
+---
 
-คุณคือนักแก้บั๊กที่โฟกัสเฉพาะจุด ไม่รีแฟคเตอร์ที่ไม่จำเป็น
+# Nuxt 4 + TypeScript + Volt + PrimeVue + Pinia Debugging Skill
 
-## Core Rules (ห้ามละเมิดเด็ดขาด)
+แนวทางการแก้ปัญหาและเทคนิคเฉพาะจุดสำหรับ Buddy Hub Frontend
 
-1. **ห้ามรีแฟคเตอร์**: อย่าเปลี่ยนโครงสร้าง อย่า rename อย่า "ทำให้สวย" ถ้าไม่ได้แก้บั๊ก
-2. **แก้เฉพาะบรรทัดที่มีปัญหา**: ไม่แตะบรรทัดอื่น เว้นแต่จะเกิด error ต่อเนื่อง
-3. **Error-driven เท่านั้น**: ถ้าไม่มี error หรือ behavior ผิด ไม่ต้องทำอะไร
-4. **อ่าน stack trace ก่อนเสมอ**: ห้ามเดา ห้ามแก้ทั้งไฟล์
+## 1. Guiding Principles
+1. **Surgical Changes**: เน้นแก้ปัญหาให้ตรงจุด ไม่ทำการ refactor วงกว้างโดยไม่จำเป็น เพื่อป้องกันผลข้างเคียง
+2. **Component Modularity**: อนุญาตให้แยก Sub-component ออกมาไว้ที่ `app/components/<feature>/` ได้เมื่อช่วยให้โค้ดเป็นระเบียบและอ่านง่าย
+3. **Error-driven**: อ่าน error messages และ stack trace ก่อนลงมือแก้เสมอ
 
-## การแก้ไข Volt Component (PrimeVue)
+---
 
-**หลักการ**: ใช้ `pt` (passthrough) ใน **parent** ที่เรียกใช้ component ห้ามแก้ component โดยตรง
-
-```vue
-<!-- ✅ ถูก: แก้ที่ parent -->
-<Divider :pt="{ root: { class: 'p-2 mt-6' } }" />
-
-<!-- หรือใช้数组 syntax ถ้า class เดิมมี -->
-<Divider :pt="{ root: { class: ['p-2', 'mt-6'] } }" />
-
-<!-- ❌ ผิด: ห้ามไปแก้ Volt component ต้นทาง -->
-<!-- ห้ามแก้ ~/volt/components/Divider.vue -->
-
-<!-- ❌ ผิด: ห้ามใช้ global CSS แก้ volt -->
-<style global> .p-divider { margin-top: 1.5rem; } </style>
+## 2. การแก้ไข Volt Component (PrimeVue)
+- **หลักการ**: ห้ามแก้ไขไฟล์ต้นทางใน `~/volt/*.vue` เด็ดขาด
+- ให้ใช้ `pt:section:class="..."` หรือ `:pt` prop ใน **parent component** ที่เรียกใช้งาน
+```html
+<Dialog
+  v-model:visible="visible"
+  pt:header:class="hidden"
+  pt:content:class="!p-6"
+  pt:root:class="max-w-md w-full rounded-3xl"
+  modal>
 ```
 
-## เทคนิคการ Debug รายจุด (Current Know-how)
+---
 
-### 1. การ Debug Provider & API
-- **ปัญหา**: Data ไม่มา หรือ Error 401/403
-- **จุดตรวจสอบ**: 
-    - เช็คว่ามีการเรียก `this.setUserAuthHeader()` ใน Provider ก่อนส่ง request หรือยัง
-    - ตรวจสอบ Request/Response Model ใน `app/models/` ว่าตรงกับ Swagger/Backend หรือไม่
-    - ใช้ `console.log` ดูผลลัพธ์ที่ `HttpRequest.ts` หรือ `Interceptors.ts` เพื่อดูว่าติดที่ middleware หรือเปล่า
+## 3. เทคนิคการ Debug รายจุด (Current Know-how)
 
-### 2. การ Debug State (Pinia)
-- **ปัญหา**: ข้อมูลใน UI ไม่ update ตาม Store
-- **จุดตรวจสอบ**:
-    - ตรวจสอบการใช้ `storeToRefs` เมื่อต้องการดึง state มาใช้แบบ reactive ใน template
-    - ใช้ `watch()` ใน component เพื่อดูว่า state ใน store เปลี่ยนจริงหรือไม่
+### A. Provider & API
+- ตรวจสอบว่ามีการเรียก `this.setUserAuthHeader()` ใน Provider ก่อนส่ง request
+- ตรวจสอบ Request/Response Model ใน `app/models/` ให้ตรงกับ Backend
 
-### 3. การ Debug UI & Loading
-- **ปัญหา**: $handleLoading ไม่แสดงผล หรือค้าง
-- **จุดตรวจสอบ**: 
-    - ตรวจสอบว่าฟังก์ชัน async ถูกครอบด้วย `await $handleLoading(async () => { ... })` หรือไม่
-    - ถ้าเป็นปัญหาเรื่อง CSS/Layout ให้เช็คที่ `pt` ของ PrimeVue เป็นหลัก (ห้ามแก้ที่ตัว volt)
+### B. State (Pinia)
+- ใช้ `storeToRefs` เมื่อต้องการดึง state มาใช้งานแบบ reactive ใน template
+- ใช้ `watch()` ใน component เพื่อตรวจสอบการเปลี่ยนแปลงของ state เมื่อจำเป็น
 
-### 4. การใช้ Console Log ให้มีประสิทธิภาพ
-- ใส่ชื่อ Component หรือไฟล์เสมอ: `console.log('[UserCard] data:', data)`
-- ใช้ `JSON.parse(JSON.stringify(obj))` เมื่อต้องการดูค่าปัจจุบันของ Proxy object (Vue Ref)
-- ลบ log ออกทุกครั้งเมื่อแก้เสร็จ (Surgical Cleanup)
+### C. UI & Loading ($handleLoading)
+- จัดวาง `const { $handleLoading } = useNuxtApp()` ไว้บรรทัดแรกๆ ของ `<script setup lang="ts">` เสมอ
+- ฟังก์ชัน async ให้ครอบด้วย `$handleLoading` พร้อมตั้งค่า toast แจ้งผลลัพธ์
 
-### 5. การจัดการ TypeScript / ESLint ใน Catch Block
-- **ปัญหา**: เมื่อ Commit code แล้วติด ESLint error จากกฎ `@typescript-eslint/typedef` (เช่น `Expected err to have a type annotation`) หรือมี Import ที่ไม่ได้ใช้งาน
-- **จุดแก้ไข**:
-    - ใน Callback function ของ `.catch()` จะต้องกำหนด Type Annotation ให้พารามิเตอร์เสมอ เช่น `(err: any)` หรือหากมีการใช้ `TErrorResponse` (import จาก `~/models/response/Response.model`) ให้พิมพ์พารามิเตอร์นั้นเป็น `TErrorResponse` เพื่อหลีกเลี่ยงปัญหา Unused Import:
-      ```typescript
-      ringtoneAudio.play().catch((err: TErrorResponse): void => { ... })
-      ```
+### D. TypeScript / ESLint ใน Catch Block
+- ใน Callback function ของ `.catch()` หรือ catch block ต้องระบุ type annotation เสมอ เช่น `(err: any)` หรือ `(err: TErrorResponse)`:
+```typescript
+audio.play().catch((err: any): void => { ... })
+```
 
-### 6. การทดสอบและการรัน Lint / Build
+---
+
+## 4. Autonomous Verification
 - ใช้ `bun run lint` เพื่อตรวจสอบ ESLint rules
 - ใช้ `bun run build` เพื่อตรวจสอบ TypeScript compilation & Nuxt build
+- แก้ไขข้อผิดพลาดจาก lint/build อัตโนมัติและตรวจสอบซ้ำจนกว่าจะผ่าน 100% ก่อนจบงาน
